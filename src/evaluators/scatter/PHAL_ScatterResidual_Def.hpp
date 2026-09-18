@@ -474,9 +474,8 @@ evaluateFields(typename Traits::EvalData workset)
     const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
     const int top = layers_data.top_side_pos;
     const int bot = layers_data.bot_side_pos;
-    const int fieldLayer = fieldLevel==layers_data.cell.lid->numLayers
-                          ? fieldLevel-1 : fieldLevel;
-    const int field_pos = fieldLevel==fieldLayer ? bot : top;
+    const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
+    const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
     const auto node_dof_mgr = workset.disc->getNodeDOFManager();
     const auto p = workset.distParamLib->get(workset.dist_param_deriv_name);
@@ -780,7 +779,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
   const int top = layers_data.top_side_pos;
   const int bot = layers_data.bot_side_pos;
-  const auto fieldLayer = fieldLevel==layers_data.cell.lid->numLayers ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos = fieldLayer==fieldLevel ? bot : top;
 
   const auto dof_mgr      = workset.disc->getDOFManager();
@@ -792,7 +791,7 @@ evaluate2DFieldsDerivativesDueToExtrudedParams(typename Traits::EvalData workset
   //       to guarantee corresponding nodes are vertically aligned.
   const auto top_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,top,field_pos);
   const auto bot_offsets = p_dof_mgr->getGIDFieldOffsetsSideKokkos(0,bot,field_pos);
-  const auto p_offsets   = fieldLevel==fieldLayer ? bot_offsets : top_offsets;
+  const auto p_offsets   = fieldLayer==fieldLevel ? bot_offsets : top_offsets;
   const auto numSideNodes = p_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos).size();
 
   const auto elem_lids_host = Kokkos::subview(elem_lids_ws.host(),ws,Kokkos::ALL);

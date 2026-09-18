@@ -72,7 +72,7 @@ ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
 {
   // Create field tag
   nodal_field_tag =
-    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className + "_" + this->param_name, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }
@@ -117,7 +117,7 @@ ScatterScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
   fieldLevel = p.get<int>("Field Level");
 
   // Create field tag
-  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+  nodal_field_tag = Teuchos::rcp(new PHX::Tag<ParamScalarT>(className + "_" + this->param_name, dl->dummy));
 
   this->addEvaluatedField(*nodal_field_tag);
 }
@@ -141,7 +141,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int  top = layers_data.top_side_pos;
   const int  bot = layers_data.bot_side_pos;
 
-  const int fieldLayer = fieldLevel==layers_data.cell.lid->numLayers ? fieldLevel-1 : fieldLevel;
+  const int fieldLayer = fieldLevel==0 ? 0 : fieldLevel-1;
   const int field_pos  = fieldLayer==fieldLevel ? bot : top;
 
   const auto& offsets = p_dof_mgr->getGIDFieldOffsetsSide(0,field_pos);
