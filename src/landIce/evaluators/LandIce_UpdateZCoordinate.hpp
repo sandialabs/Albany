@@ -37,18 +37,19 @@ public:
 private:
 
   using MeshScalarT = typename EvalT::MeshScalarT;
+  using ScalarOutT = typename Albany::StrongestScalarType<MeshScalarT,ScalarT>::type;
 
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
   PHX::MDField<const MeshScalarT, Cell, Node>       bedTopo;
   PHX::MDField<const ScalarT, Cell, Node>           H;
-  PHX::MDField<const RealType, Cell, Node>          H0;
+  PHX::MDField<const MeshScalarT, Cell, Node>       H0;
   PHX::MDField<const ScalarT, Cell, Node>           dH;
 
   // Output:
-  PHX::MDField<ScalarT, Cell, Node>           topSurface;
-  PHX::MDField<MeshScalarT, Cell, Node, Dim>  coordVecOut;
-  PHX::MDField<ScalarT, Cell, Node>           HOut;
+  PHX::MDField<ScalarOutT, Cell, Node>           topSurface;
+  PHX::MDField<MeshScalarT, Cell, Node, Dim>     coordVecOut;
+  PHX::MDField<ScalarOutT, Cell, Node>           HOut;
 
   bool haveThickness, haveThicknessDiff;
   double minH, rho_i, rho_w;

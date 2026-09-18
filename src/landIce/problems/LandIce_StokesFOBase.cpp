@@ -61,7 +61,9 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     viscosity_use_corrected_temperature = false;
   }
 
-  viscosity_use_p0_temperature = params->sublist("LandIce Viscosity").get("Use P0 Temperature",true);
+  viscosity_use_p0_temperature = params->sublist("LandIce Viscosity").get("Use P0 Temperature",!depthIntegratedModel);
+  TEUCHOS_TEST_FOR_EXCEPTION (depthIntegratedModel && viscosity_use_p0_temperature, Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error! Use P0 Temperature should be set to false when using the depth integrated model.\n");
 
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
 

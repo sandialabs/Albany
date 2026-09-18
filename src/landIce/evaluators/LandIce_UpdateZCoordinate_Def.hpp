@@ -116,23 +116,23 @@ evaluateFields(typename Traits::EvalData workset)
       const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
       const int ilevel = pos==bot ? ilayer : ilayer+1;
       for (auto node : nodes) {
-        ScalarT h;
+        ScalarOutT h;
         if(!haveThicknessDiff) {
           h = std::max(H(cell,node), ScalarT(minH));
         } else {
-          h = std::max(H0(cell,node) + dH(cell,node), ScalarT(minH));
+         h = std::max(H0(cell,node) + dH(cell,node), ScalarT(minH));
           if (haveThickness)
             HOut(cell,node) = h;
         }
-        ScalarT bed = Albany::convertScalar<const ScalarT>(bedTopo(cell,node));
+        ScalarOutT bed = Albany::convertScalar<const ScalarOutT>(bedTopo(cell,node));
         bool floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
 
-        ScalarT lowSurf = floating ? -h*rho_i/rho_w : bed;
+        ScalarOutT lowSurf = floating ? -h*rho_i/rho_w : bed;
 
-        typename PHAL::Ref<ScalarT>::type vals = topSurface(cell,node);
+        typename PHAL::Ref<ScalarOutT>::type vals = topSurface(cell,node);
         vals = lowSurf+h; 
         
-        ScalarT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
+        ScalarOutT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
         for(int icomp=0; icomp< numDims; icomp++) {
           typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
           val = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
