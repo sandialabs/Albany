@@ -33,7 +33,7 @@ ANONYMOUS:
           Power Exponent: 0.33333333
           Effective Pressure Type: Hydrostatic Computed At Nodes
           Use Pressurized Bed Above Sea Level: true
-          Minimum Fraction Overburden Pressure: 0.85
+          Minimum Flotation Fraction: 0.85
           Length Scale Factor: 0.1
           #Zero Beta On Floating Ice: true
       BC 1:
