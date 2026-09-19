@@ -45,7 +45,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   is_power_parameter = false;
   use_pressurized_bed = false;
   save_pressure_field = false;
-  overburden_fraction = 0.0;
+  min_flotation_fraction = 0.0;
   pressure_smoothing_length_scale = 1.0;
   transition_h_ocean = 0.0;
   Teuchos::ParameterList beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
@@ -65,7 +65,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<double>("Effective Pressure", 1.0, "Effective Pressure [kPa]");
   validPL.set<double>("Effective Pressure Regularization", 1000.0, "Effective Pressure Regularization [kPa]");
   validPL.set<double>("Sliding Velocity Regularization", 500.0, "Sliding Velocity Regularization [m yr^{-1}]");
-  validPL.set<double>("Minimum Fraction Overburden Pressure", 1.0, "Minimum Fraction Overburden Pressure");
+  validPL.set<double>("Minimum Flotation Fraction", 1.0, "Minimum Flotation Fraction");
   validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
   validPL.set<double>("Transition Height Above Flotation", "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition only)");
   validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
@@ -247,7 +247,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     }
 
     if(use_pressurized_bed || effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION) {
-      overburden_fraction = beta_list.get<double>("Minimum Fraction Overburden Pressure");
+      min_flotation_fraction = beta_list.get<double>("Minimum Flotation Fraction");
       pressure_smoothing_length_scale = beta_list.get<double>("Length Scale Factor");
       TEUCHOS_TEST_FOR_EXCEPTION(pressure_smoothing_length_scale <= 0.0, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Length Scale Factor\" should be positive\n");
@@ -566,7 +566,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
       case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC:
         if(nodal) {
           auto f_p = use_pressurized_bed ? MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo_field(cell,ipt)/pressure_smoothing_length_scale))) : MeshScalarT(0.0);
-          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
+          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (min_flotation_fraction*rho_i*
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
@@ -579,7 +579,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
             bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
           }
           auto f_p = use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo/pressure_smoothing_length_scale))) : MeshScalarT(0.0);
-          NVal = g* KU::max(rho_i*thickness - ( (overburden_fraction*rho_i*
+          NVal = g* KU::max(rho_i*thickness - ( (min_flotation_fraction*rho_i*
                     thickness*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo,0.0) ),0.0);
         }
@@ -587,7 +587,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
       case EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES:
         if(nodal) {
           auto f_p = use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo_field(cell,ipt)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
-          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (overburden_fraction*rho_i*
+          NVal = g* KU::max(rho_i*thickness_field(cell,ipt) - ( (min_flotation_fraction*rho_i*
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
@@ -597,7 +597,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
           NVal = 0;
           for (int node=0; node<numNodes; ++node) {
             auto f_p =use_pressurized_bed ?  MeshScalarT(1.0 / (1.0 + std::exp(-bed_topo_field(cell,node)/pressure_smoothing_length_scale))) :  MeshScalarT(0.0);
-            NVal += g* KU::max(rho_i*thickness_field(cell,node) - ( (overburden_fraction*rho_i*
+            NVal += g* KU::max(rho_i*thickness_field(cell,node) - ( (min_flotation_fraction*rho_i*
                     thickness_field(cell,node)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,node),0.0) ),0.0)*BF(cell,node,ipt);
           }
@@ -776,7 +776,7 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   // Effective pressure with a near-ocean region followed by a bounded
   // transition to a prescribed inland fraction of overburden pressure.
   // Reproduces (offline) friction_law_conversion.py::effective_pressure4(),
-  // with "overburden_fraction" == "min_fraction_overburden",
+  // with "min_flotation_fraction" == "min_fraction_overburden",
   // "pressure_smoothing_length_scale" == "length_scale" and
   // "transition_h_ocean" == "h_ocean" (all already in Albany's internal
   // km-scaled length units).
@@ -792,10 +792,10 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
       MeshScalarT(KU::max(1.0 - ocean_term / ice_term, 0.0)) : MeshScalarT(0.0);
 
   // Prescribed inland effective-pressure fraction: N/Pice_inland =
-  // 1 - overburden_fraction (same convention as Albany's HYDROSTATIC(_AT_NODES)
-  // types, where "Minimum Fraction Overburden Pressure" is subtracted from
+  // 1 - min_flotation_fraction (same convention as Albany's HYDROSTATIC(_AT_NODES)
+  // types, where "Minimum Flotation Fraction" is subtracted from
   // a retained-overburden fraction of 1, not applied directly).
-  MeshScalarT q_inland = 1.0 - overburden_fraction;
+  MeshScalarT q_inland = 1.0 - min_flotation_fraction;
 
   // Ocean-connected value at the end of the fixed near-ocean region.
   MeshScalarT q_start = (ice_term > 0.0) ?

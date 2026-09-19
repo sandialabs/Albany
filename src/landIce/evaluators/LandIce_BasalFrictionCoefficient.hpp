@@ -95,7 +95,7 @@ private:
 
   bool use_pressurized_bed;
   bool save_pressure_field;
-  double overburden_fraction;  // [adim]
+  double min_flotation_fraction;  // [adim]
   double pressure_smoothing_length_scale; //[km]
   double transition_h_ocean; // [km] (for TRANSITION effective pressure type only)
   double N0; // [kPa] Effective Pressure Regularization;
