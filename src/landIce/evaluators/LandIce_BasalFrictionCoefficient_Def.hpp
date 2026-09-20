@@ -67,7 +67,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<double>("Sliding Velocity Regularization", 500.0, "Sliding Velocity Regularization [m yr^{-1}]");
   validPL.set<double>("Minimum Flotation Fraction", 1.0, "Minimum Flotation Fraction");
   validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
-  validPL.set<double>("Transition Height Above Flotation", "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition only)");
+  validPL.set<double>("Transition Height Above Flotation", 0.025, "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition only)");
   validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");

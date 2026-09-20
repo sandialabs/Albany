@@ -227,7 +227,14 @@ if (ALBANY_FROSCH)
                      PROPERTIES
                      LABELS         "LandIce;Forward")
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_transition_effect_press.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_transition_effect_press.yaml)
+  add_test(${testNameRoot}_Humboldt_transitionEffectPress_FROSch ${Albany.exe} input_fo_humboldt_frosch_transition_effect_press.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_transitionEffectPress_FROSch
+                     PROPERTIES
+                     LABELS         "LandIce;Forward")
+  
+	     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
   add_test(${testNameRoot}_Humboldt_pressurizedBed_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
   set_tests_properties(${testNameRoot}_Humboldt_pressurizedBed_FROSch
@@ -245,6 +252,9 @@ if (ALBANY_FROSCH)
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_effectPress_FROSch
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+    
+    set_tests_properties(${testNameRoot}_Humboldt_transitionEffectPress_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
   endif()
