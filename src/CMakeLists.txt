@@ -529,7 +529,7 @@ if (ALBANY_OMEGAH)
 endif()
 
 if (ALBANY_MESHFIELDS)
-  target_link_libraries(albanyLib meshfields)
+  target_link_libraries(albanyLib meshfields::meshfields)
 endif()
 
 install(TARGETS albanyLib EXPORT albany-export
