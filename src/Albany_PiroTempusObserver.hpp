@@ -20,7 +20,7 @@ public:
                      const Teuchos::RCP<const Thyra_ModelEvaluator>& model);
 
   // Observe the end of each time step in the time loop
-  void observeEndTimeStep(const Tempus::Integrator<ST>& integrator) override;
+  void observeStartTimeStep(const Tempus::Integrator<ST>& integrator) override;
 protected:
 
   Teuchos::RCP<Application> app_;

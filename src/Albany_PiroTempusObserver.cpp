@@ -24,7 +24,7 @@ PiroTempusObserver(const Teuchos::RCP<Application>& app,
 }
 
 void PiroTempusObserver::
-observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
+observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
 {
   auto& integrator_nc = const_cast<Tempus::Integrator<ST>&>(integrator);
   auto  history_nc = integrator_nc.getNonConstSolutionHistory();
