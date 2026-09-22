@@ -587,10 +587,10 @@ create_dof_mgr (const std::string& part_name,
 
 Teuchos::RCP<AdaptationData>
 OmegahDiscretization::
-checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution ,
-                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
-                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
+checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
+                        const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                        const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                        const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
   static int checkAdaptCount = 0;
   checkAdaptCount++;

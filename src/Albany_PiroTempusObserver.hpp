@@ -23,6 +23,8 @@ public:
   void observeStartTimeStep(const Tempus::Integrator<ST>& integrator) override;
 protected:
 
+  bool is_first_time_step_ = true;
+
   Teuchos::RCP<Application> app_;
 };
 

@@ -190,10 +190,10 @@ public:
       const bool          force_write_solution) override;
 
   Teuchos::RCP<AdaptationData>
-  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
-                      const Teuchos::RCP<const Thyra_Vector>& solution_dot,
-                      const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) override;
+  checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                          const Teuchos::RCP<const Thyra_MultiVector>& dxdp);
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 

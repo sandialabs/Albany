@@ -60,6 +60,21 @@ writeSolutionMV (const Thyra_MultiVector& soln,
   writeMeshDatabaseToFile(time, force_write_solution);
 }
 
+Teuchos::RCP<AdaptationData>
+AbstractDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp,
+                    const bool is_first_time_step)
+{
+  auto& adapt_pl = m_disc_params->sublist("Mesh Adaptivity");
+  if (is_first_time_step and adapt_pl.get<bool>("Skip First Time Step",true))
+    return Teuchos::rcp(new AdaptationData());
+
+  return checkForAdaptationImpl(solution,solution_dot,solution_dotdot,dxdp);
+}
+
 auto AbstractDiscretization::
 get_dof_mgr (const std::string& part_name,
                     const FE_Type fe_type,

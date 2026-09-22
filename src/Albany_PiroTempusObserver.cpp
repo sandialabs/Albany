@@ -73,7 +73,7 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
     dxdp = px->getMultiVector()->subView(rng);
   }
 
-  auto adaptData = disc->checkForAdaptation(x,xdot,xdotdot,dxdp);
+  auto adaptData = disc->checkForAdaptation(x,xdot,xdotdot,dxdp,is_first_time_step_);
 
   // Before observing the solution, check if we need to adapt
   if (adaptData->type!=AdaptationType::None) {
@@ -112,6 +112,8 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
     }
   }
   observeSolutionImpl (x,xdot,xdotdot,dxdp,time);
+
+  is_first_time_step_ = false;
 }
 
 } // namespace Albany
