@@ -140,7 +140,7 @@ OmegahDiscretization (const Teuchos::RCP<Teuchos::ParameterList>& discParams,
                       const Teuchos::RCP<const Teuchos_Comm>&     comm,
                       const Teuchos::RCP<RigidBodyModes>& /* rigidBodyModes */,
                       const std::map<int, std::vector<std::string>>& sideSetEquations)
- : m_disc_params (discParams)
+ : AbstractDiscretization(discParams)
  , m_mesh_struct(mesh)
  , m_comm (comm)
  , m_side_set_equations(sideSetEquations)

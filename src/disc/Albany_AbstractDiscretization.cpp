@@ -1,7 +1,17 @@
 #include "Albany_AbstractDiscretization.hpp"
 
+#include <Teuchos_ParameterListExceptions.hpp>
+
 namespace Albany
 {
+
+AbstractDiscretization::
+AbstractDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams)
+ : m_disc_params(discParams)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (discParams.is_null(), Teuchos::Exceptions::InvalidArgument,
+      "Error! Input parameter list must be a valid pointer.\n");
+}
 
 void AbstractDiscretization::
 writeSolution (const Thyra_Vector& soln,

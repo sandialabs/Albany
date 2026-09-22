@@ -301,8 +301,6 @@ public:
 
   Teuchos::RCP<AbstractSTKMeshStruct> stkMeshStruct;
 
-  Teuchos::RCP<Teuchos::ParameterList> discParams;
-
   // Sideset discretizations
   std::map<std::string, Teuchos::RCP<STKDiscretization>> sideSetDiscretizationsSTK;
   std::map<std::string, Teuchos::RCP<Thyra_LinearOp>>    projectors;

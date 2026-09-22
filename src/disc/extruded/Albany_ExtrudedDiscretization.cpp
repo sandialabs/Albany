@@ -36,12 +36,12 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
                         const Teuchos::RCP<const Teuchos_Comm>&         comm,
                         const Teuchos::RCP<RigidBodyModes>&             rigidBodyModes,
                         const std::map<int, std::vector<std::string>>&  sideSetEquations)
- : m_comm(comm)
+ : AbstractDiscretization(discParams)
+ , m_comm(comm)
  , m_basal_disc (basal_disc)
  , m_sideSetEquations(sideSetEquations)
  , m_rigid_body_modes(rigidBodyModes)
  , m_extruded_mesh(extruded_mesh)
- , m_disc_params (discParams)
 {
   setNumEq(neq);
 

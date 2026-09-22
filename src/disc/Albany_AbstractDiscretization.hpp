@@ -34,7 +34,7 @@ public:
   static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
-  AbstractDiscretization() = default;
+  AbstractDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
 
   //! Prohibit copying
   AbstractDiscretization(const AbstractDiscretization&) = delete;
@@ -374,6 +374,8 @@ protected:
 
   // From std::vector<SideSet> build corresponding kokkos structures
   void buildSideSetsViews ();
+
+  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 

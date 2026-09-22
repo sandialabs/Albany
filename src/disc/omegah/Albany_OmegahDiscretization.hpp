@@ -150,8 +150,6 @@ protected:
 
   // ======================= Members ======================= //
 
-  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
-
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
 
   // TODO: move stuff below in base class?

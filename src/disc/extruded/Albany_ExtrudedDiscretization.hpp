@@ -170,9 +170,6 @@ protected:
   // The underlying extruded mesh
   Teuchos::RCP<ExtrudedMesh> m_extruded_mesh;
 
-  // Keep params around, since we may need them after construction
-  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
-
   // Sideset discretizations
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    projectors;
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    ov_projectors;
