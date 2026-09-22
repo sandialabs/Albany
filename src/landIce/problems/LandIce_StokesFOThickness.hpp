@@ -48,6 +48,11 @@ namespace LandIce
 
    When the proble is unsteady, the thickness and the mesh vertical coordinates are updated implicitly.
    We use Tempus implicit schemes to march forward in time. 
+
+   Alternatively, the thickness can be advanced with Tempus explicit schemes. The diagnostic
+   (velocity) solve is then performed at every stage, for the stage thickness, and the prognostic
+   (thickness) update is explicit. Albany::SolverFactory switches to that path whenever the Tempus
+   stepper is explicit (see getDAEMasks and Albany::ExplicitODEModelEvaluator).
  */
 class StokesFOThickness : public StokesFOBase {
 public:
@@ -78,6 +83,15 @@ public:
 
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+
+  //! This is a semi-explicit index-1 DAE: the velocity is diagnostic (no time derivative:
+  //! it is determined by the FO equations for the current thickness), and the thickness
+  //! change at the level where the thickness equation is scattered is prognostic (minus
+  //! the dofs with a Dirichlet condition). The thickness dofs at the other levels are
+  //! copies of it, kept constant in time.
+  bool getDAEMasks (const Albany::AbstractDiscretization& disc,
+                    Teuchos::RCP<Thyra_Vector>& diagnostic_mask,
+                    Teuchos::RCP<Thyra_Vector>& prognostic_mask) const;
 
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT>

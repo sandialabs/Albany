@@ -8,6 +8,8 @@
 #include "Albany_PiroObserver.hpp"
 #include "Albany_PiroTempusObserver.hpp"
 #include "Albany_ModelEvaluator.hpp"
+#include "Albany_ExplicitODEModelEvaluator.hpp"
+#include "Albany_AbstractProblem.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
@@ -65,6 +67,19 @@ enableFROSch(Stratimikos::DefaultLinearSolverBuilder&    linearSolverBuilder)
 #else
   (void) linearSolverBuilder;
 #endif
+}
+
+Teuchos::RCP<Thyra_LOWS_Factory>
+buildLinearSolveStrategy(const Teuchos::RCP<Teuchos::ParameterList>& stratParams)
+{
+  const auto linearSolverBuilder = Teuchos::rcp(new Stratimikos::DefaultLinearSolverBuilder);
+  enableMueLu(*linearSolverBuilder);
+  enableFROSch(*linearSolverBuilder);
+#ifdef ALBANY_TEKO
+  Teko::addTekoToStratimikosBuilder(*linearSolverBuilder, "Teko");
+#endif
+  linearSolverBuilder->setParameterList(stratParams);
+  return createLinearSolveStrategy(*linearSolverBuilder);
 }
 }  // namespace
 
@@ -229,6 +244,70 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
         "Error: cannot locate Stratimikos solver parameters in the input file.\n")
   }
 
+  // Explicit Tempus stepper on a problem with an algebraic constraint (a semi-explicit
+  // index-1 DAE, e.g. LandIce::StokesFOThickness): expose the model to Tempus as an
+  // explicit ODE for the differential dofs, solving the constraint at every stage (e.g.,
+  // explicit ice thickness evolution, with the FO velocity solved from H). The monolithic
+  // model cannot be used with an explicit stepper at all, since its mass matrix is singular.
+  Teuchos::RCP<ExplicitODEModelEvaluator> explicitOdeModel;
+  if (solutionMethod=="Transient" && piroParams->isSublist("Tempus") &&
+      usesExplicitTempusStepper(piroParams->sublist("Tempus")))
+  {
+    const auto albanyApp = model_tmp->getAlbanyApp();
+    Teuchos::RCP<Thyra_Vector> algebraicMask, differentialMask;
+    const bool is_dae = albanyApp->getProblem()->getDAEMasks(*albanyApp->getDiscretization(),
+                                                             algebraicMask,differentialMask);
+    if (is_dae) {
+      TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::nonnull(adjointModel), std::logic_error,
+          "Error! Explicit time integration of a DAE does not support adjoint models.\n");
+
+      auto& tempusParams = piroParams->sublist("Tempus");
+
+      // Options: everything but the mass matrix comes from the Problem list. The mass
+      // matrix options are the ones Piro uses for explicit steppers, so that they mean
+      // the same thing whether or not the model is a DAE.
+      auto explicitParams = Teuchos::rcp(new Teuchos::ParameterList("Explicit Time Integration"));
+      if (problemParams->isSublist("Explicit Time Integration")) {
+        *explicitParams = problemParams->sublist("Explicit Time Integration");
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION (explicitParams->isParameter("Lump Mass Matrix") ||
+                                  explicitParams->isParameter("Constant Mass Matrix"), std::logic_error,
+          "Error! The mass matrix options of explicit time integration are read from the\n"
+          "       Piro->Tempus list ('Lump Mass Matrix', 'Constant Mass Matrix'), and not\n"
+          "       from Problem->Explicit Time Integration.\n");
+      explicitParams->set("Lump Mass Matrix",     tempusParams.get<bool>("Lump Mass Matrix",false));
+      explicitParams->set("Constant Mass Matrix", tempusParams.get<bool>("Constant Mass Matrix",false));
+
+      // The algebraic (Newton) solve is configured as a steady solve, through Piro->NOX,
+      // using its Stratimikos list if present (otherwise, the Piro->Tempus one).
+      // The (consistent) mass matrix solve uses the Piro->Tempus->Stratimikos list.
+      const auto noxParams = Teuchos::sublist(piroParams, "NOX");
+      auto algebraicStratParams = stratList;
+      if (noxParams->isSublist("Direction") &&
+          noxParams->sublist("Direction").isSublist("Newton") &&
+          noxParams->sublist("Direction").sublist("Newton").isSublist("Stratimikos Linear Solver") &&
+          noxParams->sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver").isSublist("Stratimikos")) {
+        algebraicStratParams = Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(Teuchos::sublist(
+            noxParams, "Direction"), "Newton"), "Stratimikos Linear Solver"), "Stratimikos");
+      }
+
+      explicitOdeModel = Teuchos::rcp(new ExplicitODEModelEvaluator(
+          model, algebraicMask, differentialMask, explicitParams, noxParams,
+          buildLinearSolveStrategy(algebraicStratParams),
+          buildLinearSolveStrategy(stratList)));
+      model = explicitOdeModel;
+
+      // The model already returns x_dot: Piro must not wrap it in an InvertMassMatrixDecorator
+      tempusParams.set("Invert Mass Matrix", false);
+
+      *m_out << "Note: the problem has an algebraic constraint and the Tempus stepper is explicit,\n"
+             << "      so Albany::ExplicitODEModelEvaluator is used: the constraint is solved "
+             << (explicitParams->isParameter("Algebraic Update") && (explicitParams->get<std::string>("Algebraic Update")=="Once Per Step")
+                 ? "once per step,\n" : "at every stage,\n")
+             << "      and Piro's mass matrix inversion is turned off (the model returns x_dot).\n";
+    }
+  }
+
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
   Teuchos::RCP<Thyra_ModelEvaluator> adjointModelWithSolve = Teuchos::null;
   if (Teuchos::nonnull(model->get_W_factory())) {
@@ -268,7 +347,11 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
   Teuchos::RCP<PiroObserver> observer;
 
   if (solutionMethod=="Transient") {
-    observer = Teuchos::rcp(new PiroTempusObserver(app, modelWithSolve));
+    auto tempusObserver = Teuchos::rcp(new PiroTempusObserver(app, modelWithSolve));
+    if (Teuchos::nonnull(explicitOdeModel)) {
+      tempusObserver->setExplicitODEModel(explicitOdeModel);
+    }
+    observer = tempusObserver;
   } else {
     observer = Teuchos::rcp(new PiroObserver(app, modelWithSolve));
   }
