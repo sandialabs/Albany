@@ -54,6 +54,7 @@ jobs:
             -D ALBANY_DISABLE_FAILING_TESTS:BOOL=ON                           \
             \
             -D ENABLE_OMEGAH:BOOL=ON                                          \
+            -D ENABLE_MESHFIELDS:BOOL=ON                                      \
             -D ENABLE_DEMO_PDES:BOOL=ON                                       \
             -D ENABLE_LANDICE:BOOL=ON                                         \
             -D ENABLE_MPAS_INTERFACE:BOOL=ON                                  \
