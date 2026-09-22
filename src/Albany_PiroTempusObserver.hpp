@@ -12,6 +12,8 @@
 
 namespace Albany {
 
+class ExplicitODEModelEvaluator;
+
 class PiroTempusObserver : public PiroObserver,
                            public Tempus::IntegratorObserverBasic<ST>
 {
@@ -26,11 +28,22 @@ public:
   // Observe the end of each time step in the time loop
   // This is where saving to mesh happens (if needed)
   void observeEndTimeStep(const Tempus::Integrator<ST>& integrator) override;
+
+  // Observe the end of the time integration
+  void observeEndIntegrator(const Tempus::Integrator<ST>& integrator) override;
+
+  // When the model is exposed to Tempus as an explicit ODE, the algebraic dofs stored by
+  // Tempus are not evolved: they are made consistent with the new state at the end of
+  // each step (and, after mesh adaptation, the model is rebuilt on the new dof layout).
+  void setExplicitODEModel (const Teuchos::RCP<ExplicitODEModelEvaluator>& model) {
+    explicit_ode_model_ = model;
+  }
 protected:
 
   bool is_first_time_step_ = true;
 
   Teuchos::RCP<Application> app_;
+  Teuchos::RCP<ExplicitODEModelEvaluator> explicit_ode_model_;
 };
 
 } // namespace Albany
