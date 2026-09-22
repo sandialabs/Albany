@@ -5,8 +5,13 @@
 //*****************************************************************//
 
 #include "Albany_PiroTempusObserver.hpp"
+#include "Albany_ExplicitODEModelEvaluator.hpp"
+#include "Albany_AbstractProblem.hpp"
+#include "Albany_AbstractDiscretization.hpp"
 
 #include <Thyra_DefaultMultiVectorProductVector.hpp>
+
+#include <iostream>
 
 #include <Tempus_Stepper.hpp>
 #include <Tempus_StepperImplicit.hpp>
@@ -103,6 +108,17 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
       dxdp = app_->getAdaptSolMgr()->getCurrentDxDp();
     }
 
+    if (Teuchos::nonnull(explicit_ode_model_)) {
+      // The masks, the work vectors, the mass matrix and the algebraic solver all live
+      // on the old dof layout: rebuild them for the adapted discretization.
+      // NOTE: this has not been tested with an actual mesh change yet.
+      Teuchos::RCP<Thyra_Vector> algebraic_mask, differential_mask;
+      const bool is_dae = app_->getProblem()->getDAEMasks(*disc,algebraic_mask,differential_mask);
+      TEUCHOS_TEST_FOR_EXCEPTION (!is_dae, std::logic_error,
+          "Error! The problem stopped providing the DAE masks after adaptation.\n");
+      explicit_ode_model_->reinitialize(algebraic_mask,differential_mask);
+    }
+
     if (adaptData->type==AdaptationType::Topology) {
       // This should trigger the nonlinear solver to be rebuilt, which should create new linear
       // algebra objects (jac and residual)
@@ -111,7 +127,29 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
       stepper->initialize();
     }
   }
+
+  if (Teuchos::nonnull(explicit_ode_model_)) {
+    // Solve the algebraic constraint (e.g., the FO velocity) at the new state, so that
+    // the output is consistent. The solve is cached by the model, so that the first stage
+    // of the next step does not have to repeat it.
+    TEUCHOS_TEST_FOR_EXCEPTION (Teuchos::nonnull(px), std::logic_error,
+        "Error! Explicit time integration of a DAE does not support sensitivities.\n");
+    auto x_nc = state_nc->getX();
+    explicit_ode_model_->syncAlgebraicState(*x_nc,time);
+    x = x_nc;
+  }
+
   observeSolutionImpl (x,xdot,xdotdot,dxdp,time);
+}
+
+void PiroTempusObserver::
+observeEndIntegrator(const Tempus::Integrator<ST>& integrator)
+{
+  Tempus::IntegratorObserverBasic<ST>::observeEndIntegrator(integrator);
+
+  if (Teuchos::nonnull(explicit_ode_model_) && app_->getComm()->getRank()==0) {
+    explicit_ode_model_->printStatistics(std::cout);
+  }
 }
 
 } // namespace Albany

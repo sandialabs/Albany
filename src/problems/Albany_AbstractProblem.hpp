@@ -163,6 +163,25 @@ class AbstractProblem {
   applyProblemSpecificSolverSettings(
       Teuchos::RCP<Teuchos::ParameterList> ) {}
 
+  //! Structure of the problem, when it is a semi-explicit index-1 DAE rather than an
+  //! ODE: on the owned solution vector space, flag with 1 the algebraic dofs (those
+  //! with no time derivative, determined by an algebraic constraint) and the
+  //! differential dofs (those integrated in time). All the other dofs are constant.
+  //! Returns false (the default) if the problem has no algebraic constraint.
+  //!
+  //! With an explicit Tempus stepper, Albany::SolverFactory uses these masks to solve
+  //! the constraint at every stage, and to integrate the differential dofs explicitly
+  //! (see Albany::ExplicitODEModelEvaluator). Without them, an explicit stepper cannot
+  //! be used at all, since the mass matrix of a DAE is singular.
+  virtual bool
+  getDAEMasks(
+      const AbstractDiscretization& /* disc */,
+      Teuchos::RCP<Thyra_Vector>&   /* algebraic_mask */,
+      Teuchos::RCP<Thyra_Vector>&   /* differential_mask */) const
+  {
+    return false;
+  }
+
  protected:
   Teuchos::Array<Teuchos::Array<int>> offsets_;
   std::vector<std::string> nodeSetIDs_;

@@ -132,6 +132,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
   validPL->sublist("Adaptation", false, "");
+  validPL->sublist("Explicit Time Integration", false,
+                   "Options used with an explicit Tempus stepper, for problems that provide "
+                   "getDAEMasks (see Albany::ExplicitODEModelEvaluator)");
   validPL->set<bool>("Overwrite Nominal Values With Final Point",false,
                      "Whether 'reportFinalPoint' should be allowed to overwrite nominal values");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");

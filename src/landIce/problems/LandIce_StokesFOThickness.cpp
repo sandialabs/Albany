@@ -9,6 +9,12 @@
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_StringUtils.hpp" // for 'upper_case'
+#include "Albany_ThyraUtils.hpp"
+#include "Albany_CombineAndScatterManager.hpp"
+
+#include "Thyra_VectorStdOps.hpp"
+
+#include <algorithm>
 
 // Uncomment for some setup output
 #define OUTPUT_TO_SCREEN
@@ -207,6 +213,110 @@ StokesFOThickness::getValidProblemParameters() const
   validPL->set<std::string>("Lateral Side Name", "lateral side", "Lateral Side Set Name");
 
   return validPL;
+}
+
+bool StokesFOThickness::
+getDAEMasks (const Albany::AbstractDiscretization& disc,
+             Teuchos::RCP<Thyra_Vector>& diagnostic_mask,
+             Teuchos::RCP<Thyra_Vector>& prognostic_mask) const
+{
+  if (!unsteady) {
+    // Steady runs (including the quasi-static thickness update used in coupled runs)
+    // have no time derivative at all: there is nothing to integrate.
+    return false;
+  }
+
+  const auto  dof_mgr       = disc.getDOFManager();
+  const auto  elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& layers_data   = disc.getMeshStruct()->layers_data;
+  const int   thk_eq        = dof_offsets[1];
+
+  // Build the masks on the overlapped space (element-based loops), then combine
+  auto ov_vs   = disc.getOverlapVectorSpace();
+  auto ov_diag = Thyra::createMember(ov_vs);
+  auto ov_prog = Thyra::createMember(ov_vs);
+  auto ov_dbc  = Thyra::createMember(ov_vs);
+  ov_diag->assign(0.0);
+  ov_prog->assign(0.0);
+  ov_dbc->assign(0.0);
+  auto diag_data = Albany::getNonconstLocalData(*ov_diag);
+  auto prog_data = Albany::getNonconstLocalData(*ov_prog);
+  auto dbc_data  = Albany::getNonconstLocalData(*ov_dbc);
+
+  // 1. Diagnostic (algebraic) dofs: all velocity components, at all nodes
+  const int num_elems = dof_mgr->cell_indexer()->getNumLocalElements();
+  for (int eq=dof_offsets[0]; eq<thk_eq; ++eq) {
+    const auto& offsets = dof_mgr->getGIDFieldOffsets(eq);
+    for (int ielem=0; ielem<num_elems; ++ielem) {
+      for (auto o : offsets) {
+        diag_data[elem_dof_lids(ielem,o)] = 1.0;
+      }
+    }
+  }
+
+  // 2. Prognostic (differential) dofs: the thickness change at the level where its
+  //    equation is scattered (same logic as PHAL::ScatterResidual2D, with
+  //    'Field Level' = NumLayers). The thickness dofs at the other levels are copies.
+  const int field_level = discParams->get<int>("NumLayers");
+  const int field_layer = field_level==0 ? 0 : field_level-1;
+  const int field_pos   = field_layer==field_level ? layers_data.bot_side_pos : layers_data.top_side_pos;
+  const auto& thk_side_offsets = dof_mgr->getGIDFieldOffsetsSide(thk_eq,field_pos);
+  for (int ws=0; ws<disc.getNumWorksets(); ++ws) {
+    const auto& ssList = disc.getSideSets(ws);
+    const auto it_ss = ssList.find(surfaceSideName);
+    if (it_ss==ssList.end()) {
+      continue;
+    }
+    const auto elem_lids = disc.getElementLIDs_host(ws);
+    for (const auto& side : it_ss->second) {
+      const int elem_LID       = elem_lids(side.ws_elem_idx);
+      const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+      const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
+      for (auto o : thk_side_offsets) {
+        prog_data[elem_dof_lids(field_elem_LID,o)] = 1.0;
+      }
+    }
+  }
+
+  // 3. Thickness dofs with a Dirichlet condition are prescribed, not integrated
+  const auto& node_sets   = disc.getNodeSets();
+  const auto& thk_offsets = dof_mgr->getGIDFieldOffsets(thk_eq);
+  for (size_t ins=0; ins<nodeSetIDs_.size(); ++ins) {
+    const auto& ns_eqs = offsets_[ins];
+    if (std::find(ns_eqs.begin(),ns_eqs.end(),thk_eq)==ns_eqs.end()) {
+      continue;
+    }
+    const auto it_ns = node_sets.find(nodeSetIDs_[ins]);
+    if (it_ns==node_sets.end()) {
+      continue;
+    }
+    for (const auto& ep : it_ns->second) {
+      dbc_data[elem_dof_lids(ep.first,thk_offsets[ep.second])] = 1.0;
+    }
+  }
+
+  // Overlapped -> owned
+  auto vs  = disc.getVectorSpace();
+  auto cas = Albany::createCombineAndScatterManager(vs,ov_vs);
+  diagnostic_mask = Thyra::createMember(vs);
+  prognostic_mask = Thyra::createMember(vs);
+  auto dbc        = Thyra::createMember(vs);
+  diagnostic_mask->assign(0.0);
+  prognostic_mask->assign(0.0);
+  dbc->assign(0.0);
+  cas->combine(*ov_diag,*diagnostic_mask, Albany::CombineMode::ABSMAX);
+  cas->combine(*ov_prog,*prognostic_mask, Albany::CombineMode::ABSMAX);
+  cas->combine(*ov_dbc, *dbc,             Albany::CombineMode::ABSMAX);
+
+  auto p_data = Albany::getNonconstLocalData(*prognostic_mask);
+  auto b_data = Albany::getLocalData(*dbc);
+  for (int i=0; i<static_cast<int>(p_data.size()); ++i) {
+    if (b_data[i]!=0.0) {
+      p_data[i] = 0.0;
+    }
+  }
+
+  return true;
 }
 
 void StokesFOThickness::setFieldsProperties () {
