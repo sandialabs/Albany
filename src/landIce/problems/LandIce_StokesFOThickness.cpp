@@ -199,8 +199,10 @@ StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->set<bool>("Allow Loss Of Derivative Terms", false, "Allow loss of derivative terms in mesh coordinates");
-  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
-  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
+  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux (Not used for time integation)");
+  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux (Not used for time integation)");
+  validPL->set<std::string>("Stabilization", "SUPG", "Time of stabilization");
+  validPL->set<bool>("Lump Time Derivative Mass Matrix", false, "Whether to Lump the Mass Matrix for Time Derivative");
 
   return validPL;
 }

@@ -51,7 +51,7 @@ private:
   PHX::MDField<const ScalarT,Cell,Node>       dHdt;   //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,Node>   H0;     //[km]
   PHX::MDField<const ScalarT>                 V;      //[m/yr]                
-  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;    //[m/yr]
+  PHX::MDField<const ParamScalarT,Cell,Node>  forcing;    //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;  //[km]
   
   // Output:
@@ -60,7 +60,7 @@ private:
 
   unsigned int  cellDim, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
-  bool have_SMB;
+  bool have_forcing;
   std::string sideSetName, lateralSideSetName;
 
   std::size_t numVecFODims;
@@ -77,6 +77,10 @@ private:
 
   std::string sideSetID;
   bool unsteady;
+  bool supg; 
+  bool graph_viscosity;
+  bool edge_stabilization;
+  bool lump_mass; 
 
 };
 

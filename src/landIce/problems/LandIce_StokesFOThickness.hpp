@@ -267,6 +267,13 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<bool>("Unsteady", unsteady);
   if(unsteady) {
     p->set<std::string>("Thickness Dot Variable Name", dof_names_dot[1]);
+  } else {
+    if(this->params->isParameter("Time Step Ptr")) {
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
+    } else {
+      Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
+    }
   }
 
   p->set<std::string>("Thickness Change Variable Name", dof_names[1]);
@@ -276,12 +283,9 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<int>("Cubature Degree",4);
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
-  if(this->params->isParameter("Time Step Ptr")) {
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
-  } else {
-    Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
-  }
+  p->set<std::string>("Forcing Name", "thickness_forcing");
+  p->set<std::string>("Stabilization", this->params->get<std::string>("Thickness Stabilization", "None"));
+  p->set<bool>("Lump Mass Matrix", this->params->get<bool>("Lump Time Derivative Mass Matrix", false));
 
   //Output
   p->set<std::string>("Residual Name", resid_names[1]);
