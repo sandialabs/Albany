@@ -1982,9 +1982,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   updateMesh();
 
   int num_time_deriv = m_disc_params->get<int>("Number Of Time Derivatives");
-  auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv);
+  auto x_mv_new = Thyra::createMembers(getVectorSpace(),num_time_deriv+1);
 
-  for (int ideriv=0; ideriv<num_time_deriv; ++ideriv) {
+  for (int ideriv=0; ideriv<=num_time_deriv; ++ideriv) {
     auto data_new = getNonconstLocalData(x_mv_new->col(ideriv));
     auto x = ideriv==0 ? adaptData->x : (ideriv==1 ? adaptData->x_dot : adaptData->x_dotdot);
     auto data_old = getLocalData(x);
