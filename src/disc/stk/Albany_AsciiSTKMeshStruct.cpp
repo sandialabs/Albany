@@ -614,7 +614,7 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
        *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl;
-       if ( xyz[eles[i][0]][2] == 0.0) {
+       if ( xyz[eles[i][0]-1][2] == 0.0) {
          singlePartVec[0] = ssPartVec["Basal"];
 
          stk::mesh::Entity side  = bulkData->declare_element_side(elem, 4, singlePartVec);
