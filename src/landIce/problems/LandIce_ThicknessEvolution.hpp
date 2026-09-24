@@ -109,6 +109,7 @@ namespace LandIce
     unsigned int numDim;
     Teuchos::RCP<Albany::Layouts> dl, dl_side;
     std::string elementBlockName;
+    std::string lateralSideName;
 
     std::string ice_thickness_name, surface_height_name, initial_ice_thickness_name;
     int vecDim;
@@ -219,6 +220,13 @@ LandIce::ThicknessEvolution::constructEvaluators (PHX::FieldManager<PHAL::Albany
   p->set<bool>("Unsteady", unsteady);
   if(unsteady) {
     p->set<std::string>("Thickness Dot Variable Name", dof_names_dot[0]);
+  } else {
+    if(this->params->isParameter("Time Step Ptr")) {
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
+    } else {
+      Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
+    }
   }
 
   p->set<std::string>("Thickness Change Variable Name", dof_names[0]);
@@ -228,12 +236,9 @@ LandIce::ThicknessEvolution::constructEvaluators (PHX::FieldManager<PHAL::Albany
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   p->set<std::string>("Velocity Name", "velocity");
   p->set<std::string>("Forcing Name", "forcing");
-  if(this->params->isParameter("Time Step Ptr")) {
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
-  } else {
-    Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
-  }
+  p->set<std::string>("Stabilization", this->params->get<std::string>("Thickness Stabilization", "None"));
+  p->set<bool>("Lump Mass Matrix", this->params->get<bool>("Lump Time Derivative Mass Matrix", false));
+  p->set<std::string>("Lateral Side Set Name", lateralSideName);
 
   //Output
   p->set<std::string>("Residual Name", resid_names[0]);

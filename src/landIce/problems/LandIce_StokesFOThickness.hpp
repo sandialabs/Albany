@@ -355,46 +355,6 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     fm0.template registerEvaluator<EvalT>(ev);
     */
   }
-  
- /* {
-    // Saving the dissipation heat in the output mesh
-    std::string stateName = ice_thickness_name;
-    p = Teuchos::rcp(new Teuchos::ParameterList("Write computed thickness"));
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-      // An output: save it.
-      p->set("State Name", stateName);
-      p->set("Field Name", stateName);
-      p->set<Teuchos::RCP<PHX::DataLayout>> ("State Field Layout",dl->node_scalar);
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // Only PHAL::AlbanyTraits::Residual evaluates something,
-      // others will have empty list of evaluated fields
-      if (ev->evaluatedFields().size()>0) {
-        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-      }
-    }
-  }
-
-  {
-    // Saving the dissipation heat in the output mesh
-    std::string stateName = surface_height_name;
-    p = Teuchos::rcp(new Teuchos::ParameterList("Write computed surface height"));
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
-      // An output: save it.
-      p->set("State Name", stateName);
-      p->set("Field Name", stateName);
-      p->set<Teuchos::RCP<PHX::DataLayout>> ("State Field Layout",dl->node_scalar);
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // Only PHAL::AlbanyTraits::Residual evaluates something,
-      // others will have empty list of evaluated fields
-      if (ev->evaluatedFields().size()>0) {
-        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-      }
-    }
-  }*/
 
   //--- LandIce Stokes FO Residual Thickness ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("Scatter ResidualH"));

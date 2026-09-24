@@ -37,13 +37,14 @@ public:
 private:
 
   using MeshScalarT = typename EvalT::MeshScalarT;
-  using ScalarOutT = typename Albany::StrongestScalarType<MeshScalarT,ScalarT>::type;
+  using ParamScalarT = typename EvalT::ParamScalarT;
+  using ScalarOutT = typename Albany::StrongestScalarType<ParamScalarT,ScalarT>::type;
 
   // Input:
   PHX::MDField<const MeshScalarT, Cell, Node,Dim>   coordVecIn;
   PHX::MDField<const MeshScalarT, Cell, Node>       bedTopo;
   PHX::MDField<const ScalarT, Cell, Node>           H;
-  PHX::MDField<const MeshScalarT, Cell, Node>       H0;
+  PHX::MDField<const ParamScalarT, Cell, Node>      H0;
   PHX::MDField<const ScalarT, Cell, Node>           dH;
 
   // Output:

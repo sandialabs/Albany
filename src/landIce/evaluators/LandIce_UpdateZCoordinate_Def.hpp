@@ -52,8 +52,9 @@ UpdateZCoordinateMovingTopBase (const Teuchos::ParameterList& p,
       this->addEvaluatedField(HOut);
       haveThickness = true;
     }
-    else
+    else {
       haveThickness = false;
+    }
     this->addDependentField(H0);
     this->addDependentField(dH);
     

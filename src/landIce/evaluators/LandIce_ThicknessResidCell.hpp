@@ -21,8 +21,9 @@
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
 
-    This evaluator interpolates nodal DOF values to quad points.
-
+    This evaluator computes the thickness evolution with Galerkin discretization and different stabilizations
+    We assume that the donmain has no inflow boundary (defined as the part of the boundary where the outward normal velocity is negative), or that the thickness is zero on the inflow boundary
+    Supported stabilizations: SUPG, Graph Viscosity, Edge Stabilization 
 */
 
 template<typename EvalT, typename Traits>
@@ -50,8 +51,8 @@ private:
   PHX::MDField<const ScalarT,Cell,Node>       Hdiff;  //[km]
   PHX::MDField<const ScalarT,Cell,Node>       dHdt;   //[m/yr]
   PHX::MDField<const ParamScalarT,Cell,Node>  H0;     //[km]
-  PHX::MDField<const ParamScalarT>            V;      //[m/yr]                
-  PHX::MDField<const ParamScalarT,Cell,Node>  forcing;    //[m/yr]
+  PHX::MDField<const RealType>                V;      //[m/yr]                
+  PHX::MDField<const RealType,Cell,Node>      forcing;    //[m/yr]
   PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;  //[km]
   
   // Output:
@@ -76,6 +77,10 @@ private:
 
   std::string sideSetID;
   bool unsteady;
+  bool supg; 
+  bool graph_viscosity;
+  bool edge_stabilization;
+  bool lump_mass; 
 
 };
 

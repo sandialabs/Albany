@@ -126,7 +126,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	  int numBasalSideNodes      = -1;
 	  int numBasalSideQPs        = -1;
 
-    std::string lateralSideName = "boundary_side_set_3";
+    lateralSideName = this->params->get<std::string>("Side Set Name");
 	  if (lateralSideName!="INVALID")
 	  {
 		  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(lateralSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
@@ -263,10 +263,14 @@ LandIce::ThicknessEvolution::getValidProblemParameters() const
 	Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidThicknessEvolParams");
 	validPL->sublist("LandIce Physical Parameters", false, "");
   validPL->sublist("Variables Names", false, "");
-  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
-  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
+  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux (Not used for time integation)");
+  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux (Not used for time integation)");
 	validPL->set<int>("Cubature Degree", 4, "Cubature degree used on the basal side");
   validPL->set<int>("Lateral Cubature Degree", 4, "Cubature degree used on the lateral side");
+  validPL->set<std::string>("Thickness Stabilization", "SUPG", "Type of stabilization");
+  validPL->set<std::string>("Side Set Name", "lateral side", "Side Set Name");
+  validPL->set<bool>("Lump Time Derivative Mass Matrix", false, "Whether to Lump the Mass Matrix for Time Derivative");
+
 
 	return validPL;
 }

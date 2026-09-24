@@ -32,8 +32,6 @@ ThicknessResidCell(const Teuchos::ParameterList& p,
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
-  //normals = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_lateral->qp_vector_spacedim);
-  
   this->addDependentField(Hdiff);
   this->addDependentField(H0);
   this->addDependentField(coordVec);
@@ -47,19 +45,39 @@ ThicknessResidCell(const Teuchos::ParameterList& p,
   forcing = decltype(forcing)(p.get<std::string> ("Forcing Name"), dl->node_scalar);
   this->addDependentField(forcing);
 
+  supg = graph_viscosity = edge_stabilization =false;
+  { //stabilization
+    const auto stabilization = p.get<std::string>("Stabilization");
+    if(stabilization == "SUPG")
+      supg = true;
+    else if (stabilization == "Graph Viscosity")
+      graph_viscosity = true;
+    else if (stabilization == "Edge Stabilization")
+      edge_stabilization = true;
+    else 
+      TEUCHOS_TEST_FOR_EXCEPTION (stabilization != "None", std::runtime_error,
+        "Error! Stabilization \"" << stabilization << "\" not supported.\nSupported stabilizations are: \"SUPG\", \"Graph Viscosity\", \"Edge Stabilization\" and \"None\".\n");
+  }
+  
+  lump_mass = p.get<bool>("Lump Mass Matrix");
+
   V = decltype(V)(p.get<std::string>("Velocity Name"),  dl->node_vector);
   this->addDependentField(V);
 
   this->addEvaluatedField(Residual);
 
-  dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
+  //only used in the steady case
+  if (!unsteady)
+    dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
+  else
+    dt = Teuchos::rcp(new double(-1.0));
+  
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
-  //for (const auto &ele : dl->side_layouts) 
-  //  std::cout <<"Layout: " <<ele.first << std::endl;
 
-  lateralSideSetName = p.isParameter("Lateral Side Set Name") ? p.get<std::string>("Lateral Side Set Name") : std::string("boundary_side_set_3");
+
+  lateralSideSetName = p.get<std::string>("Lateral Side Set Name");
   TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(lateralSideSetName)==dl->side_layouts.end(), std::runtime_error,
                               "Error! Lateral side data layout not found.\n");
 
@@ -111,20 +129,27 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
-  std::map<const int, const int> elem_side_map;
+ 
+  //create vector mapping elements to sides in the lateralSideSet
+  //note, there could be multiple sides associated to the same element.
+  constexpr int maxLatSidesPerElem = 3; //safe for triangular Wedges, but should work on most meshes
+  std::vector<std::array<int,maxLatSidesPerElem>> elem_lateral_sides(workset.numCells);
+  for (auto& sides : elem_lateral_sides)
+    sides.fill(-1);
 
-  Albany::SideSetList::const_iterator it_latss = ssList.find(lateralSideSetName);
+  auto it_latss = ssList.find(lateralSideSetName);
   if (it_latss != ssList.end()) {
-    const std::vector<Albany::SideStruct>& latSideSet = it_latss->second;
-    for (std::size_t iSide = 0; iSide < latSideSet.size(); ++iSide) {
-      const int elem_LID = latSideSet[iSide].ws_elem_idx;
-      const int elem_side = latSideSet[iSide].side_pos; 
-      auto ret = elem_side_map.insert(std::pair<const int,const int>(elem_LID, elem_side));
-      TEUCHOS_TEST_FOR_EXCEPTION ((ret.second==false) && (ret.first->second != elem_side), std::runtime_error, "Error! This evaluator does not support multiple sides associated to the same element.\n");
+    const auto& latSideSet = it_latss->second;
+
+    std::vector<int> num_elem_lateral_sides(workset.numCells, 0);
+    for (const auto& ss : latSideSet) {
+      const int elem = ss.ws_elem_idx;
+      const int side = ss.side_pos;
+      const int n = num_elem_lateral_sides[elem]++;
+      TEUCHOS_TEST_FOR_EXCEPTION(n >= 3, std::runtime_error, "More than three lateral sides found on this element");
+      elem_lateral_sides[elem][n] = side;
     }
   }
-
-  //Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
 
   if (cellDim==2) {
     //const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
@@ -155,19 +180,15 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<ScalarT, PHX::Device> gradH_Points;
     Kokkos::DynRankView<ScalarT, PHX::Device> divV_Points;
 
-    // Loop over the sides that form the boundary condition
+    // Loop over the elements
     for (std::size_t elem_LID = 0; elem_LID < workset.numCells; ++elem_LID) { // loop over the sides on this ws and name
 
-      // Get the data that corresponds to the side
-      //const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
-      unsigned int numSideNodes = cellType->getNodeCount();
       Intrepid2::DefaultCubatureFactory cubFactory;
       cubatureSide = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubatureDegree);
       unsigned int sideDims = cellType->getDimension();
       unsigned int numQPsSide = cubatureSide->getNumPoints();
 
       // Allocate Temporary Views (should be pre-allocated)
-     // cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
       refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, cellDim);
       cubWeightsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide);
       basis_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide);
@@ -179,7 +200,6 @@ evaluateFields(typename Traits::EvalData workset)
       weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
       trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
       trans_gradBasis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide, cellDim);
-      //weighted_trans_basis_refPointsSide = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
       scratch = Sacado::createDynRankView(jacobianSide,"XXS", numQPsSide*cellDim*cellDim);
 
       dHdt_Points = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsSide);
@@ -194,10 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
      for (std::size_t node = 0; node < numNodes; ++node) {
        for (std::size_t dim = 0; dim < cellDim; ++dim)
          physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
-         //physPointsCell(0, node, cellDim-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
      }
-     //for (unsigned int i = 0; i < numSideNodes; ++i)
-     //  physPointsCell(0, i, cellDim-1) = 1.0;  //set z=0 on side
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
       //Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
@@ -213,24 +230,13 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
       Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianSideDet, jacobianSide);
 
-     // std::cout << "Resid: " << __LINE__ << std::endl;
       Intrepid2::CellTools<PHX::Device>::setJacobianInv(invJacobianSide, jacobianSide);
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      //FST::computeEdgeMeasure(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType, scratch);
       FST::computeCellMeasure(weighted_measure, jacobianSideDet, cubWeightsSide);
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      // Values of the basis functions at side cubature points, in the reference parent cell domain
       intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
-//std::cout << "Resid: " << __LINE__ << std::endl;
       intrepidBasis->getValues(basisGrad_refPointsSide, refPointsSide, Intrepid2::OPERATOR_GRAD);
-//std::cout << "Resid: " << __LINE__ << std::endl;
       // Transform values of the basis functions
       FST::HGRADtransformVALUE(trans_basis_refPointsSide, basis_refPointsSide);
-
       FST::HGRADtransformGRAD(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      // Multiply with weighted measure
-      //FST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       dHdt_Nodes = Sacado::createDynRankView(Residual.get_view(), "xxx", numNodes);
@@ -240,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
       gradH_Points = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide, numVecFODims);
       divV_Points = Sacado::createDynRankView(Residual.get_view(), "xxx", numQPsSide);
 
-      for (unsigned int node = 0; node < numSideNodes; ++node){
+      for (unsigned int node = 0; node < numNodes; ++node){
         dHdt_Nodes(node) = unsteady ? dHdt(elem_LID, node) : ScalarT(Hdiff(elem_LID, node)/ *dt);
         H_Nodes(node) = Hdiff(elem_LID, node) + H0(elem_LID, node);//unsteady ? ScalarT(Hdiff(elem_LID, node) + H0(elem_LID, node)) : ScalarT(H0(elem_LID, node));
         forcing_Nodes(node) = forcing(elem_LID, node);
@@ -248,7 +254,7 @@ evaluateFields(typename Traits::EvalData workset)
           V_Nodes(node, dim) = V(elem_LID, node, dim)/1000.0;  //[km/yr]    physPointsCell(0, node, dim)/640.0*(1-dim);//
         }
       }
-//std::cout << "Resid: " << __LINE__ << std::endl;
+
       // This is needed, since evaluate currently sums into
       for (unsigned int qp = 0; qp < numQPsSide; qp++) {
         dHdt_Points(qp) = 0.0;
@@ -260,9 +266,8 @@ evaluateFields(typename Traits::EvalData workset)
           gradH_Points(qp, dim) = 0.0;
         }
       }
-//std::cout << "Resid: " << __LINE__ << std::endl;
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (unsigned int node = 0; node < numSideNodes; ++node){
+      for (unsigned int node = 0; node < numNodes; ++node){
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
           dHdt_Points(qp) += dHdt_Nodes(node) * tmp;
@@ -272,9 +277,8 @@ evaluateFields(typename Traits::EvalData workset)
             V_Points(qp, dim) += V_Nodes(node, dim) * tmp;
         }
       }
-//std::cout << "Resid: " << __LINE__ << std::endl;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-        for (unsigned int node = 0; node < numSideNodes; ++node){
+        for (unsigned int node = 0; node < numNodes; ++node){
           for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
             gradH_Points(qp, dim) += H_Nodes(node) * tmp;
@@ -282,19 +286,170 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
       }
-//std::cout << "Resid: " << __LINE__ << " " <<numQPsSide << " " <<  numNodes << " " << numVecFODims << " " <<cellDim << " " << weighted_measure(0)  << " " << weighted_measure(1) << " "<< weighted_measure(2)  << " " << weighted_measure(3) << " "<< weighted_measure(4)  << " " << weighted_measure(5) <<  std::endl;
+
       MeshScalarT area = 0.0;
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) 
-        area += weighted_measure(qp);  
-    //    std::cout << "Resid: " << __LINE__ << " " << h << std::endl;
+        area += weighted_measure(0,qp);  
       MeshScalarT h = sqrt(area);
-//std::cout << "Resid: " << __LINE__ << std::endl;
+
       
-      for (unsigned int node = 0; node < numSideNodes; ++node){
-        ScalarT min_divV = 0.0; 
-        ScalarT res = (dHdt_Nodes(node) - forcing_Nodes(node))*area/3.0;
+      RealType Q[3][3] = {{0.0}};
+
+      if(graph_viscosity) { 
+        RealType A[3][3] = {{0.0}};   
+        // Element advection matrix
+        for (int i = 0; i < 3; ++i) {
+          for (int j = 0; j < 3; ++j) {
+            for (int qp = 0; qp < numQPsSide; ++qp) {
+
+              ScalarT V_dot_gradN_i = 0.0;
+              for (int dim = 0; dim < 2; ++dim)
+                V_dot_gradN_i += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,i,qp,dim);
+              ScalarT Aij = trans_basis_refPointsSide(0,j,qp) * V_dot_gradN_i * weighted_measure(0, qp);
+              A[i][j] -= Albany::convertScalar<RealType>(Aij); //discard derivatives of stabilization term
+            }
+          }
+        }
+        for (int i = 0; i < 3; ++i) {
+          for (int j = i+1; j < 3; ++j) {
+
+            RealType nu_ij = std::max(RealType(0.0), std::max(A[i][j], A[j][i]));
+
+            Q[i][j] = -nu_ij;
+            Q[j][i] = -nu_ij;
+
+            Q[i][i] += nu_ij;
+            Q[j][j] += nu_ij;
+          }
+        }
+      }
+
+      if(edge_stabilization) {
+        // -----------------------------------------------------------------------------
+        // Parameter-free symmetric edge stabilization
+        //
+        // Q(H,phi) = int_K Theta_tilde(H) . Theta_tilde(phi) dx
+        //
+        // Theta_tilde(H) = sum_e sqrt(theta_e) (g_e H) W_e
+        //
+        // For pure advection:
+        //   theta_e = 0.5 * h_e * |Vbar_e . t_e|
+        //
+        // Lowest-order Nedelec edge basis:
+        //   W_ij = N_i grad(N_j) - N_j grad(N_i)
+        //
+        // Edge orientation is arbitrary but must be used consistently.
+        // -----------------------------------------------------------------------------
+
+
+
+        // Local oriented edges of the triangle.
+        // The orientation itself does not matter.
+        constexpr int edgeNodes[3][2] = {
+            {0, 1},
+            {1, 2},
+            {2, 0}
+        };
+
+        // Compute theta_e for each edge.
+        ScalarT theta[3];
+
+        for (int e = 0; e < 3; ++e) {
+
+          const int nodei = edgeNodes[e][0];
+          const int nodej = edgeNodes[e][1];
+
+          MeshScalarT edge_vec[2];
+          MeshScalarT h_e2 = 0.0;
+
+          for (int dim = 0; dim < 2; ++dim) {
+            edge_vec[dim] = coordVec(elem_LID,nodej,dim) - coordVec(elem_LID,nodei,dim);
+            h_e2 += edge_vec[dim] * edge_vec[dim];
+          }
+
+          const MeshScalarT h_e = std::sqrt(h_e2);
+
+          // Mean tangential velocity along the edge.
+          ScalarT ubar_e = 0.0;
+
+          for (int dim = 0; dim < 2; ++dim) {
+
+            const MeshScalarT t_e = edge_vec[dim] / h_e;
+
+            ubar_e += 0.5 * (V_Nodes(nodei,dim) + V_Nodes(nodej,dim)) * t_e;
+          }
+
+          // Pure-advection limit of the paper's stabilization.
+          theta[e] = 0.5 * h_e * std::abs(ubar_e);
+        }
+
+
+        // Build the local 3x3 stabilization matrix
+        //
+        //   Q_K(i,j) = int_K Theta_tilde(N_j) . Theta_tilde(N_i) dx
+        //
+        // Algebraically this is
+        //
+        //   Q_K = G^T sqrt(Theta) M sqrt(Theta) G.
+        //
+        for (int i = 0; i < 3; ++i)
+          for (int j = 0; j < 3; ++j)
+            Q[i][j] = 0.0;
+
+
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-          min_divV = std::min(min_divV, divV_Points(qp));
+
+          // thetaN[a][dim] = Theta_tilde(N_a)
+          ScalarT thetaN[3][2];
+
+          for (int a = 0; a < 3; ++a)
+            for (int dim = 0; dim < 2; ++dim)
+              thetaN[a][dim] = 0.0;
+
+
+          for (int e = 0; e < 3; ++e) {
+
+            const int i = edgeNodes[e][0];
+            const int j = edgeNodes[e][1];
+
+            const ScalarT sqrt_theta = std::sqrt(theta[e]+1e-12);
+
+            for (int dim = 0; dim < 2; ++dim) {
+
+              // Lowest-order Nedelec edge basis
+              //
+              // W_ij = N_i grad(N_j) - N_j grad(N_i)
+              const MeshScalarT W_e = trans_basis_refPointsSide(0,i,qp) * trans_gradBasis_refPointsSide(0,j,qp,dim)
+                - trans_basis_refPointsSide(0,j,qp) * trans_gradBasis_refPointsSide(0,i,qp,dim);
+
+              // g_e,i = -1
+              // g_e,j = +1
+              thetaN[i][dim] -= sqrt_theta * W_e;
+              thetaN[j][dim] += sqrt_theta * W_e;
+            }
+          }
+
+          // Q_ij = int Theta_tilde(N_i) . Theta_tilde(N_j)
+          for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+
+              ScalarT qij = 0.0;
+
+              for (int dim = 0; dim < 2; ++dim)
+                qij += thetaN[i][dim] * thetaN[j][dim];
+
+              ScalarT Qij = qij * weighted_measure(0,qp);
+              Q[i][j] += Albany::convertScalar<RealType>(Qij); //discard derivatives of stabilization term
+            }
+          }
+        }
+      }
+
+      for (unsigned int node = 0; node < numNodes; ++node){
+        ScalarT res = 0;
+        if(lump_mass)
+          res += (dHdt_Nodes(node) - forcing_Nodes(node))*area/3.0;
+        for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           ScalarT divHV = divV_Points(qp)* H_Points(qp);
           ScalarT V_norm2 = 0.0;
           ScalarT V_dot_gradPhi = 0.0;
@@ -305,172 +460,138 @@ evaluateFields(typename Traits::EvalData workset)
             V_dot_gradPhi += trans_gradBasis_refPointsSide(0, node, qp, dim)*V_Points(qp, dim);
             V_dot_HGrad += gradH_Points(qp, dim)*V_Points(qp, dim);
           }
-
-          ScalarT advective_rate = 0.0;  // 2|V|/ h_V,  h_V = 2|V|/sum(|V \nabla Phi|)
-          for (unsigned int inode = 0; inode < numNodes; ++inode) {
-            ScalarT V_dot_gradN = 0.0;
-
-            for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-              V_dot_gradN += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,inode,qp,dim);
-
-            advective_rate += std::abs(V_dot_gradN);
-          }
-
-          //std::cout << "Resid: " << __LINE__ << std::endl;
-
-          ScalarT tmp = dHdt_Points(qp) + divHV - forcing_Points(qp);
-
+          
           ScalarT HV_gradPhi = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             HV_gradPhi += H_Points(qp) * V_Points(qp, dim) * trans_gradBasis_refPointsSide(0, node, qp, dim);
           
-          //res += ((dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) - HV_gradPhi) * weighted_measure(qp);
-          res -=  HV_gradPhi * weighted_measure(qp);
-          ScalarT invTau = sqrt(4.0/ *dt/ *dt + advective_rate*advective_rate  + divV_Points(qp)*divV_Points(qp));
-          //res += tmp * V_dot_gradPhi * weighted_measure(qp) / invTau; //SUPG
-         // V_norm = sqrt(V_norm+1e-6);
-          //res += tmp * h/V_norm*V_dot_gradPhi * weighted_measure(qp); //SUPG
-
-          //res += tmp * (trans_basis_refPointsSide(0, node, qp)+h/V_norm*V_dot_gradPhi) * weighted_measure(qp);
-          //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp)+h/V_norm*V_dot_HGrad*V_dot_gradPhi*weighted_measure(qp);
+          if(!lump_mass)
+            res += (dHdt_Points(qp) - forcing_Points(qp))*trans_basis_refPointsSide(0, node, qp) * weighted_measure(0, qp);
+          res -=  HV_gradPhi * weighted_measure(0, qp);
+          //std::cout << "Time Step: " << workset.time_step << std::endl;
           
-          //res += tmp * trans_basis_refPointsSide(0, node, qp) * weighted_measure(qp);
-          //ScalarT delta = V_norm2/(advective_rate+1e-12);
-          //ScalarT delta = h*std::min(0.2*sqrt(V_norm2+1e-12), std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-8));
-         // for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
-         //   res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(qp);         
-        }
-        if (1.0 + *dt * min_divV < 0) {
-         std::cout << "Loss of positivity: " << min_divV << " " << 1.0 + *dt * min_divV <<std::endl;
-        }
+          if(supg) {
+            ScalarT advective_rate = 0.0;  // 2|V|/ h_V,  h_V = 2|V|/sum(|V \nabla Phi|)
+            for (unsigned int inode = 0; inode < numNodes; ++inode) {
+              ScalarT V_dot_gradN = 0.0;
+              for (std::size_t dim = 0; dim < numVecFODims; ++dim)
+                V_dot_gradN += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,inode,qp,dim);
 
-        ScalarT A[3][3] = {{0.0}};
-        ScalarT D[3][3] = {{0.0}};
-
-        // Element advection matrix
-        for (int k = 0; k < 3; ++k) {
-          for (int l = 0; l < 3; ++l) {
-            for (int qp = 0; qp < numQPsSide; ++qp) {
-
-              ScalarT V_dot_gradNk = 0.0;
-              for (int dim = 0; dim < 2; ++dim)
-                V_dot_gradNk += V_Points(qp,dim) * trans_gradBasis_refPointsSide(0,k,qp,dim);
-
-              A[k][l] -= trans_basis_refPointsSide(0,l,qp) * V_dot_gradNk * weighted_measure(qp);
+              advective_rate += std::abs(V_dot_gradN);
+            }
+            ScalarT tmp = dHdt_Points(qp) + divHV - forcing_Points(qp);
+            if(workset.time_step != 0){
+              ScalarT invTau = sqrt(4.0/ workset.time_step / workset.time_step + advective_rate*advective_rate + divV_Points(qp)*divV_Points(qp));
+              res += tmp * V_dot_gradPhi * weighted_measure(0, qp) / invTau; //SUPG
             }
           }
-        }
-        for (int k = 0; k < 3; ++k) {
-          for (int l = k+1; l < 3; ++l) {
-
-            ScalarT nu_lk = std::max(ScalarT(0.0), std::max(A[k][l], A[l][k]));
-
-            D[k][l] = -nu_lk;
-            D[l][k] = -nu_lk;
-
-            D[k][k] += nu_lk;
-            D[l][l] += nu_lk;
+          /*
+          { //discontinuity capturing/artficial diffiusion term        
+            ScalarT delta = V_norm2/(advective_rate+1e-12);
+            //ScalarT delta = h*std::min(0.2*sqrt(V_norm2+1e-12), std::abs(tmp)/std::sqrt(gradH_Points(qp,0)*gradH_Points(qp,0)+gradH_Points(qp,1)*gradH_Points(qp,1)+1e-12));
+            for (std::size_t dim = 0; dim < numVecFODims; ++dim) 
+              res += delta  *gradH_Points(qp, dim)*trans_gradBasis_refPointsSide(0, node, qp, dim)*weighted_measure(0,qp);         
           }
+          */
         }
-        for (int j = 0; j < 3; ++j)
-          res += D[node][j] * H_Nodes(j);
 
-
+        if(graph_viscosity || edge_stabilization) {          
+          for (int j = 0; j < 3; ++j)
+            res += Q[node][j] * H_Nodes(j);
+        }
         Residual(elem_LID,node) = res;
       }
 
-      // Get the data that corresponds to the side
-      auto it = elem_side_map.find(elem_LID);
-      if(it == elem_side_map.end())
-        continue;   //not on the lateral side
+      const auto& lateral_sides = elem_lateral_sides[elem_LID];
+      for (int is=0; (is < maxLatSidesPerElem) && (lateral_sides[is] != -1); ++is) {
+        const int lateral_side = lateral_sides[is];
+        const CellTopologyData_Subcell& edge =  cellType->getCellTopologyData()->edge[lateral_side];
+        auto edgeType = Teuchos::rcp(new shards::CellTopology(edge.topology));
+        unsigned int numEdgeNodes = edgeType->getNodeCount();
+        auto cubatureEdge = cubFactory.create<PHX::Device, RealType, RealType>(*edgeType, cubatureDegree);
+        unsigned int edgeDim = edgeType->getDimension();
+        unsigned int numQPsEdge = cubatureEdge->getNumPoints();
 
-      const int elem_edge = it->second; //Selecting the top edge of the Wedge associated to the edge lateral side
+        // Allocate Temporary Views (should be pre-allocated)
+        auto cubPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge, edgeDim);
+        auto refPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge, cellDim);
+        auto cubWeightsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge);
+        auto basis_refPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsEdge);
+
+        auto jacobianEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim, cellDim);
+        auto edge_weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge);
+        auto trans_basis_refPointsEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsEdge);
+        auto sideNormals = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim);
+        auto scratch = Sacado::createDynRankView(jacobianEdge,"XXS", numQPsEdge*cellDim);
+
+        auto H_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
+        auto V_Normal_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
+
+        // Pre-Calculate reference element quantities
+        cubatureEdge->getCubature(cubPointsEdge, cubWeightsEdge);
+
+        // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
+        Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsEdge, cubPointsEdge, edgeDim, lateral_side, *cellType);
+
+        //for (std::size_t node = 0; node < numNodes; ++node) {
+        //  std::cout << "node" << node << " points: " << physPointsCell(0, node,0) << " " << physPointsCell(0, node, 1) << " " << physPointsCell(0, node, 2)<<  std::endl;
+        //}
+        //for(int i=0; i< numQPsEdge; ++i)
+        //  std::cout << "qp: " << i << " points: " << refPointsEdge(i,0) << " " << refPointsEdge(i,1) << " " << refPointsEdge(i,2)<< ", name: " << cellType->getName() << std::endl;
+
+        // Calculate side geometry
+        Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianEdge, refPointsEdge, physPointsCell, *cellType);
+        Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(sideNormals, jacobianEdge, lateral_side, *cellType );
         
-      const CellTopologyData_Subcell& edge =  cellType->getCellTopologyData()->edge[elem_edge];
-      auto edgeType = Teuchos::rcp(new shards::CellTopology(edge.topology));
-      unsigned int numEdgeNodes = edgeType->getNodeCount();
-      auto cubatureEdge = cubFactory.create<PHX::Device, RealType, RealType>(*edgeType, cubatureDegree);
-      unsigned int edgeDim = edgeType->getDimension();
-      unsigned int numQPsEdge = cubatureEdge->getNumPoints();
+        FST::computeEdgeMeasure(edge_weighted_measure, jacobianEdge, cubWeightsEdge, lateral_side, *cellType, scratch);
 
-      // Allocate Temporary Views (should be pre-allocated)
-      auto cubPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge, edgeDim);
-      auto refPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge, cellDim);
-      auto cubWeightsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsEdge);
-      auto basis_refPointsEdge = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsEdge);
+        // Values of the basis functions at side cubature points, in the reference parent cell domain
+        intrepidBasis->getValues(basis_refPointsEdge, refPointsEdge, Intrepid2::OPERATOR_VALUE);
 
-      auto jacobianEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim, cellDim);
-      auto edge_weighted_measure = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge);
-      auto trans_basis_refPointsEdge = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsEdge);
-      auto sideNormals = Sacado::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsEdge, cellDim);
-      auto scratch = Sacado::createDynRankView(jacobianEdge,"XXS", numQPsEdge*cellDim*cellDim);
-
-      auto H_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
-      //auto V_X_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
-      auto V_Normal_Edge = Sacado::createDynRankView(Residual.get_view(), "XXX", numQPsEdge);
-
-      // Pre-Calculate reference element quantities
-      cubatureEdge->getCubature(cubPointsEdge, cubWeightsEdge);
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-      Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(refPointsEdge, cubPointsEdge, edgeDim, elem_edge, *cellType);
-    // std::cout << "Resid: " << __LINE__ << std::endl;
-
-      //for (std::size_t node = 0; node < numNodes; ++node) {
-      //  std::cout << "node" << node << " points: " << physPointsCell(0, node,0) << " " << physPointsCell(0, node, 1) << " " << physPointsCell(0, node, 2)<<  std::endl;
-      //}
-      //for(int i=0; i< numQPsEdge; ++i)
-      //  std::cout << "qp: " << i << " points: " << refPointsEdge(i,0) << " " << refPointsEdge(i,1) << " " << refPointsEdge(i,2)<< ", name: " << cellType->getName() << std::endl;
-
-      // Calculate side geometry
-      Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianEdge, refPointsEdge, physPointsCell, *cellType);
-      Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(sideNormals, jacobianEdge, it->second, *cellType );
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      FST::computeEdgeMeasure(edge_weighted_measure, jacobianEdge, cubWeightsEdge, elem_edge, *cellType, scratch);
-      //std::cout << "Resid: " << __LINE__ << std::endl;
-      // Values of the basis functions at side cubature points, in the reference parent cell domain
-      intrepidBasis->getValues(basis_refPointsEdge, refPointsEdge, Intrepid2::OPERATOR_VALUE);
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      // Transform values of the basis functions
-      FST::HGRADtransformVALUE(trans_basis_refPointsEdge, basis_refPointsEdge);
-      
-      // This is needed, since evaluate currently sums into
-      for (unsigned int qp = 0; qp < numQPsEdge; qp++) {
-        H_Edge(qp) = 0.0;
-        V_Normal_Edge(qp) = 0.0;
-        //V_X_Edge(qp) = 0.0;
-        MeshScalarT norm = 0.0;
-        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          norm += sideNormals(0, qp, dim)*sideNormals(0, qp, dim);
-        norm = std::sqrt(norm);
-        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          sideNormals(0, qp, dim) /= norm;          
-      }
-//std::cout << "Resid: " << __LINE__ << std::endl;
-      // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (unsigned int i = 0; i < numEdgeNodes; ++i){
-        std::size_t node = edge.node[i];
-        for (std::size_t qp = 0; qp < numQPsEdge; ++qp) {
-          const MeshScalarT& edge_basis = trans_basis_refPointsEdge(0, node, qp);
-          H_Edge(qp) += H_Nodes(node) * edge_basis;
-          //V_X_Edge(qp) += V_Nodes(node,0) * tmp;
-          auto normal_norm = 0;
+        // Transform values of the basis functions
+        FST::HGRADtransformVALUE(trans_basis_refPointsEdge, basis_refPointsEdge);
+        
+        // This is needed, since evaluate currently sums into
+        for (unsigned int qp = 0; qp < numQPsEdge; qp++) {
+          H_Edge(qp) = 0.0;
+          V_Normal_Edge(qp) = 0.0;
+          //V_X_Edge(qp) = 0.0;
+          MeshScalarT norm = 0.0;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            V_Normal_Edge(qp) += V_Nodes(node, dim) * edge_basis * sideNormals(0, qp, dim);
+            norm += sideNormals(0, qp, dim)*sideNormals(0, qp, dim);
+          norm = std::sqrt(norm);
+          for (std::size_t dim = 0; dim < numVecFODims; ++dim)
+            sideNormals(0, qp, dim) /= norm;          
         }
-      }
-//std::cout << "Resid: " << __LINE__ << std::endl;
-     // for (unsigned int qp = 0; qp < numQPsEdge; qp++)
-      //  std::cout << "qp: " << qp << ", Normal V: " << V_Normal_Edge(qp) << ", N:" << sideNormals(0, qp, 0) << ", " <<  sideNormals(0, qp, 1) <<  ", H: " << H_Edge(qp) << ", measure:  " <<  edge_weighted_measure(qp) << std::endl;
 
-      for (unsigned int i = 0; i < numEdgeNodes; ++i){
-        std::size_t node = edge.node[i];
-        ScalarT res = 0;
-        for (std::size_t qp = 0; qp < numQPsEdge; ++qp) { 
-          if(V_Normal_Edge(qp) > 0)   
-            res += H_Edge(qp) * V_Normal_Edge(qp) * trans_basis_refPointsEdge(0, node, qp) * edge_weighted_measure(qp);
+        // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
+        for (unsigned int i = 0; i < numEdgeNodes; ++i){
+          std::size_t node = edge.node[i];
+          for (std::size_t qp = 0; qp < numQPsEdge; ++qp) {
+            const MeshScalarT& edge_basis = trans_basis_refPointsEdge(0, node, qp);
+            H_Edge(qp) += H_Nodes(node) * edge_basis;
+            //V_X_Edge(qp) += V_Nodes(node,0) * tmp;
+            auto normal_norm = 0;
+            for (std::size_t dim = 0; dim < numVecFODims; ++dim)
+              V_Normal_Edge(qp) += V_Nodes(node, dim) * edge_basis * sideNormals(0, qp, dim);
+          }
         }
-        Residual(elem_LID,node) += res;
+
+        // for (unsigned int qp = 0; qp < numQPsEdge; qp++)
+        //  std::cout << "qp: " << qp << ", Normal V: " << V_Normal_Edge(qp) << ", N:" << sideNormals(0, qp, 0) << ", " <<  sideNormals(0, qp, 1) <<  ", H: " << H_Edge(qp) << ", measure:  " <<  edge_weighted_measure(qp) << std::endl;
+
+        for (unsigned int i = 0; i < numEdgeNodes; ++i){
+          std::size_t node = edge.node[i];
+          ScalarT res = 0;
+          for (std::size_t qp = 0; qp < numQPsEdge; ++qp) { 
+            if(V_Normal_Edge(qp) > 0)
+              if(graph_viscosity)   
+                res += H_Nodes(node) * V_Normal_Edge(qp) * trans_basis_refPointsEdge(0, node, qp) * edge_weighted_measure(0, qp);
+              else 
+                res += H_Edge(qp) * V_Normal_Edge(qp) * trans_basis_refPointsEdge(0, node, qp) * edge_weighted_measure(0, qp);
+          }
+          Residual(elem_LID,node) += res;
+        }
       }
     }
   }
