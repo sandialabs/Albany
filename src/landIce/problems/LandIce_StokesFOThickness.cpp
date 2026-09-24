@@ -66,6 +66,7 @@ StokesFOThickness::StokesFOThickness(
     surface_height_name += "_computed";
     ice_thickness_name += "_computed";
   }
+  lateralSideName = this->params->get<std::string>("Lateral Side Name", "lateralside");
 
   effectivePressure_from_basalFrictionEval = true;
 }
@@ -203,6 +204,7 @@ StokesFOThickness::getValidProblemParameters() const
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux (Not used for time integation)");
   validPL->set<std::string>("Thickness Stabilization", "SUPG", "Stabilization for the thickness equation");
   validPL->set<bool>("Lump Time Derivative Mass Matrix", false, "Whether to Lump the Mass Matrix for Time Derivative");
+  validPL->set<std::string>("Lateral Side Name", "lateral side", "Lateral Side Set Name");
 
   return validPL;
 }

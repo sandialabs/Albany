@@ -61,7 +61,6 @@ set(SOURCES
   evaluators/LandIce_SurfaceAirEnthalpy.cpp
   evaluators/LandIce_Temperature.cpp
   evaluators/LandIce_ThicknessResid.cpp
-  evaluators/LandIce_ThicknessResidCell.cpp
   evaluators/LandIce_UpdateZCoordinate.cpp
   evaluators/LandIce_VerticalVelocity.cpp
   evaluators/LandIce_ViscosityFO.cpp
@@ -167,8 +166,6 @@ set(HEADERS
   evaluators/LandIce_Temperature_Def.hpp
   evaluators/LandIce_ThicknessResid_Def.hpp
   evaluators/LandIce_ThicknessResid.hpp
-  evaluators/LandIce_ThicknessResidCell_Def.hpp
-  evaluators/LandIce_ThicknessResidCell.hpp
   evaluators/LandIce_UpdateZCoordinate.hpp
   evaluators/LandIce_UpdateZCoordinate_Def.hpp
   evaluators/LandIce_VerticalVelocity.hpp

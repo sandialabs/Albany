@@ -20,7 +20,7 @@
 #include "LandIce_ScatterResidual2D.hpp"
 #include "LandIce_SimpleOperationEvaluator.hpp"
 #include "LandIce_UpdateZCoordinate.hpp"
-#include "LandIce_ThicknessResidCell.hpp"
+#include "LandIce_ThicknessResid.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"  
 
 #include "LandIce_ParamEnum.hpp"
@@ -243,7 +243,7 @@ LandIce::ThicknessEvolution::constructEvaluators (PHX::FieldManager<PHAL::Albany
   //Output
   p->set<std::string>("Residual Name", resid_names[0]);
 
-  ev = Teuchos::rcp(new LandIce::ThicknessResidCell<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = Teuchos::rcp(new LandIce::ThicknessResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
 

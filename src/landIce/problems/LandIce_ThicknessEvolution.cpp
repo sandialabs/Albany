@@ -126,7 +126,7 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 	  int numBasalSideNodes      = -1;
 	  int numBasalSideQPs        = -1;
 
-    lateralSideName = this->params->get<std::string>("Side Set Name");
+    lateralSideName = this->params->get<std::string>("Lateral Side Name");
 	  if (lateralSideName!="INVALID")
 	  {
 		  TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(lateralSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
@@ -268,7 +268,7 @@ LandIce::ThicknessEvolution::getValidProblemParameters() const
 	validPL->set<int>("Cubature Degree", 4, "Cubature degree used on the basal side");
   validPL->set<int>("Lateral Cubature Degree", 4, "Cubature degree used on the lateral side");
   validPL->set<std::string>("Thickness Stabilization", "SUPG", "Type of stabilization");
-  validPL->set<std::string>("Side Set Name", "lateral side", "Side Set Name");
+  validPL->set<std::string>("Lateral Side Name", "lateral side", "Lateral Side Set Name");
   validPL->set<bool>("Lump Time Derivative Mass Matrix", false, "Whether to Lump the Mass Matrix for Time Derivative");
 
 
