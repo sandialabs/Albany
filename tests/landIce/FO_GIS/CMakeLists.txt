@@ -387,6 +387,12 @@ IF(NOT Kokkos_ENABLE_CUDA)
     add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
 
+    set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+
     if (ALBANY_OMEGAH)
       # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
       set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
