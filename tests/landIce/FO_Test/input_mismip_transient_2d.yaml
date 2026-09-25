@@ -1,0 +1,207 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output:
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
+          #Write Residual to MatrixMarket: -1
+  Problem:
+    Phalanx Graph Visualization Detail: 1
+    Use MDField Memoization: False
+    Solution Method: Transient
+    Name: LandIce Thickness Evolution
+    Compute Sensitivities: false
+    Thickness Stabilization: SUPG
+    Lateral Side Name: boundary_side_set_2     
+    Lump Time Derivative Mass Matrix: true
+    Cubature Degree: 4
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Scalar Response
+        Name: Solution Average
+    Dirichlet BCs: 
+    #  SDBC on NS boundary_node_set_1 for DOF H: 0.1
+    Neumann BCs: {}
+    Parameters:
+      Number Of Parameters: 0
+      Parameter 2:
+        Type: Scalar
+        Name: Glen's Law Homotopy Parameter
+      Parameter 0:
+        Type: Distributed
+        Name: surface_height_computed
+      Parameter 1:
+        Type: Distributed
+        Name: ice_thickness_computed
+    LandIce Physical Parameters:
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.81e+00
+      Clausius-Clapeyron Coefficient: 0.0
+  Discretization:
+    Method: Ioss
+    Number Of Time Derivatives: 1
+    Restart Index: 1
+    Exodus Output File Name: output/mismip_transient_2s.exo
+    Exodus Input File Name: ../AsciiMeshes/MISMIP/mismip_2d.exo
+    Use Serial Mesh: false
+    Required Fields Info:
+      Number Of Fields: 3
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: File
+        File Name: ../AsciiMeshes/MISMIP/thickness.ascii
+      Field 1:
+        Field Name: velocity
+        Field Type: Node Vector
+        Field Origin: File
+        Vector Dim: 2
+        File Name: ../AsciiMeshes/MISMIP/averaged_velocity.ascii
+      Field 2:
+        Field Name: forcing
+        Field Type: Node Scalar
+        Field Origin: File
+        Field Value: 0.3
+  Piro:
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator: 
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 1
+        Stepper Name: Tempus Stepper
+        Solution History: 
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control: 
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 0.5
+          Final Time: 1.0
+          Final Time Index: 1000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.0e+01
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper: 
+        Stepper Type: Backward Euler
+        VerboseObject:
+          Verbosity Level: medium
+        Solver Name: Demo Solver
+        Demo Solver: 
+          VerboseObject:
+            Verbosity Level: medium
+          NOX:
+            Thyra Group Options:
+              Function Scaling: None #Row Sum
+              Update Row Sum Scaling: Before Each Nonlinear Solve
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Norm Type: Two Norm
+                Scale Type: Unscaled
+                Tolerance: 1.0e-04
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 50
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Linear Solver:
+                  Write Linear System: false
+                  Tolerance: 1.0e-4  #used for forward solve
+                Stratimikos Linear Solver:
+                  NOX Stratimikos Options: {}
+                  Stratimikos:
+                    Linear Solver Type: Belos
+                    Linear Solver Types:
+                      Belos:
+                        VerboseObject:
+                          Verbosity Level: medium
+                        Solver Type: Block GMRES
+                        Solver Types:
+                          Block GMRES:
+                            Convergence Tolerance: 1.0e-07
+                            Output Frequency: 10
+                            Output Style: 1
+                            Verbosity: 33
+                            Maximum Iterations: 500
+                            Block Size: 1
+                            Num Blocks: 50
+                            Flexible Gmres: false
+                    Preconditioner Type: Ifpack2
+                    Preconditioner Types:
+                      Ifpack2:
+                        Overlap: 0
+                        Prec Type: Amesos2 # RILUK
+                        Ifpack2 Settings:
+                          Amesos2: {}
+                          Amesos2 solver name: klu
+                          'fact: iluk level-of-fill': 0
+                Rescue Bad Newton Solve: true
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: false
+                Details: false
+                Linear Solver Details: false
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+
+      Stratimikos:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                VerboseObject:
+                  Verbosity Level: medium
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Convergence Tolerance: 1.0e-07
+                    Output Frequency: 10
+                    Output Style: 1
+                    Verbosity: 33
+                    Maximum Iterations: 500
+                    Block Size: 1
+                    Num Blocks: 50
+                    Flexible Gmres: false
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2 # RILUK
+                Ifpack2 Settings:
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+                  'fact: iluk level-of-fill': 0
+
+
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    #Sensitivity For Parameter 0:
+    #  Test Value: 
+    Test Value: 5.482808401653e-05
+...
