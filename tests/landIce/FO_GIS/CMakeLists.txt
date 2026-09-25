@@ -380,38 +380,40 @@ IF(NOT Kokkos_ENABLE_CUDA)
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk3d.yaml)
     add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk3d.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
-
-    set (testName ${testNameRoot}_Humboldt_Transient_STK)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
-
-    set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
-
-    if (ALBANY_OMEGAH)
-      # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
-      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
-      # add_test (NAME ${testName}_CreateHumboldtOsh
-      #       COMMAND ${OMEGAH_EXO2OSH} humboldt_contiguous_2d.exo humboldt_contiguous_2d.osh
-      #       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-      # set_tests_properties (${testName}_CreateHumboldtOsh PROPERTIES
-      #     LABELS "LandIce;Forward;Omega_h"
-      #     FIXTURES_SETUP CreateHumboldtOshMesh)
-
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah.yaml
-                     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah.yaml)
-      add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_omegah.yaml)
-      set_tests_properties(${testName}  PROPERTIES
-        LABELS "LandIce;Forward;Omega_h")
-      # set_tests_properties(${testName}  PROPERTIES
-      #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
-    endif()
   endif()
+
+  set (testName ${testNameRoot}_Humboldt_Transient_STK)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+
+  set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+
+  if (ALBANY_OMEGAH)
+    # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
+    set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
+    # add_test (NAME ${testName}_CreateHumboldtOsh
+    #       COMMAND ${OMEGAH_EXO2OSH} humboldt_contiguous_2d.exo humboldt_contiguous_2d.osh
+    #       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+    # set_tests_properties (${testName}_CreateHumboldtOsh PROPERTIES
+    #     LABELS "LandIce;Forward;Omega_h"
+    #     FIXTURES_SETUP CreateHumboldtOshMesh)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah.yaml
+                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah.yaml)
+    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_omegah.yaml)
+    set_tests_properties(${testName}  PROPERTIES
+      LABELS "LandIce;Forward;Omega_h")
+    # set_tests_properties(${testName}  PROPERTIES
+    #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
+
+  endif()
+
 endif()
 
 ####################################
