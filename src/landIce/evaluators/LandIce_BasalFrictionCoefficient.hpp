@@ -76,7 +76,7 @@ private:
   PHX::MDField<const MeshScalarT>       coordVec;           // [km]
   PHX::MDField<const TemperatureST>     flowRate;           // [Pa^{-n} s^{-1}]
   PHX::MDField<const MeshScalarT>       bed_topo_field;     // [km]
-  PHX::MDField<const MeshScalarT>       thickness_field;    // [km]
+  PHX::MDField<const EffPressureST>     thickness_field;    // [km]
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
@@ -128,7 +128,7 @@ private:
   // (EFFECTIVE_PRESSURE_TYPE::TRANSITION). Reproduces (offline)
   // friction_law_conversion.py::effective_pressure4().
   KOKKOS_INLINE_FUNCTION
-  MeshScalarT computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScalarT& bed_topo) const;
+  EffPressureST computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const;
 
 public:
 

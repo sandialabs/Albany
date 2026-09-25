@@ -66,10 +66,10 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography]
+    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
     Interpolate Basal Layered Fields: [temperature]
     Required Fields Info:
-      Number Of Fields: 4
+      Number Of Fields: 5
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -86,6 +86,10 @@ ANONYMOUS:
         Field Name: bed_topography 
         Field Type: Node Scalar
         Field Origin: Mesh
+      Field 4:
+        Field Name: thickness_forcing
+        Field Type: Node Scalar
+        Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -95,7 +99,7 @@ ANONYMOUS:
         Box Scaling: [40.0, 40.0]    # domain [0,40]x[0,40] (km)
         Number Of Time Derivatives: 1
         Required Fields Info:
-          Number Of Fields: 5
+          Number Of Fields: 6
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -122,6 +126,11 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             Field Expression: ['0.05*x + 0.0*y']
+          Field 5:
+            Field Name: thickness_forcing
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.0
   Piro:
     Tempus: 
       Integrator Name: Tempus Integrator
