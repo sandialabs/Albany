@@ -1,7 +1,17 @@
 #include "Albany_AbstractDiscretization.hpp"
 
+#include <Teuchos_ParameterListExceptions.hpp>
+
 namespace Albany
 {
+
+AbstractDiscretization::
+AbstractDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams)
+ : m_disc_params(discParams)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (discParams.is_null(), Teuchos::Exceptions::InvalidArgument,
+      "Error! Input parameter list must be a valid pointer.\n");
+}
 
 void AbstractDiscretization::
 writeSolution (const Thyra_Vector& soln,
@@ -48,6 +58,21 @@ writeSolutionMV (const Thyra_MultiVector& soln,
 {
   writeSolutionMVToMeshDatabase(soln, soln_dxdp, overlapped);
   writeMeshDatabaseToFile(time, force_write_solution);
+}
+
+Teuchos::RCP<AdaptationData>
+AbstractDiscretization::
+checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                    const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                    const Teuchos::RCP<const Thyra_MultiVector>& dxdp,
+                    const bool is_first_time_step)
+{
+  auto& adapt_pl = m_disc_params->sublist("Mesh Adaptivity");
+  if (is_first_time_step and adapt_pl.get<bool>("Skip First Time Step",true))
+    return Teuchos::rcp(new AdaptationData());
+
+  return checkForAdaptationImpl(solution,solution_dot,solution_dotdot,dxdp);
 }
 
 auto AbstractDiscretization::

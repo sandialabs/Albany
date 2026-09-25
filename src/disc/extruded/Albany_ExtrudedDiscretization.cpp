@@ -36,12 +36,12 @@ ExtrudedDiscretization (const Teuchos::RCP<Teuchos::ParameterList>&     discPara
                         const Teuchos::RCP<const Teuchos_Comm>&         comm,
                         const Teuchos::RCP<RigidBodyModes>&             rigidBodyModes,
                         const std::map<int, std::vector<std::string>>&  sideSetEquations)
- : m_comm(comm)
+ : AbstractDiscretization(discParams)
+ , m_comm(comm)
  , m_basal_disc (basal_disc)
  , m_sideSetEquations(sideSetEquations)
  , m_rigid_body_modes(rigidBodyModes)
  , m_extruded_mesh(extruded_mesh)
- , m_disc_params (discParams)
 {
   setNumEq(neq);
 
@@ -145,10 +145,10 @@ ExtrudedDiscretization::writeMeshDatabaseToFile(const double time,
 
 Teuchos::RCP<AdaptationData>
 ExtrudedDiscretization::
-checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
-                    const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                    const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */)
+checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
+                        const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
+                        const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
+                        const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */)
 {
   auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
   auto adapt_type = adapt_params.get<std::string>("Type","None");

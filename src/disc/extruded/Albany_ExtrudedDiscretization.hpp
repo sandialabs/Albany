@@ -103,10 +103,10 @@ public:
                                 const bool          force_write_solution) override;
 
   Teuchos::RCP<AdaptationData>
-  checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
-                      const Teuchos::RCP<const Thyra_Vector>& solution_dot,
-                      const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) override;
+  checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                          const Teuchos::RCP<const Thyra_MultiVector>& dxdp) override;
 
   void adapt (const Teuchos::RCP<AdaptationData>& adaptData) override;
 
@@ -169,9 +169,6 @@ protected:
 
   // The underlying extruded mesh
   Teuchos::RCP<ExtrudedMesh> m_extruded_mesh;
-
-  // Keep params around, since we may need them after construction
-  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   // Sideset discretizations
   strmap_t<Teuchos::RCP<Thyra_LinearOp>>    projectors;

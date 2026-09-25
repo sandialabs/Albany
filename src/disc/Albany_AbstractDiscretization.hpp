@@ -34,7 +34,7 @@ public:
   static std::string nodes_dof_name    () { return "mesh_nodes"; }
 
   //! Constructor
-  AbstractDiscretization() = default;
+  AbstractDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
 
   //! Prohibit copying
   AbstractDiscretization(const AbstractDiscretization&) = delete;
@@ -351,11 +351,12 @@ public:
                                         const bool   force_write_solution) = 0;
 
   // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
-  virtual Teuchos::RCP<AdaptationData>
+  Teuchos::RCP<AdaptationData>
   checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                       const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
-                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp) = 0;
+                      const Teuchos::RCP<const Thyra_MultiVector>& dxdp,
+                      const bool is_first_time_step = false);
 
   // Check if mesh adaptation is needed, and if so adapt mesh (and possibly reinterpolate solution)
   virtual void adapt (const Teuchos::RCP<AdaptationData>& adaptData) = 0;
@@ -372,8 +373,17 @@ protected:
                const int order,
                const int dof_dim);
 
+  // Check if mesh adaptation is needed, and if so what kind (topological or just mesh-movement)
+  virtual Teuchos::RCP<AdaptationData>
+  checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                          const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                          const Teuchos::RCP<const Thyra_MultiVector>& dxdp) = 0;
+
   // From std::vector<SideSet> build corresponding kokkos structures
   void buildSideSetsViews ();
+
+  Teuchos::RCP<Teuchos::ParameterList> m_disc_params;
 
   strmap_t<Teuchos::RCP<AbstractDiscretization>> sideSetDiscretizations;
 
