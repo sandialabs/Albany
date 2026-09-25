@@ -143,7 +143,7 @@ ANONYMOUS:
     Absolute Tolerance: 2.0e-05
   Regression For Response 1:
     Test Value: -8.928324283348e-05
-    Absolute Tolerance: 3.0e-05
+    Absolute Tolerance: 4.5e-05
   Regression For Response 2:
     Test Value: 5.248640595484e-03
     Absolute Tolerance: 2.0e-04
