@@ -84,10 +84,8 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:sandialabs/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (CRAYPE_LINK_TYPE dynamic)
-
 set (MPICH_DIR $ENV{MPICH_DIR})
-set (CRAY_PE_LIBSCI_PREFIX_DIR $ENV{CRAY_PE_LIBSCI_PREFIX_DIR})
+set (CRAY_LIBSCI_PREFIX_DIR $ENV{CRAY_LIBSCI_PREFIX_DIR})
 set (BOOST_DIR $ENV{BOOST_DIR})
 set (NETCDF_DIR $ENV{NETCDF_DIR})
 set (PNETCDF_DIR $ENV{PNETCDF_DIR})

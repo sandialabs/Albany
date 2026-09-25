@@ -30,11 +30,6 @@ cmake \
 \
   -D TPL_ENABLE_Boost:BOOL=ON \
   -D Boost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include \
-  -D Boost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
-\
-  -D TPL_ENABLE_BoostLib:BOOL=ON \
-  -D BoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include \
-  -D BoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib \
 \
   -D TPL_ENABLE_Netcdf:BOOL=ON \
   -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include \

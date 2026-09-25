@@ -35,9 +35,8 @@ done
 # --- Load Modules ---
 module load PrgEnv-gnu/8.6.0
 module load gcc-native/14
-module load cudatoolkit/12.9
-module load craype-accel-nvidia80
 module load cray-libsci/25.09.0
+module load craype-accel-host
 module load craype/2.7.35
 module load cray-mpich/9.0.1
 module load cray-hdf5-parallel/1.14.3.7
@@ -53,21 +52,20 @@ export HDF5_USE_FILE_LOCKING=FALSE
 export FI_MR_CACHE_MONITOR=kdreg2
 export NETCDF_PATH=${CRAY_NETCDF_HDF5PARALLEL_PREFIX}
 export PNETCDF_PATH=${CRAY_PARALLEL_NETCDF_PREFIX}
+export GATOR_INITIAL_MB=4000MB
+export MPICH_SMP_SINGLE_COPY_MODE=CMA
+export STK_UNKNOWN_PATTERN_EXCHANGER=Prepost
 export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
 export OMP_STACKSIZE=128M
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
-export MPICH_GPU_SUPPORT_ENABLED=1
 
 # --- System Resources ---
 # RLIMIT_STACK = -1 typically maps to unlimited
 ulimit -s unlimited
 
 # Extras
+export SUPERLU_DIR=/global/common/software/fanssie/superlu/7.0.1/gcc/14.3
 export BOOST_DIR=/global/common/software/fanssie/boost/1.83.0/gcc/14.3
-export CUDATOOLKIT_VERSION_STRING=${CRAY_CUDATOOLKIT_VERSION#*_}
-export TPETRA_ASSUME_GPU_AWARE_MPI=0
+unset MPICH_GPU_SUPPORT_ENABLED
 
-# To enable GPU-aware MPI, use the following two environment variables instead
-#export TPETRA_ASSUME_GPU_AWARE_MPI=1
-#export FI_HMEM_CUDA_USE_GDRCOPY=0
