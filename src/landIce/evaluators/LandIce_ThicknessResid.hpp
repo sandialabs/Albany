@@ -21,8 +21,11 @@
 namespace LandIce {
 /** \brief Finite Element Interpolation Evaluator
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator computes the thickness evolution with Galerkin discretization and different stabilizations
+    We assume that the donmain has no inflow boundary (defined as the part of the boundary where the outward normal velocity is negative), or that the thickness is zero on the inflow boundary
+    Supported stabilizations: SUPG, Graph Viscosity, Edge Stabilization 
 
+    The thickness lives on the side set (either the bottom or top surface)
 */
 
 template<typename EvalT, typename Traits>
@@ -46,22 +49,25 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-
-  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;
-  PHX::MDField<const ScalarT,Cell,Node>       dHdt;
-  PHX::MDField<const ParamScalarT,Cell,Node>  H0;
-  PHX::MDField<const ScalarT> V;
-  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+    
+  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;  //[km]
+  PHX::MDField<const ScalarT,Cell,Node>       dHdt;   //[m/yr]
+  PHX::MDField<const ParamScalarT,Cell,Node>  H0;     //[km]
+  PHX::MDField<const ScalarT>                 V;      //[m/yr]                
+  PHX::MDField<const RealType,Cell,Node>      forcing;    //[m/yr]
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;  //[km]
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
 
+  //Maps two faces ids of the cell to the id of the edge shared by the faces. 
+  //If the faces do not share any edge or if the faces are identical, the id is set to -1;
+  std::vector<std::vector<int>> edgeSharedByFaces;
 
-  unsigned int  cellDims, numNodes, cubatureDegree;
+
+  unsigned int  cellDim, numNodes, cubatureDegree;
   Teuchos::RCP<double> dt;
-  bool have_SMB;
-  std::string sideSetName;
+  std::string sideSetName, lateralSideSetName;
 
   std::size_t numVecFODims;
 
@@ -77,6 +83,10 @@ private:
 
   std::string sideSetID;
   bool unsteady;
+  bool supg; 
+  bool graph_viscosity;
+  bool edge_stabilization;
+  bool lump_mass; 
 
 };
 

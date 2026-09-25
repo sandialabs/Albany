@@ -60,12 +60,12 @@ ANONYMOUS:
     NumLayers: 5
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
-    Extrude Basal Node Fields: [ice_thickness, surface_height]
-    Basal Node Fields Ranks: [1, 1]
+    Extrude Basal Node Fields: [ice_thickness, surface_height,thickness_forcing]
+    Basal Node Fields Ranks: [1, 1, 1]
     Interpolate Basal Node Layered Fields: [temperature]
     Basal Node Layered Fields Ranks: [1]
     Required Fields Info:
-      Number Of Fields: 3
+      Number Of Fields: 4
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -78,6 +78,10 @@ ANONYMOUS:
         Field Name: temperature
         Field Type: Node Scalar
         Field Origin: Mesh
+      Field 3:
+        Field Name: thickness_forcing
+        Field Type: Node Scalar
+        Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -87,7 +91,7 @@ ANONYMOUS:
         Exodus Input File Name: ../ExoMeshes/gis_unstruct_2d.exo
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
-          Number Of Fields: 4
+          Number Of Fields: 5
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -109,6 +113,11 @@ ANONYMOUS:
             Field Type: Node Scalar
             Field Origin: File
             File Name: ../AsciiMeshes/GisUnstructFiles/basal_friction.ascii
+          Field 4:
+            Field Name: thickness_forcing
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.0
       upperside:
         Method: SideSetSTK
         Number Of Time Derivatives: 0
@@ -211,6 +220,6 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Sensitivity For Parameter 0:
-      Test Value: 1.829143533112e+07
-    Test Value: 1.096045141735e+08
+      Test Value: 1.829141887472e+07
+    Test Value: 1.096054593124e+08
 ...
