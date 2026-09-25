@@ -66,6 +66,7 @@ StokesFOThickness::StokesFOThickness(
     surface_height_name += "_computed";
     ice_thickness_name += "_computed";
   }
+  lateralSideName = this->params->get<std::string>("Lateral Side Name", "lateralside");
 
   effectivePressure_from_basalFrictionEval = true;
 }
@@ -199,8 +200,11 @@ StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->set<bool>("Allow Loss Of Derivative Terms", false, "Allow loss of derivative terms in mesh coordinates");
-  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
-  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
+  validPL->set<double>("Time Step", 1.0, "Time step for divergence flux (Not used for time integation)");
+  validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux (Not used for time integation)");
+  validPL->set<std::string>("Thickness Stabilization", "SUPG", "Stabilization for the thickness equation");
+  validPL->set<bool>("Lump Time Derivative Mass Matrix", false, "Whether to Lump the Mass Matrix for Time Derivative");
+  validPL->set<std::string>("Lateral Side Name", "lateral side", "Lateral Side Set Name");
 
   return validPL;
 }
@@ -210,6 +214,7 @@ void StokesFOThickness::setFieldsProperties () {
 
   if(unsteady) {
     setSingleFieldProperties(ice_thickness_name, FRT::Scalar, FST::Scalar);
+    setSingleFieldProperties(effective_pressure_name, FRT::Scalar, FST::Scalar);
     setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::Scalar);
   } else {
     setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::ParamScalar);

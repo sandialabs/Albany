@@ -1,7 +1,7 @@
 //*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
-//    This Software is released under the BSD license detailed     //
-//    in the file "license.txt" in the top-level Albany directory  //
+//    Albany 3.0: Copyright 2016 Sandia Corporation                  //
+//    This software is released under the BSD license described    //
+//    in the top-level Albany license.txt.                           //
 //*****************************************************************//
 
 #ifndef LANDICE_THICKNESS_RESID_HPP
@@ -11,75 +11,70 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Intrepid2_CellTools.hpp"
-#include "Intrepid2_Cubature.hpp"
-
 #include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_ScalarOrdinalTypes.hpp"
+#include "Shards_CellTopology.hpp"
+#include "Teuchos_RCP.hpp"
 
 namespace LandIce {
-/** \brief Finite Element Interpolation Evaluator
 
-    This evaluator interpolates nodal DOF values to quad points.
-
-*/
-
+/**
+ * Conservative P1 thickness transport on horizontal triangles.  The triangle
+ * can be either a 2D triangular cell or a selected triangular face of a 3D wedge.
+ *
+ * Available stabilizations: None, SUPG, Graph Viscosity, Edge Stabilization.
+ * Inflow thickness defaults to zero and can optionally be specified via
+ * the parameter "Inflow Thickness" (km).
+ */
 template<typename EvalT, typename Traits>
 class ThicknessResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+                       public PHX::EvaluatorDerived<EvalT, Traits> {
 public:
 
-  ThicknessResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
+  ThicknessResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+  void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm);
+  void evaluateFields(typename Traits::EvalData workset);
 
 private:
+  using ScalarT     = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using ParamScalarT= typename EvalT::ParamScalarT;
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  // Input:
-
-  PHX::MDField<const ScalarT,Cell,Node>       Hdiff;
-  PHX::MDField<const ScalarT,Cell,Node>       dHdt;
-  PHX::MDField<const ParamScalarT,Cell,Node>  H0;
-  PHX::MDField<const ScalarT> V;
-  PHX::MDField<const ParamScalarT,Cell,Node>  SMB;
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
-  
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual;
-
-
-  unsigned int  cellDims, numNodes, cubatureDegree;
-  Teuchos::RCP<double> dt;
-  bool have_SMB;
-  std::string sideSetName;
-
-  std::size_t numVecFODims;
+  PHX::MDField<const ScalarT, Cell, Node> Hdiff; //[km]
+  PHX::MDField<const ScalarT, Cell, Node> dHdt;  //[km/yr]
+  PHX::MDField<const ParamScalarT, Cell, Node> H0;  //[km]
+  PHX::MDField<const RealType, Cell, Node> forcing; //[m/yr]
+  PHX::MDField<const MeshScalarT, Cell, Vertex, Dim> coordVec; //[km]
+  PHX::MDField<const RealType> V_cell; // [m/yr],  prescribed: (cell, node, xy)
+  PHX::MDField<const ScalarT> V_side; // [m/yr], coupled: (side entry, side node, xy)
+  PHX::MDField<ScalarT, Cell, Node> Residual;
 
   Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<shards::CellTopology> sideType;
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide;
+  Teuchos::RCP<double> dt;
+  std::string sideSetName, lateralSideSetName;
+  unsigned int cellDim = 0, cubatureDegree = 0;
+  bool unsteady = false, lump_mass = false;
+  bool supg = false, graph_viscosity = false, edge_stabilization = false;
+  RealType inflowThickness = 0.0;
 
-  // The basis
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  // Reference-element integration: built just once per evaluator instance.
+  Kokkos::DynRankView<RealType,PHX::Device> triBasisValues;
+  Kokkos::DynRankView<RealType,PHX::Device> triWeights;
+  // Intrepid2 reference P1 triangle gradients and values are computed once.
+  // Shape of triRefGrad: (3 basis functions, nqp, 2 reference dimensions).
+  Kokkos::DynRankView<RealType, PHX::Device> triRefGrad;
 
-  // Temporary Views
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
+  // Triangle basis evaluated at line cubature mapped to each reference edge.
+  Kokkos::DynRankView<RealType,PHX::Device> edgesBasisValues;
+  Kokkos::DynRankView<RealType,PHX::Device> edgeWeights;
 
-  std::string sideSetID;
-  bool unsteady;
-
+  // Precomputed for wedge topology.  Entries are parent-cell edge ordinals.
+  std::vector<std::vector<int>> edgeSharedByFaces;
+  // [triangle face ordinal][parent edge ordinal] -> local triangle edge 0,1,2.
+  // For a 2D triangle, face ordinal 0 is an artificial index for the cell.
+  std::vector<std::vector<int>> localEdgeForParentEdge;
 };
 
 } // namespace LandIce
-
-#endif // LANDICE_THICKNESS_RESID_HPP
+#endif

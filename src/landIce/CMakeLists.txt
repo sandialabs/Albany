@@ -76,6 +76,8 @@ set(SOURCES
   problems/LandIce_StokesFO.cpp
   problems/LandIce_StokesFOBase.cpp
   problems/LandIce_StokesFOThermoCoupled.cpp
+  problems/LandIce_ThicknessEvolution.cpp
+  problems/LandIce_ThicknessEvolution.cpp
   problems/LandIce_StokesFOThickness.cpp
   problems/LandIce_StokesFOHydrology.cpp
   evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
