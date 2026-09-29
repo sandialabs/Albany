@@ -111,7 +111,7 @@ ANONYMOUS:
             Field Type: Node Layered Scalar
             Field Origin: File
             Number Of Layers: 8
-            Field Value: [258.0, 258.0, 258.0, 258.0, 258.0, 258.0, 258.0, 258.0]
+            Field Value: 258.0   # same value for all layers
           Field 3:
             Field Name: basal_friction
             Field Type: Node Scalar

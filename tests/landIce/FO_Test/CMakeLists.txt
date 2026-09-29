@@ -77,7 +77,8 @@ ENDIF()
 ########################################
 
 if (ALBANY_OMEGAH)
-  # Same as above, but with a small structured MxN basal box mesh and analytic fields (easy to debug/adapt)
+  # Transient FO+H test on an extruded, small, structured MxN Omega_h basal box mesh, with analytic input fields.
+  # Meant as a small test case for debugging/adaptivity (see also FO_GIS Humboldt transient Omega_h test).
   set (testName ${testNameRoot}_Box_Transient_Omega_h)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah.yaml)
