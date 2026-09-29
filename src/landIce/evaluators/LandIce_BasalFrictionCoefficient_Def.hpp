@@ -798,9 +798,14 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   MeshScalarT q_inland = 1.0 - min_flotation_fraction;
 
   // Ocean-connected value at the end of the fixed near-ocean region.
-  // Guard against division by zero at ice-free cells (N will end up 0
-  // there regardless, since N is proportional to ice_term below).
-  MeshScalarT q_start = (ice_term > 0.0) ?
+  // Guard the division against (near-)zero ice_term: N is proportional
+  // to ice_term below, so it goes to 0 there regardless of q_start;
+  // using a thin-ice threshold (rather than a strict > 0.0 check)
+  // additionally avoids an extreme/overflowing q_start for a vanishingly
+  // small but nonzero thickness (same threshold convention used for
+  // thin-ice guards elsewhere, e.g. LandIce_StokesFOLateralResid).
+  const MeshScalarT thin_ice_threshold(1.0e-8); // [km]
+  MeshScalarT q_start = (thickness > thin_ice_threshold) ?
       MeshScalarT(rho_w * transition_h_ocean / ice_term) : MeshScalarT(0.0);
 
   MeshScalarT distance_into_transition =
@@ -809,7 +814,14 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
       std::exp(-distance_into_transition / pressure_smoothing_length_scale);
   MeshScalarT q = (height_above_flotation <= transition_h_ocean) ? q_ocean : transition_q;
 
-  return g * ice_term * q;
+  // Floor N at zero: q can go (slightly) negative from roundoff, or
+  // substantially negative if "Minimum Flotation Fraction" > 1 makes
+  // q_inland < 0. This guards downstream consumers of N that raise it
+  // to a (possibly non-integer) power (e.g. REGULARIZED_COULOMB) from
+  // NaN on a negative base. Note this only reinstates a floor at zero;
+  // it does not reinstate the upper cap at q_inland that was removed
+  // upstream.
+  return KU::max(g * ice_term * q, MeshScalarT(0.0));
 }
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
