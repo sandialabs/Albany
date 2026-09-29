@@ -798,21 +798,16 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   MeshScalarT q_inland = 1.0 - min_flotation_fraction;
 
   // Ocean-connected value at the end of the fixed near-ocean region.
+  // Guard against division by zero at ice-free cells (N will end up 0
+  // there regardless, since N is proportional to ice_term below).
   MeshScalarT q_start = (ice_term > 0.0) ?
       MeshScalarT(rho_w * transition_h_ocean / ice_term) : MeshScalarT(0.0);
-  // Guarantee the transition begins at or below the prescribed inland
-  // value, and keep the near-grounding-line branch bounded as well.
-  q_start = KU::min(q_start, q_inland);
-  MeshScalarT q_near_ocean = KU::min(q_ocean, q_inland);
 
   MeshScalarT distance_into_transition =
       KU::max(height_above_flotation - transition_h_ocean, 0.0);
   MeshScalarT transition_q = q_inland - (q_inland - q_start) *
       std::exp(-distance_into_transition / pressure_smoothing_length_scale);
-  MeshScalarT q = (height_above_flotation <= transition_h_ocean) ? q_near_ocean : transition_q;
-
-  // Roundoff safeguard.
-  q = KU::min(KU::max(q, 0.0), q_inland);
+  MeshScalarT q = (height_above_flotation <= transition_h_ocean) ? q_ocean : transition_q;
 
   return g * ice_term * q;
 }
