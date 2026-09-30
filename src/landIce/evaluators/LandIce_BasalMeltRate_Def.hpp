@@ -71,8 +71,6 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   dl_basal->node_qp_gradient->dimensions(dims);
   numSideNodes = dims[1];
   numSideQPs   = dims[2];
-  sideDim      = dims[3];
-  numCellNodes = basalVertVelocity.fieldTag().dataLayout().extent(1);
 
   basalSideName = p.get<std::string> ("Side Set Name");
 
@@ -81,11 +79,8 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   rho_i = physics_list->get<double>("Ice Density");//, 910.0);
   L = physics_list->get<double>("Ice Latent Heat Of Fusion");//, 3e5);
 
-  k_0 = physics_list->get<double>("Permeability factor");//, 0.0);
   k_i = physics_list->get<double>("Conductivity of ice");//, 1.0); //[W m^{-1} K^{-1}]
-  eta_w = physics_list->get<double>("Viscosity of water");//, 0.0018);
   g = physics_list->get<double>("Gravity Acceleration");//, 9.8);
-  alpha_om = physics_list->get<double>("Omega exponent alpha");//, 2.0);
 
   beta_p = physics_list->get<double>("Clausius-Clapeyron Coefficient");
   scyr = physics_list->get<double>("Seconds per Year");
@@ -165,7 +160,6 @@ operator() (const Basal_Melt_Rate_Tag&, const int& sideSet_idx) const {
 
     enthalpyBasalFlux(sideSet_idx,node) =  (basal_reg_scale-1) *mstar + k_i*dTdz_melting;
 
-    //ScalarT basal_water_flux = scyr * k_0 * (rho_w - rho_i) * g / eta_w * pow(phi(sideSet_idx,node),alpha_om); //[m yr^{-1}]
     ScalarT melting = scyr * basal_reg_scale * mstar / (L*rho_i); //[m yr^{-1}]
     basalVertVelocity(sideSet_idx,node) =  - melting /(1 - rho_w/rho_i*KU::min(phi(sideSet_idx,node),0.5));
   }

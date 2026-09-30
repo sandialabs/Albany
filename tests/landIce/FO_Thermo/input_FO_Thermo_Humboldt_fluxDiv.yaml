@@ -18,8 +18,6 @@ ANONYMOUS:
     Cubature Degrees (Horiz Vert): [4, 6]
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4
-    Needs Dissipation: true
-    Needs Basal Friction: true
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value

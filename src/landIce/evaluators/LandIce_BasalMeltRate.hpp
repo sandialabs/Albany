@@ -50,27 +50,21 @@ private:
   PHX::MDField<ScalarT> enthalpyBasalFlux; // [W m^{-2}]
   PHX::MDField<ScalarT> basalVertVelocity; // [m/yr]
 
-  std::vector<std::vector<int> >  sideNodes;
   std::string                     basalSideName;
 
-  unsigned int numCellNodes, numSideNodes, numSideQPs, sideDim;
+  unsigned int numSideNodes, numSideQPs;
 
   double rho_w; 	// [kg m^{-3}] density of water
   double rho_i; 	// [kg m^{-3}] density of ice
   double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
   double g;       //[m s^{-2}], Gravity Acceleration
 
-  double k_0;      //[m^2], Permeability factor
   double k_i;      //[W m^{-1} K^{-1}], Conductivity of ice
-  double eta_w;    //[Pa s], Viscosity of water
-  double alpha_om; //[adim], Omega exponent alpha
   double beta_p;   //[K Pa^{-1}], Clausius-Clapeyron ~7e-8
   double scyr ;    // [s/yr] (3.1536e7);
   double beta_scaling;  //[s yr^{-1} k^{-1}]
 
 
-  double flux_reg_alpha;
-  double flux_reg_beta;
   double basalMelt_reg_alpha;
   double basalMelt_reg_beta;
 
