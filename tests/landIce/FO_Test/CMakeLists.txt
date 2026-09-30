@@ -70,3 +70,19 @@ IF(ALBANY_SEACAS)
     set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
   endif()
 ENDIF()
+
+
+########################################
+###     Box mesh transient test      ###
+########################################
+
+if (ALBANY_OMEGAH)
+  # Transient FO+H test on an extruded, small, structured MxN Omega_h basal box mesh, with analytic input fields.
+  # Meant as a small test case for debugging/adaptivity (see also FO_GIS Humboldt transient Omega_h test).
+  set (testName ${testNameRoot}_Box_Transient_Omega_h)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_box_transient_omegah.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h")
+endif()
