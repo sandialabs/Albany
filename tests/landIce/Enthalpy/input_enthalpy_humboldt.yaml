@@ -14,8 +14,6 @@ ANONYMOUS:
     Flat Bed Approximation: false
     Basal Cubature Degree: 4
     Cubature Degree: 4
-    Needs Dissipation: true
-    Needs Basal Friction: true
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
     LandIce Viscosity:
