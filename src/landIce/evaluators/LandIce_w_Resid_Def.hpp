@@ -35,7 +35,6 @@ namespace LandIce
   wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  velocity (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
   coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
@@ -52,8 +51,10 @@ namespace LandIce
     sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
     side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
     side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
+    side_velocity_qp = decltype(side_velocity_qp)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_side->qp_vector);
     basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
     normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
+    upwind = p.get<bool>("Upwind Integration From Bed");
 
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
@@ -81,7 +82,7 @@ namespace LandIce
     sideNodes.sync_device();
 
     this->addDependentField(GradVelocity);
-    this->addDependentField(velocity);
+    this->addDependentField(side_velocity_qp);
     this->addDependentField(basalVerticalVelocitySideQP);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
@@ -103,18 +104,25 @@ namespace LandIce
   void w_Resid<EvalT,Traits,VelocityType>::
   operator() (const wResid_Cell_Tag&, const int& cell) const {
 
-    MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
-    for (std::size_t i = 0; i < numNodes; ++i) {
-      //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-      //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
-      //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-      diam_z = KU::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-    }
-    for (std::size_t node = 0; node < numNodes; ++node)
-      for (std::size_t qp = 0; qp < numQPs; ++qp)
-        Residual(cell,node) += ( w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp)
-                            + 0.0*  diam_z * w_z(cell,qp,2) * wGradBF(cell,node,qp,2);// + diam_xy * GradVelocity(cell,qp,0,0) * wGradBF(cell,node,qp,0);// +  diam_xy * GradVelocity(cell,qp,1,1) * wGradBF(cell,node,qp,1);
+    // Incompressibility, w_z + u_x + v_y = 0, with a consistent streamline-upwind term in the vertical:
+    // the test function is v + 0.5*dz*v_z, which makes the scheme integrate upward from the bed.
+    // With linear basis functions, the w-w block becomes block lower triangular (layer by layer)
+    // with positive definite diagonal blocks, whereas the Galerkin form has zero diagonal entries.
+    MeshScalarT tau = 0;
+    for (std::size_t qp = 0; qp < numQPs; ++qp) {      
+      if(upwind) {
+        MeshScalarT sumW(0), sumAbsGz(0);
+        for (std::size_t node = 0; node < numNodes; ++node) {
+          sumW     += wBF(cell,node,qp);
+          sumAbsGz += std::abs(wGradBF(cell,node,qp,2));
+        }
+        tau = sumW/sumAbsGz;   // = 0.5*dz = 1/sum_i |dN_i/dz|
+      }
 
+      ScalarT divU = w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) + GradVelocity(cell,qp,1,1);
+      for (std::size_t node = 0; node < numNodes; ++node)
+        Residual(cell,node) += divU * wBF(cell,node,qp) + tau * divU * wGradBF(cell,node,qp,2);
+    }
   }
 
   template<typename EvalT, typename Traits, typename VelocityType>
@@ -134,9 +142,10 @@ namespace LandIce
     for (unsigned int snode=0; snode<numSideNodes; ++snode) {
       int cnode = sideNodes.view_device()(side,snode);
       for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
+      // No penetration condition at the bed
       Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
-                                  velocity(cell,qp,0)  * normals(side_idx,qp,0) +
-                                  velocity(cell,qp,1)  * normals(side_idx,qp,1) +
+                                  side_velocity_qp(side_idx,qp,0)  * normals(side_idx,qp,0) +
+                                  side_velocity_qp(side_idx,qp,1)  * normals(side_idx,qp,1) +
                                   basalVerticalVelocitySideQP(side_idx, qp)) *
                               sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
       }
