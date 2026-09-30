@@ -35,7 +35,6 @@ namespace LandIce
   wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
   wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  velocity (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
   coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
@@ -52,6 +51,7 @@ namespace LandIce
     sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
     side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
     side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
+    side_velocity_qp = decltype(side_velocity_qp)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_side->qp_vector);
     basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
     normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
 
@@ -81,7 +81,7 @@ namespace LandIce
     sideNodes.sync_device();
 
     this->addDependentField(GradVelocity);
-    this->addDependentField(velocity);
+    this->addDependentField(side_velocity_qp);
     this->addDependentField(basalVerticalVelocitySideQP);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
@@ -134,9 +134,10 @@ namespace LandIce
     for (unsigned int snode=0; snode<numSideNodes; ++snode) {
       int cnode = sideNodes.view_device()(side,snode);
       for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
+      // No penetration condition at the bed
       Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
-                                  velocity(cell,qp,0)  * normals(side_idx,qp,0) +
-                                  velocity(cell,qp,1)  * normals(side_idx,qp,1) +
+                                  side_velocity_qp(side_idx,qp,0)  * normals(side_idx,qp,0) +
+                                  side_velocity_qp(side_idx,qp,1)  * normals(side_idx,qp,1) +
                                   basalVerticalVelocitySideQP(side_idx, qp)) *
                               sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
       }
