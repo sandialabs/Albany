@@ -13,21 +13,11 @@
 
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_DiscretizationUtils.hpp"
-#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_w_Resid.hpp"
 
 namespace LandIce
 {
-
-  template<typename Type>
-  Type distance (const Type& x0, const Type& x1, const Type& x2,
-                 const Type& y0, const Type& y1, const Type& y2)
-  {
-    return std::sqrt(std::pow(x0-y0,2) +
-                     std::pow(x1-y1,2) +
-                     std::pow(x2-y2,2));
-  }
 
   template<typename EvalT, typename Traits, typename VelocityType>
   w_Resid<EvalT,Traits,VelocityType>::
@@ -36,7 +26,6 @@ namespace LandIce
   wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
-  coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
   {
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -90,7 +79,6 @@ namespace LandIce
     this->addDependentField(side_w_qp);
     this->addDependentField(side_w_measure);
     this->addDependentField(w_z);
-    this->addDependentField(coordVec);
     this->addDependentField(normals);
 
     this->addEvaluatedField(Residual);

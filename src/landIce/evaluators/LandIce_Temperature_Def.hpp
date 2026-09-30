@@ -9,7 +9,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_Print.hpp"
-#include "Shards_CellTopology.hpp"
 
 #include "Albany_ScalarOrdinalTypes.hpp"
 #include "Albany_AbstractDiscretization.hpp"
@@ -25,16 +24,10 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
  : meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar)
  , enthalpyHs     (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar)
  , enthalpy     (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar)
- // , thickness     (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar)
  , temperature    (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar)
  , correctedTemp  (p.get<std::string> ("Corrected Temperature Variable Name"), dl->node_scalar)
  , diffEnth       (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
 {
-  Teuchos::RCP<shards::CellTopology> cellType;
-  cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-
-  // dTdz = decltype(dTdz)(p.get<std::string> ("Basal dTdz Variable Name"), dl_side->node_scalar);
-
   std::vector<PHX::Device::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
 
@@ -43,12 +36,10 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
   this->addDependentField(meltingTemp);
   this->addDependentField(enthalpyHs);
   this->addDependentField(enthalpy);
-  // this->addDependentField(thickness);
 
   this->addEvaluatedField(temperature);
   this->addEvaluatedField(correctedTemp);
   this->addEvaluatedField(diffEnth);
-  // this->addEvaluatedField(dTdz);
   this->setName("Temperature");
 
   // Setting parameters
@@ -86,12 +77,10 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(meltingTemp,fm);
   this->utils.setFieldData(enthalpyHs,fm);
   this->utils.setFieldData(enthalpy,fm);
-  // this->utils.setFieldData(thickness,fm);
 
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(correctedTemp,fm);
   this->utils.setFieldData(diffEnth,fm);
-  // this->utils.setFieldData(dTdz,fm);
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();

@@ -8,8 +8,6 @@ ANONYMOUS:
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
     Flat Bed Approximation: true
-    Needs Dissipation: true
-    Needs Basal Friction: true
     Cubature Degree: 4
     Basal Cubature Degree: 4
     Dirichlet BCs:

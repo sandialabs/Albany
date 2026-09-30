@@ -47,31 +47,22 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    Enthalpy;  //[MW s m^{-3}]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                EnthalpyGrad; //[kW s m^{-4}]
   PHX::MDField<const MeshScalarT,Cell,QuadPoint>                EnthalpyHs;  //[MW s m^{-3}]
-  PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
 
   PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim>          Velocity; //[m yr^{-1}]
-  PHX::MDField<const VelocityST,Cell,QuadPoint,VecDim, Dim>     velGrad; //[m yr^{-1}]
   PHX::MDField<const VelocityST,Cell,QuadPoint>                 verticalVel; //[m yr^{-1}]
   PHX::MDField<const MeshScalarT,Cell,Node,Dim>                 coordVec; // [km]
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    diss;  //[W m^{-3}] = [Pa s^{-1}]
-  PHX::MDField<const ScalarT,Cell,Node>                         basalFricHeat;  // [MW] = [k^{-1} Pa s^{-1} km^3], k=1000
-  PHX::MDField<const ScalarT,Cell,Node>                         basalFricHeatSUPG; // [MW s^{-1}] = [k^{-1} Pa s^{-2} km^3], k=1000
-  PHX::MDField<const ScalarT,Cell,Node>                         geoFluxHeat;     // [MW]
-  PHX::MDField<const ScalarT,Cell,Node>                         geoFluxHeatSUPG; // [MW s^{-1}]
   PHX::MDField<const ScalarT,Cell,QuadPoint>                    phi;                //[]
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                phiGrad;        //[km^{-1}
   PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>            meltTempGrad; // [K km^{-1}]
   PHX::MDField<const ScalarT,Cell,Node>                         basalResid; // [k^{2} W], k =1000
-  PHX::MDField<const ScalarT,Cell,Node>                         basalResidSUPG; // [k^{2} W], k =1000
 
   PHX::MDField<const ScalarT,Dim>                               homotopy;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual; // [k^3 W]  = [km^3 Pa s^{-1} ], k =1000
 
-  unsigned int numQPs, numNodes, vecDimFO;
-
-  bool needsDiss, needsBasFric;
+  unsigned int numQPs, numNodes;
 
   double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
@@ -83,7 +74,6 @@ private:
   double rho_w; // [kg m^{-3}] density of water
   double g;     //[m s^{-2}], Gravity Acceleration
   double L;     //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5);
-  double a;     // [adim], Diffusivity homotopy exponent
   double drainage_coeff; //[kg s^{-3}]
   double alpha_om; //[adim], Omega exponent alpha
   double scyr ;    // [s/yr] (3.1536e7);

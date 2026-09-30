@@ -85,9 +85,6 @@ protected:
   void setupEvaluatorRequests ();
   void setFieldsProperties ();
 
-  bool needsDiss;
-  bool needsBasFric;
-
   bool adjustBedTopo;
   bool adjustSurfaceHeight;
   bool fluxDivIsPartOfSolution;
@@ -265,7 +262,6 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p = Teuchos::rcp(new Teuchos::ParameterList(resid_names[1]));
 
   //Input
-  p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
   p->set<std::string>("Velocity Side QP Variable Name", dof_names[0] + "_" + basalSideName);
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
@@ -278,7 +274,6 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
-  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<bool>("Upwind Integration From Bed", !this->depthIntegratedModel);
 
   //Output
@@ -322,7 +317,6 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Basal Friction Coefficient Side Variable Name", "beta_" + basalSideName);
   p->set<std::string>("Enthalpy Hs Side Variable Name", melting_enthalpy_name + "_" + basalSideName);
   p->set<std::string>("Enthalpy Side Variable Name", dof_names[2] + "_" + basalSideName);
-  p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
   p->set<Teuchos::ParameterList*>("LandIce Enthalpy", &params->sublist("LandIce Enthalpy", false));
@@ -345,9 +339,6 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Enthalpy Variable Name", dof_names[2]);
 
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-
-  p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   //Output
   p->set<std::string>("Water Content Variable Name", water_content_name);
@@ -394,15 +385,11 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Melting Temperature Variable Name", melting_temperature_name);
   p->set<std::string>("Enthalpy Hs Variable Name", melting_enthalpy_name);
   p->set<std::string>("Enthalpy Variable Name", dof_names[2]);
-  p->set<std::string>("Thickness Variable Name", ice_thickness_name);
-  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
-  p->set<std::string>("Side Set Name", basalSideName);
 
   //Output
   p->set<std::string>("Temperature Variable Name", temperature_name);
   p->set<std::string>("Corrected Temperature Variable Name", corrected_temperature_name);
-  // p->set<std::string>("Basal dTdz Variable Name", "basal_dTdz");
   p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
 
   ev = Teuchos::rcp(new LandIce::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
@@ -418,23 +405,14 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Enthalpy QP Variable Name", dof_names[2]);
   p->set<std::string>("Enthalpy Gradient QP Variable Name", dof_names[2] + " Gradient");
   p->set<std::string>("Enthalpy Hs QP Variable Name", melting_enthalpy_name);
-  p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
   p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
-  p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<std::string>("Vertical Velocity QP Variable Name", dof_names[1]);
   p->set<std::string>("Melting Temperature Gradient QP Variable Name",melting_temperature_name + " Gradient");
   p->set<std::string>("Enthalpy Basal Residual Variable Name", "Enthalpy Basal Residual");
-
-  if(needsDiss) {
-    p->set<std::string>("Dissipation QP Variable Name", "LandIce Dissipation");
-  }
-
+  p->set<std::string>("Dissipation QP Variable Name", "LandIce Dissipation");
   p->set<std::string>("Water Content QP Variable Name",water_content_name);
   p->set<std::string>("Water Content Gradient QP Variable Name",water_content_name + " Gradient");
   p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
-  p->set<bool>("Needs Dissipation", needsDiss);
-  p->set<bool>("Needs Basal Friction", needsBasFric);
-  p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("LandIce Physical Parameters", &params->sublist("LandIce Physical Parameters"));
   p->set<Teuchos::ParameterList*>("LandIce Enthalpy Regularization", &params->sublist("LandIce Enthalpy", false).sublist("Regularization", false));
   if(params->isSublist("LandIce Enthalpy") &&  params->sublist("LandIce Enthalpy").isParameter("Stabilization")) {
