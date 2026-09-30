@@ -807,6 +807,8 @@ computeTransitionEffectivePressure (const MeshScalarT& thickness, const MeshScal
   const MeshScalarT thin_ice_threshold(1.0e-8); // [km]
   MeshScalarT q_start = (thickness > thin_ice_threshold) ?
       MeshScalarT(rho_w * transition_h_ocean / ice_term) : MeshScalarT(0.0);
+  // Ensure q is continuous when bed_topo>0
+  q_start = KU::min(q_start, 1.0);
 
   MeshScalarT distance_into_transition =
       KU::max(height_above_flotation - transition_h_ocean, 0.0);
