@@ -45,7 +45,7 @@ private:
 
   PHX::MDField<const ScalarT> basalVerticalVelocitySideQP; // [m yr^{-1}]
   PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
-  PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim>  velocity; // [m yr^{-1}]
+  PHX::MDField<const VelocityType>  side_velocity_qp; // [m yr^{-1}], horizontal velocity at basal side QPs
   PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
   PHX::MDField<const ScalarT> side_w_qp; // [m yr^{-1}]
   PHX::MDField<const MeshScalarT,Cell,Node,Dim>  coordVec; // [km]
@@ -61,6 +61,7 @@ private:
   unsigned int numSideNodes;
   unsigned int numQPs;
   unsigned int numSideQPs;
+  bool upwind; //wether to use upwind derivative from bed. Only correct for linear elements in the vertical direction 
 
 public:
 

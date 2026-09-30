@@ -188,8 +188,11 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
         meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
         meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-    retval -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-                            nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+    // Gravity-driven drainage, div(rho_w L j), j = k0/eta_w phi^alpha (rho_w-rho_i) g (strong form)
+    retval -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
+
+    // Water-content diffusion, -div(nu rho_w L grad(phi)) (weak form).
+    retval += nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
                                 phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
                                 phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
   }
