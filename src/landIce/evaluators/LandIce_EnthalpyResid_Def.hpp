@@ -36,9 +36,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   Enthalpy     (p.get<std::string> ("Enthalpy QP Variable Name"), dl->qp_scalar),
   EnthalpyGrad (p.get<std::string> ("Enthalpy Gradient QP Variable Name"), dl->qp_gradient),
   EnthalpyHs   (p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar ),
-  diffEnth     (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar),
   Velocity		 (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
-  velGrad      (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   verticalVel	 (p.get<std::string> ("Vertical Velocity QP Variable Name"),  dl->qp_scalar),
   coordVec 		 (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   phi			     (p.get<std::string> ("Water Content QP Variable Name"), dl->qp_scalar ),
@@ -52,7 +50,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
-  vecDimFO = 2;
 
   if(p.isParameter("LandIce Enthalpy Stabilization")) {
     Teuchos::ParameterList* stabilization_list = p.get<Teuchos::ParameterList*>("LandIce Enthalpy Stabilization");
@@ -67,17 +64,12 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
     delta = 0;
   }
 
-  needsDiss = p.get<bool>("Needs Dissipation");
-  needsBasFric = p.get<bool>("Needs Basal Friction");
-
   this->addDependentField(Enthalpy);
   this->addDependentField(EnthalpyGrad);
   this->addDependentField(EnthalpyHs);
-  this->addDependentField(diffEnth);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(Velocity);
-  this->addDependentField(velGrad);
   this->addDependentField(verticalVel);
   this->addDependentField(coordVec);
   this->addDependentField(meltTempGrad);
@@ -86,12 +78,9 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   this->addDependentField(homotopy);
   this->addDependentField(basalResid);
 
-  if (needsDiss)
-  {
-    diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
-    this->addDependentField(diss);
-  }
-
+  diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
+  this->addDependentField(diss);
+  
   this->addEvaluatedField(Residual);
   this->setName("EnthalpyResid");
 
@@ -110,8 +99,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   g = physics_list->get<double>("Gravity Acceleration"); //[m s^{-2}]
   L = physics_list->get<double>("Ice Latent Heat Of Fusion"); //[J kg^{-1} ]
   alpha_om = physics_list->get<double>("Omega exponent alpha");
-
-  a = physics_list->get<double>("Diffusivity homotopy exponent");
 
   drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w; //[kg s^{-3}]
   scyr = physics_list->get<double>("Seconds per Year");
@@ -172,8 +159,7 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
   ScalarT retval = powm3*basalResid(cell,node);  //go to zero in temperate region
 
   for (std::size_t qp = 0; qp < numQPs; ++qp) {
-    if (needsDiss)
-      retval -= (diss(cell,qp))*wBF(cell,node,qp);
+    retval -= (diss(cell,qp))*wBF(cell,node,qp);
 
     ScalarT w = verticalVel(cell,qp);
     ScalarT scale = 0.5 - 0.5*tanh(flux_reg_coeff * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)));
@@ -188,8 +174,11 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
         meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
         meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-    retval -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp) +
-                            nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+    // Gravity-driven drainage, div(rho_w L j), j = k0/eta_w phi^alpha (rho_w-rho_i) g (strong form)
+    retval -= powm3 * (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
+
+    // Water-content diffusion, -div(nu rho_w L grad(phi)) (weak form).
+    retval += nu * (1 - scale) * powm6 * rho_w * L * (phiGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
                                 phiGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
                                 phiGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
   }
@@ -249,7 +238,7 @@ operator() (const SU_Stabilization_Tag&, const int& cell) const{
 
     for (std::size_t qp = 0; qp < numQPs; ++qp) {
       ScalarT w = verticalVel(cell,qp);
-      wSU = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2)); // +(velGrad(cell,qp,0,0)+velGrad(cell,qp,1,1))*wBF(cell,node,qp));
+      wSU = delta*diam/vmax*(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + w * wGradBF(cell,node,qp,2));
       val[node] += pow3*(Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
           Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + w*EnthalpyGrad(cell,qp,2))*wSU/scyr;
     }
@@ -285,11 +274,9 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(Enthalpy,fm);
   this->utils.setFieldData(EnthalpyGrad,fm);
   this->utils.setFieldData(EnthalpyHs,fm);
-  this->utils.setFieldData(diffEnth,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(Velocity,fm);
-  this->utils.setFieldData(velGrad,fm);
   this->utils.setFieldData(verticalVel,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(meltTempGrad,fm);
@@ -297,9 +284,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(phiGrad,fm);
   this->utils.setFieldData(homotopy,fm);
   this->utils.setFieldData(basalResid,fm);
-
-  if (needsDiss)
-    this->utils.setFieldData(diss,fm);
+  this->utils.setFieldData(diss,fm);
 
   this->utils.setFieldData(Residual,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());

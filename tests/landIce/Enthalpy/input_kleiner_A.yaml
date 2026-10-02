@@ -9,8 +9,6 @@ ANONYMOUS:
     Basal Side Name: basalside
     Cubature Degree: 4
     Basal Cubature Degree: 3
-    Needs Dissipation: true
-    Needs Basal Friction: true
     Flat Bed Approximation: false
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy

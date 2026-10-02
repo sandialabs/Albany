@@ -44,10 +44,6 @@ EnthalpyBasalResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
   dl_basal->node_qp_gradient->dimensions(dims);
   numSideNodes = dims[1];
   numSideQPs   = dims[2];
-  numCellNodes = enthalpyBasalResid.fieldTag().dataLayout().extent(1);
-
-  dl->node_vector->dimensions(dims);
-  vecDimFO     = std::min((int)dims[2],2);
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");

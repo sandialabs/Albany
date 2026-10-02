@@ -19,8 +19,6 @@ ANONYMOUS:
     Cubature Degrees (Horiz Vert): [4, 6]
     Basal Cubature Degree: 4
     Surface Cubature Degree: 4
-    Needs Dissipation: true
-    Needs Basal Friction: true
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value
@@ -405,14 +403,14 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  9.641748816124e+00
+    Test Value:  9.640181536512e+00
     Sensitivity For Parameter 0:
-      Test Value: 2.440106502494e+00
+      Test Value: 2.440211465301e+00
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
-    Test Value: 6.405018328683e-04
+    Test Value: 6.405288404936e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.426531983367e-04
+      Test Value: 1.426531256163e-04
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
     Test Value:  5.967986097162e+00

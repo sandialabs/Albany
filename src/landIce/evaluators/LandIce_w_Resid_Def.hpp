@@ -13,31 +13,18 @@
 
 #include "Albany_SacadoTypes.hpp"
 #include "Albany_DiscretizationUtils.hpp"
-#include "Albany_KokkosUtils.hpp"
 
 #include "LandIce_w_Resid.hpp"
 
 namespace LandIce
 {
 
-  template<typename Type>
-  Type distance (const Type& x0, const Type& x1, const Type& x2,
-                 const Type& y0, const Type& y1, const Type& y2)
-  {
-    return std::sqrt(std::pow(x0-y0,2) +
-                     std::pow(x1-y1,2) +
-                     std::pow(x2-y2,2));
-  }
-
   template<typename EvalT, typename Traits, typename VelocityType>
   w_Resid<EvalT,Traits,VelocityType>::
   w_Resid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
   wBF          (p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
-  wGradBF      (p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
   GradVelocity   (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
-  velocity (p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   w_z        (p.get<std::string> ("w Gradient QP Variable Name"), dl->qp_gradient),
-  coordVec     (p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
   Residual     (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
   {
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -52,6 +39,7 @@ namespace LandIce
     sideBF = decltype(sideBF)(p.get<std::string> ("BF Side Name"), dl_side->node_qp_scalar);
     side_w_measure = decltype(side_w_measure)(p.get<std::string> ("Weighted Measure Side Name"), dl_side->qp_scalar);
     side_w_qp  = decltype(side_w_qp)(p.get<std::string> ("w Side QP Variable Name"), dl_side->qp_scalar);
+    side_velocity_qp = decltype(side_velocity_qp)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_side->qp_vector);
     basalVerticalVelocitySideQP = decltype(basalVerticalVelocitySideQP)(p.get<std::string>("Basal Vertical Velocity Side QP Variable Name"), dl_side->qp_scalar);
     normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
 
@@ -81,15 +69,13 @@ namespace LandIce
     sideNodes.sync_device();
 
     this->addDependentField(GradVelocity);
-    this->addDependentField(velocity);
+    this->addDependentField(side_velocity_qp);
     this->addDependentField(basalVerticalVelocitySideQP);
     this->addDependentField(wBF);
-    this->addDependentField(wGradBF);
     this->addDependentField(sideBF);
     this->addDependentField(side_w_qp);
     this->addDependentField(side_w_measure);
     this->addDependentField(w_z);
-    this->addDependentField(coordVec);
     this->addDependentField(normals);
 
     this->addEvaluatedField(Residual);
@@ -103,17 +89,9 @@ namespace LandIce
   void w_Resid<EvalT,Traits,VelocityType>::
   operator() (const wResid_Cell_Tag&, const int& cell) const {
 
-    MeshScalarT diam_z(0);//, diam_xy(0), diam_z(0);
-    for (std::size_t i = 0; i < numNodes; ++i) {
-      //  diam = std::max(diam,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
-      //                                              coordVec(cell,0,0),coordVec(cell,0,1),coordVec(cell,j,2)));
-      //  diam_xy = std::max(diam_xy,distance<MeshScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),MeshScalarT(0.0),coordVec(cell,0,0),coordVec(cell,0,1),MeshScalarT(0.0)));
-      diam_z = KU::max(diam_z,std::abs(coordVec(cell,i,2) - coordVec(cell,0,2)));
-    }
     for (std::size_t node = 0; node < numNodes; ++node)
       for (std::size_t qp = 0; qp < numQPs; ++qp)
-        Residual(cell,node) += ( w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp)
-                            + 0.0*  diam_z * w_z(cell,qp,2) * wGradBF(cell,node,qp,2);// + diam_xy * GradVelocity(cell,qp,0,0) * wGradBF(cell,node,qp,0);// +  diam_xy * GradVelocity(cell,qp,1,1) * wGradBF(cell,node,qp,1);
+        Residual(cell,node) += ( w_z(cell,qp,2) + GradVelocity(cell,qp,0,0) +  GradVelocity(cell,qp,1,1) ) * wBF(cell,node,qp);
 
   }
 
@@ -134,9 +112,10 @@ namespace LandIce
     for (unsigned int snode=0; snode<numSideNodes; ++snode) {
       int cnode = sideNodes.view_device()(side,snode);
       for (std::size_t qp = 0; qp < numSideQPs; ++qp) {
+      // No penetration condition at the bed
       Residual(cell,cnode) += (side_w_qp(side_idx,qp) * normals(side_idx,qp,2) +
-                                  velocity(cell,qp,0)  * normals(side_idx,qp,0) +
-                                  velocity(cell,qp,1)  * normals(side_idx,qp,1) +
+                                  side_velocity_qp(side_idx,qp,0)  * normals(side_idx,qp,0) +
+                                  side_velocity_qp(side_idx,qp,1)  * normals(side_idx,qp,1) +
                                   basalVerticalVelocitySideQP(side_idx, qp)) *
                               sideBF(side_idx,snode,qp) * side_w_measure(side_idx,qp);
       }

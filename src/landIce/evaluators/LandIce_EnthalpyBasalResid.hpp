@@ -21,9 +21,10 @@
 namespace LandIce
 {
 
-/** \brief Geotermal Flux Heat Evaluator
+/** \brief Enthalpy Basal Residual
 
-  This evaluator evaluates the production of heat coming from the earth
+  This evaluator integrates the basal enthalpy flux (Stefan condition) against the basis
+  functions of the basal side and scatters it to the cell nodes
  */
 
 template<typename EvalT, typename Traits, typename Type>
@@ -45,46 +46,19 @@ private:
   // Input:
   PHX::MDField<const RealType>         BF;          // []
   PHX::MDField<const MeshScalarT>           w_measure;   // [km^2]
-  // PHX::MDField<const RealType,Cell,Side,QuadPoint>              geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
-  // PHX::MDField<const Type,Cell,Side,QuadPoint>                  beta; // [kPa m / yr]
-  // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               basal_dTdz; // [K  km^{-1}]
-  // PHX::MDField<const ScalarT,Cell,Side, QuadPoint>              enthalpy;  //[MW s m^{-3}]
-  // PHX::MDField<const ParamScalarT,Cell, Side, QuadPoint>        enthalpyHs;  //[MW s m^{-3}]
-  // PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>           velocity; // [m yr^{-1}
-  // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               verticalVel; // [m y^{-1}]
-  // PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
-  // PHX::MDField<const ScalarT,Cell,Node>                         diffEnth;  //[MW s m^{-3}]
-  // PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               phi;  // []
-  // PHX::MDField<const ScalarT,Dim>                               homotopy;
   PHX::MDField<const ScalarT>               basalMeltRateQP;      // [MW] = [m/yr]
 
   // Output:
   PHX::MDField<ScalarT> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]
-  // PHX::MDField<ScalarT,Cell,Side, Node> basalMeltRate;      // [MW] = [m/yr]
   
   Albany::LocalSideSetInfo sideSet;
 
   Kokkos::DualView<int**, PHX::Device> sideNodes;
   std::string                     basalSideName;
 
-  unsigned int numCellNodes;
   unsigned int numSideNodes;
   unsigned int numSideQPs;
   unsigned int sideDim;
-  unsigned int vecDimFO;
-
-  // double a;
-  // double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
-  // double beta_p;  //[K Pa^{-1}]
-  // double rho_i;  // [kg m^{-3}]
-  // double rho_w;  // [kg m^{-3}]
-  // double g;  //[m s^{-2}]
-  // double L;       //[J kg^{-1} ] Ice Latent Heat Of Fusion", 3e5)
-  // double k_0;     //[m^2], Permeability factor
-  // double eta_w;   //[Pa s], Viscosity of water
-  // double alpha_om; //[]
-
-  // bool haveSUPG;
 
   public:
 

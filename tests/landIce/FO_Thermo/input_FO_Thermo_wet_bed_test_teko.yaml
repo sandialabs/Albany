@@ -12,8 +12,6 @@ ANONYMOUS:
     Flat Bed Approximation: true
     Cubature Degree: 4
     Basal Cubature Degree: 4
-    Needs Dissipation: true
-    Needs Basal Friction: true
     Dirichlet BCs:
       DBC on NS top for DOF Enth prescribe Field: surface_enthalpy
       DBC on NS bottom for DOF U1: 0.0
@@ -424,7 +422,7 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Sensitivity For Parameter 0:
-      Test Value: -4.047527788959e-01
-    Test Value: 9.189270361965e-01
-    Relative Tolerance: 1.0e-02
+      Test Value: -3.960123974668e-01
+    Test Value: 9.223545445623e-01
+    Relative Tolerance: 1.0e-06
 ...

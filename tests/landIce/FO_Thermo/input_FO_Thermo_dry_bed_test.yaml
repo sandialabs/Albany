@@ -8,8 +8,6 @@ ANONYMOUS:
     Name: LandIce Stokes FO Thermo Coupled 3D
     Basal Side Name: basalside
     Flat Bed Approximation: true
-    Needs Dissipation: true
-    Needs Basal Friction: true
     Cubature Degree: 4
     Basal Cubature Degree: 4
     Dirichlet BCs:
@@ -230,7 +228,7 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value: 5.622308517722e-01
+    Test Value: 5.657043029710e-01
     Sensitivity For Parameter 0:
-      Test Value: 2.344521645843e-01
+      Test Value: 2.693550475988e-01
 ...

@@ -18,8 +18,6 @@ ANONYMOUS:
     Cubature Degree: 4
     Basal Cubature Degree: 3
     Surface Cubature Degree: 4
-    Needs Dissipation: true
-    Needs Basal Friction: true
     LandIce Field Norm:
       sliding_velocity_basalside:
         Regularization Type: Given Value
@@ -309,7 +307,7 @@ ANONYMOUS:
                   CoarseOperator Type: IPOUHarmonicCoarseOperator           # Second Level: IPOUHarmonicCoarseOperator work for all kinds of GDSW type coarse spaces
                   Recycling: true                                           # This enables the possibility to re-use parts of the preconditioner in a Newton or time iteration
                   Dimension: 3                                              # Spatial dimension of the problem
-                  DofsPerNode: 6                                            # Number of degrees of freedom per node
+                  DofsPerNode: 5                                            # Number of degrees of freedom per node
                   Overlap: 0                                                # Number of layers of elements in the overlap
                   Null Space Type: Input                                    # Null space is provided by Albany
                   AlgebraicOverlappingOperator:
@@ -362,8 +360,8 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  1.554983546608e+01
+    Test Value:  1.539940346377e+01
     Sensitivity For Parameter 0:
-      Test Value: 7.652733203298e+00
+      Test Value: 7.521568221863e+00
 ...
 ...
