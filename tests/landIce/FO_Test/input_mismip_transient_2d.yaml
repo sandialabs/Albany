@@ -2,159 +2,68 @@
 ---
 ANONYMOUS:
   Debug Output:
-    #Write Solution to MatrixMarket: -3
-    #Write Jacobian to MatrixMarket: -1
-    #Write Residual to MatrixMarket: -1
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
+          #Write Residual to MatrixMarket: -1
   Problem:
-    Phalanx Graph Visualization Detail: 0
+    Phalanx Graph Visualization Detail: 1
+    Use MDField Memoization: False
     Solution Method: Transient
-    Name: LandIce Coupled FO H 3D
+    Name: LandIce Thickness Evolution
     Compute Sensitivities: false
-    Allow Loss Of Derivative Terms: true
-    Basal Side Name: basalside
-    Surface Side Name: upperside
-    Flat Bed Approximation: true
+    Thickness Stabilization: SUPG
+    Lateral Side Name: boundary_side_set_2     
+    Lump Time Derivative Mass Matrix: true
     Cubature Degree: 4
-    Basal Cubature Degree: 4
-    Surface Cubature Degree: 4
     Response Functions:
       Number Of Responses: 1
       Response 0:
         Type: Scalar Response
-        Name: Surface Velocity Mismatch
-    Dirichlet BCs:
-      SDBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
-      SDBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+        Name: Solution Average
+    Dirichlet BCs: 
+    #  SDBC on NS boundary_node_set_1 for DOF H: 0.1
     Neumann BCs: {}
-    LandIce BCs:
-      Number: 2
-      BC 0:
-        Type: Basal Friction
-        Side Set Name: basalside
-        Basal Friction Coefficient:
-          Type: Field
-          Beta Field Name: basal_friction
-      BC 1:
-        Type: Lateral
-        Cubature Degree: 4
-        Side Set Name: lateralside
     Parameters:
       Number Of Parameters: 0
-      Parameter 0:
+      Parameter 2:
         Type: Scalar
         Name: Glen's Law Homotopy Parameter
+      Parameter 0:
+        Type: Distributed
+        Name: surface_height_computed
+      Parameter 1:
+        Type: Distributed
+        Name: ice_thickness_computed
     LandIce Physical Parameters:
       Water Density: 1.028e+03
       Ice Density: 9.10e+02
       Gravity Acceleration: 9.81e+00
       Clausius-Clapeyron Coefficient: 0.0
-    LandIce Viscosity:
-      Type: Glen's Law
-      Glen's Law Homotopy Parameter: 0.3
-      Glen's Law A: 2.400304414e-24            # [Pa^-n s^-1
-      Glen's Law n: 3.0
-      Flow Rate Type: Temperature Based
-    Body Force:
-      Type: FO INTERP SURF GRAD
   Discretization:
-    Method: Extruded
+    Method: Ioss
     Number Of Time Derivatives: 1
-    # Exodus Output File Name: output/humboldt_transient.exo
-    Columnwise Ordering: false
-    NumLayers: 5
-    Thickness Field Name: ice_thickness
-    #Surface Height Field Name: surface_height
-    Use Glimmer Spacing: true
-    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography,thickness_forcing]
-    Interpolate Basal Layered Fields: [temperature,velocity]
+    Restart Index: 1
+    Exodus Output File Name: output/mismip_transient_2s.exo
+    Exodus Input File Name: ../AsciiMeshes/MISMIP/mismip_2d.exo
+    Use Serial Mesh: false
     Required Fields Info:
-      Number Of Fields: 6
+      Number Of Fields: 3
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
-        Field Origin: Mesh
+        Field Origin: File
+        File Name: ../AsciiMeshes/MISMIP/thickness.ascii
       Field 1:
-        Field Name: surface_height
-        Field Type: Node Scalar
-        Field Origin: Mesh
-      Field 2:
-        Field Name: temperature
-        Field Type: Node Scalar
-        Field Origin: Mesh
-      Field 3:
-        Field Name: bed_topography 
-        Field Type: Node Scalar
-        Field Origin: Mesh
-      Field 4:
         Field Name: velocity
         Field Type: Node Vector
-        Field Origin: Mesh
-      Field 5:
-        Field Name: thickness_forcing
+        Field Origin: File
+        Vector Dim: 2
+        File Name: ../AsciiMeshes/MISMIP/averaged_velocity.ascii
+      Field 2:
+        Field Name: forcing
         Field Type: Node Scalar
-        Field Origin: Mesh
-    Side Set Discretizations:
-      Side Sets: [basalside, upperside]
-      basalside:
-        Method: Ioss
-        Number Of Time Derivatives: 1
-        Restart Index: 1
-        Exodus Output File Name: humboldt_transient_basal.exo
-        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
-        Use Serial Mesh: ${USE_SERIAL_MESH}
-        Required Fields Info:
-          Number Of Fields: 7
-          Field 0:
-            Field Name: ice_thickness
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
-          Field 1:
-            Field Name: surface_height
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
-          Field 2:
-            Field Name: temperature
-            Field Type: Node Layered Scalar
-            Field Origin: File
-            Number Of Layers: 8
-            File Name: ../AsciiMeshes/Humboldt/nodal_temperature.ascii
-          Field 3:
-            Field Name: basal_friction
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/basal_friction.ascii
-          Field 4:
-            Field Name: bed_topography #surface_height
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii #surface_height.ascii
-          Field 5:
-            Field Name: velocity
-            Field Origin: File
-            Field Type: Node Layered Vector
-            Number Of Layers: 2
-            Vector Dim: 2
-            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
-          Field 6:
-            Field Name: thickness_forcing
-            Field Type: Node Scalar
-            Field Origin: File
-            Field Value: 0.0
-      upperside:
-        Required Fields Info:
-          Number Of Fields: 2
-          Field 0:
-            Field Name: observed_surface_velocity
-            Field Type: Node Vector
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
-          Field 1:
-            Field Name: observed_surface_velocity_RMS
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
+        Field Origin: File
+        Field Value: 0.3
   Piro:
     Tempus: 
       Integrator Name: Tempus Integrator
@@ -169,8 +78,8 @@ ANONYMOUS:
         Time Step Control: 
           Initial Time: 0.0
           Initial Time Index: 0
-          Initial Time Step: 0.2
-          Final Time: 0.4
+          Initial Time Step: 0.5
+          Final Time: 1.0
           Final Time Index: 1000
           Maximum Absolute Error: 1.0e-08
           Maximum Relative Error: 1.0e-08
@@ -189,6 +98,9 @@ ANONYMOUS:
           VerboseObject:
             Verbosity Level: medium
           NOX:
+            Thyra Group Options:
+              Function Scaling: None #Row Sum
+              Update Row Sum Scaling: Before Each Nonlinear Solve
             Status Tests:
               Test Type: Combo
               Combo Type: OR
@@ -223,7 +135,7 @@ ANONYMOUS:
                             Output Frequency: 10
                             Output Style: 1
                             Verbosity: 33
-                            Maximum Iterations: 100
+                            Maximum Iterations: 500
                             Block Size: 1
                             Num Blocks: 50
                             Flexible Gmres: false
@@ -271,7 +183,7 @@ ANONYMOUS:
                     Output Frequency: 10
                     Output Style: 1
                     Verbosity: 33
-                    Maximum Iterations: 100
+                    Maximum Iterations: 500
                     Block Size: 1
                     Num Blocks: 50
                     Flexible Gmres: false
@@ -290,6 +202,6 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     #Sensitivity For Parameter 0:
-    #  Test Value: 1.829334359669e+07
-    Test Value: 6.313645409926e+06
+    #  Test Value: 
+    Test Value: 5.482808401653e-05
 ...

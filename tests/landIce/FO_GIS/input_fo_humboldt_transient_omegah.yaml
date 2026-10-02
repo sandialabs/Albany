@@ -11,7 +11,6 @@ ANONYMOUS:
     Name: LandIce Coupled FO H 3D
     Compute Sensitivities: false
     Allow Loss Of Derivative Terms: true
-    Time Step: 2.0e-01
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true
@@ -69,7 +68,7 @@ ANONYMOUS:
     Extrude Basal Fields: [ice_thickness, surface_height, bed_topography]
     Interpolate Basal Layered Fields: [temperature,velocity]
     Required Fields Info:
-      Number Of Fields: 5
+      Number Of Fields: 6
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -90,6 +89,10 @@ ANONYMOUS:
         Field Name: velocity
         Field Type: Node Vector
         Field Origin: Mesh
+      Field 5:
+        Field Name: thickness_forcing
+        Field Type: Node Scalar
+        Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
@@ -99,7 +102,7 @@ ANONYMOUS:
         Number Of Time Derivatives: 1
         Mark Parts: [boundary_side_set,boundary_side_set_1,boundary_side_set_2,boundary_node_set_3]
         Required Fields Info:
-          Number Of Fields: 6
+          Number Of Fields: 7
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -133,6 +136,11 @@ ANONYMOUS:
             Number Of Layers: 2
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
+          Field 6:
+            Field Name: thickness_forcing
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.0
       upperside:
         Required Fields Info:
           Number Of Fields: 2
@@ -282,5 +290,5 @@ ANONYMOUS:
     Relative Tolerance: 1.0e-06
     #Sensitivity For Parameter 0:
     #  Test Value: 1.829334359669e+07
-    Test Value: 6.299846947873e+06
+    Test Value: 6.313645409926e+06
 ...

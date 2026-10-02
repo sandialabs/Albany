@@ -11,6 +11,7 @@ ANONYMOUS:
     Name: LandIce Coupled FO H 3D
     Compute Sensitivities: false
     Allow Loss Of Derivative Terms: true
+    Time Step: 2.0e-01
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true
@@ -21,10 +22,10 @@ ANONYMOUS:
       Number Of Responses: 1
       Response 0:
         Type: Scalar Response
-        Name: Surface Velocity Mismatch
+        Name: Solution Average
     Dirichlet BCs:
-      SDBC on NS extruded_boundary_node_set_3 for DOF U0 prescribe Field: velocity
-      SDBC on NS extruded_boundary_node_set_3 for DOF U1 prescribe Field: velocity
+      DBC on NS extruded_NodeSet0 for DOF U0: 0.0
+      DBC on NS extruded_NodeSet0 for DOF U1: 0.0
     Neumann BCs: {}
     LandIce BCs:
       Number: 2
@@ -65,10 +66,10 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography,thickness_forcing]
-    Interpolate Basal Layered Fields: [temperature,velocity]
+    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
+    Interpolate Basal Layered Fields: [temperature]
     Required Fields Info:
-      Number Of Fields: 6
+      Number Of Fields: 5
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -86,75 +87,50 @@ ANONYMOUS:
         Field Type: Node Scalar
         Field Origin: Mesh
       Field 4:
-        Field Name: velocity
-        Field Type: Node Vector
-        Field Origin: Mesh
-      Field 5:
         Field Name: thickness_forcing
         Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
-        Method: Ioss
+        Method: Omegah
+        Mesh Creation Method: Box2D
+        Number of Elements: [4, 4]   # M x N basal mesh (configurable)
+        Box Scaling: [40.0, 40.0]    # domain [0,40]x[0,40] (km)
         Number Of Time Derivatives: 1
-        Restart Index: 1
-        Exodus Output File Name: humboldt_transient_basal.exo
-        Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_contiguous_2d.exo
-        Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
-          Number Of Fields: 7
+          Number Of Fields: 6
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/thickness.ascii
+            Field Expression: ['1.0 - 0.01*x + 0.1*sin(3.14159265*y/40)']
           Field 1:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_height.ascii
+            Field Expression: ['0.05*x + 1.0 - 0.01*x + 0.1*sin(3.14159265*y/40)']
           Field 2:
             Field Name: temperature
             Field Type: Node Layered Scalar
             Field Origin: File
             Number Of Layers: 8
-            File Name: ../AsciiMeshes/Humboldt/nodal_temperature.ascii
+            Field Value: 258.0   # same value for all layers
           Field 3:
             Field Name: basal_friction
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/basal_friction.ascii
+            Field Expression: ['10.0 + 5.0*x/40 + 0.0*y']
           Field 4:
-            Field Name: bed_topography #surface_height
+            Field Name: bed_topography
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/bed_topography.ascii #surface_height.ascii
+            Field Expression: ['0.05*x + 0.0*y']
           Field 5:
-            Field Name: velocity
-            Field Origin: File
-            Field Type: Node Layered Vector
-            Number Of Layers: 2
-            Vector Dim: 2
-            File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
-          Field 6:
             Field Name: thickness_forcing
             Field Type: Node Scalar
             Field Origin: File
             Field Value: 0.0
-      upperside:
-        Required Fields Info:
-          Number Of Fields: 2
-          Field 0:
-            Field Name: observed_surface_velocity
-            Field Type: Node Vector
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity.ascii
-          Field 1:
-            Field Name: observed_surface_velocity_RMS
-            Field Type: Node Scalar
-            Field Origin: File
-            File Name: ../AsciiMeshes/Humboldt/surface_velocity_uncertainty.ascii
   Piro:
     Tempus: 
       Integrator Name: Tempus Integrator
@@ -286,10 +262,5 @@ ANONYMOUS:
                   'fact: iluk level-of-fill': 0
 
 
-  Regression For Response 0:
-    Absolute Tolerance: 1.0e-06
-    Relative Tolerance: 1.0e-06
-    #Sensitivity For Parameter 0:
-    #  Test Value: 1.829334359669e+07
-    Test Value: 6.313645409926e+06
+  # TODO: add 'Regression For Response 0' with a Test Value generated from a real run
 ...

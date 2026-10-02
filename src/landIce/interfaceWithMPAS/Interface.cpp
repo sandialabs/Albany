@@ -58,6 +58,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <optional>
 
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
@@ -89,6 +90,62 @@ typedef struct TET_ {
   char bound_type[4];
 } TET;
 
+namespace {
+
+// Number of nested calls into the interface functions currently active
+// (e.g., the deprecated velocity_solver_solve_fo calls the current one).
+int interfaceCallDepth = 0;
+
+// RAII guard used at the top of each interface function called by MPAS.
+// The base timer ("Albany Velocity Solver") runs only while MPAS is inside
+// one of these functions. If it ran from velocity_solver_init_mpi to
+// velocity_solver_finalize, it would include all the time spent in MPAS
+// between velocity solves, and that time would show up as (Remainder) in the report.
+class InterfaceCallTimer {
+public:
+  InterfaceCallTimer () : active_(Teuchos::nonnull(stackedTimer)) {
+    if (active_ && interfaceCallDepth++ == 0) {
+      stackedTimer->startBaseTimer();
+    }
+  }
+  ~InterfaceCallTimer () {
+    if (active_ && --interfaceCallDepth == 0) {
+      stackedTimer->stopBaseTimer();
+    }
+  }
+  InterfaceCallTimer (const InterfaceCallTimer&) = delete;
+  InterfaceCallTimer& operator= (const InterfaceCallTimer&) = delete;
+private:
+  const bool active_;
+};
+
+// Times consecutive phases of a function without opening a new scope for
+// each phase: start() stops the current phase (if any) and starts the next
+// one; the destructor stops the current phase.
+class PhaseTimer {
+public:
+  explicit PhaseTimer (const std::string& name) { start(name); }
+  ~PhaseTimer () { stop(); }
+  void start (const std::string& name) {
+    stop();
+    monitor_.emplace(*Teuchos::TimeMonitor::getNewTimer(name));
+  }
+  void stop () { monitor_.reset(); }
+  PhaseTimer (const PhaseTimer&) = delete;
+  PhaseTimer& operator= (const PhaseTimer&) = delete;
+private:
+  std::optional<Teuchos::TimeMonitor> monitor_;
+};
+
+// Releases the solver of the previous solve. 
+void releasePreviousSolver () {
+  if (Teuchos::is_null(solver)) return;
+  auto releaseTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Release Previous Solver"));
+  solver = Teuchos::null;
+}
+
+} // anonymous namespace
+
 /***********************************************************/
 
 // Note: betaData can be input (if prescribing basal friction)
@@ -117,7 +174,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     int& error,
     const double& deltat)
 {
+  InterfaceCallTimer callTimer;
   auto solveTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: SolveFO"));
+  // No-op if velocity_solver_extrude_3d_grid already released it (FEM grid regenerated).
+  releasePreviousSolver();
+  PhaseTimer phase("Albany: Import Fields");
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
@@ -165,6 +226,11 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   bool update_dirichlet = !velocityOnVertices.empty() && (dirichletField != nullptr) && (noupdate_fields.find("dirichlet_field") == noupdate_fields.end());
   bool update_stiffeningFactorLog = !stiffeningFactorData.empty() && (stiffeningFactorLogField != nullptr) && (noupdate_fields.find("stiffening_factor_log") == noupdate_fields.end());
 
+  // STK node entities of the 3D mesh, ordered like the MPAS 3D vertices (index j below).
+  // They are cached so that the export of the solution back to MPAS does not need to look them up again.
+  // (With the depth-integrated model only the entries for the bottom and top layers are set.)
+  std::vector<stk::mesh::Entity> nodes3D(numVertices3D);
+
   for (int j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
             + (ordering == 1) * (j / vertexLayerShift);
@@ -183,6 +249,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
     
     stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId);
+    nodes3D[j] = node;
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] + (levelsNormalizedThickness[il]-1.0) * thicknessData[ib];
 
@@ -232,8 +299,12 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   bool update_bulkFriction = !bulkFrictionData.empty() && (bulkFrictionField != nullptr) && (noupdate_fields.find("bulk_friction") == noupdate_fields.end());
   bool update_basalDebris = !basalDebrisData.empty() && (basalDebrisField != nullptr) && (noupdate_fields.find("basal_debris_factor") == noupdate_fields.end());
   bool update_effectivePressure = !effectivePressureData.empty() && (effectivePressureField!=nullptr) && (noupdate_fields.find("effective_pressure") == noupdate_fields.end());
+
+  // STK node entities of the basal mesh, cached for the export of beta and effective pressure.
+  std::vector<stk::mesh::Entity> basalNodes(indexToVertexID.size());
   for(int i = 0; i < (int) indexToVertexID.size(); ++i) {
     stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[i]);
+    basalNodes[i] = node;
     int ib = vertexLayerShift * i;
 
     if (update_bedTopography) {
@@ -334,17 +405,22 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
     }
   }
 
+  // updateMesh has its own timer ("STKDiscretization: updateMesh")
+  phase.stop();
   stk_disc->updateMesh();
+
+  phase.start("Albany: Final SetUp");
   albanyApp->finalSetUp(paramList);
 
   if (keptMesh) albanyApp->getPhxSetup()->reboot_memoizer();
 
   bool success = true;
-  Teuchos::ArrayRCP<const ST> solution_constView;
   try {
+    phase.start("Albany: Create Model And Solver");
     auto model = slvrfctry->createModel(albanyApp);
     solver = slvrfctry->createSolver(model, Teuchos::null, true);
 
+    phase.start("Albany: Perform Solve");
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", false);
 
@@ -361,73 +437,54 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
         std::cout << std::setprecision(15) << "\nResponse " << i << ": " << g[0] << std::endl;
       }
     }
-
-    auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
-    auto disc = albanyApp->getDiscretization();
-    auto cas_manager = Albany::createCombineAndScatterManager(disc->getVectorSpace(), disc->getOverlapVectorSpace());
-    Teuchos::RCP<Thyra_Vector> solution = Thyra::createMember(disc->getOverlapVectorSpace());
-    cas_manager->scatter(*disc->getSolutionField(), *solution, Albany::CombineMode::INSERT);
-    solution_constView = Albany::getLocalData(solution.getConst());
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
 
+  phase.start("Albany: Export Fields");
   error = !success || (albanyApp->getSolutionStatus() != Albany::Application::SolutionStatus::Converged);
 
-  auto overlapVS = albanyApp->getDiscretization()->getOverlapVectorSpace();
-
-  auto indexer = Albany::createGlobalLocalIndexer(overlapVS);
-
+  // The velocity is read directly from the STK solution field, using the node entities cached
+  // during the import. After the solve, the Albany observer writes the overlapped solution
+  // (owned and shared nodes) into this field. Before, at every call we built a new
+  // CombineAndScatterManager (i.e., a Tpetra Import, which requires communication), an owned
+  // and an overlapped vector and a global-to-local indexer, and synced the vector to host,
+  // only to read back the same values that are stored in the STK field.
+  // If the observer is not called (e.g., the solve failed and only converged solutions are
+  // written), the field holds the initial guess set above, as the previous code also returned.
   if(depthIntegratedModel) {
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
-      int depthVertexLayerShift = (ordering == 0) ? 1 : 2;
-      int gIdBed =  depthVertexLayerShift * (indexToVertexID[ib]-1) + 1;
-      int gIdTop = gIdBed + vertexColumnShift;
-      
-      int lIdBed0 = indexer->getLocalElement(neq * (gIdBed-1));
-      int lIdBed1 = lIdBed0 + 1;
-      int lIdTop0 = indexer->getLocalElement(neq * (gIdTop-1));
-      int lIdTop1 = lIdTop0 + 1;      
-      double solBed0 = solution_constView[lIdBed0];
-      double solBed1 = solution_constView[lIdBed1];
-      double solTop0 = solution_constView[lIdTop0];
-      double solTop1 = solution_constView[lIdTop1];
+      const double* solBed = stk::mesh::field_data(*solutionField, nodes3D[vertexLayerShift * ib]);
+      const double* solTop = stk::mesh::field_data(*solutionField, nodes3D[nLayers * lVertexColumnShift + vertexLayerShift * ib]);
 
       for(int il=0; il<nLayers+1; ++il) {
         int j = il * lVertexColumnShift + vertexLayerShift * ib;
         double z = 1.0 - levelsNormalizedThickness[il];
         double fz = 1.0 - std::pow(z,4);
-        velocityOnVertices[j] = solBed0 + fz * (solTop0-solBed0);
-        velocityOnVertices[j + numVertices3D]  = solBed1 + fz * (solTop1-solBed1);
+        velocityOnVertices[j] = solBed[0] + fz * (solTop[0]-solBed[0]);
+        velocityOnVertices[j + numVertices3D]  = solBed[1] + fz * (solTop[1]-solBed[1]);
       }
     }
   } else {
     for (int j = 0; j < numVertices3D; ++j) {
-      int ib = (ordering == 0) * (j % lVertexColumnShift)
-              + (ordering == 1) * (j / vertexLayerShift);
-      int il = (ordering == 0) * (j / lVertexColumnShift)
-              + (ordering == 1) * (j % vertexLayerShift);
-      int gId = il * vertexColumnShift + vertexLayerShift * (indexToVertexID[ib]-1) + 1;
-
-      int lId0 = indexer->getLocalElement(neq * (gId-1));
-      int lId1 = lId0 + 1;
-      velocityOnVertices[j] = solution_constView[lId0];
-      velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+      const double* sol = stk::mesh::field_data(*solutionField, nodes3D[j]);
+      velocityOnVertices[j] = sol[0];
+      velocityOnVertices[j + numVertices3D] = sol[1];
     }
   }
 
-  if (Teuchos::nonnull(ss_mesh_stk) && !effectivePressureData.empty() && (effectivePressureField!=nullptr)) {
+  const bool export_effectivePressure = !effectivePressureData.empty() && (effectivePressureField!=nullptr);
+  const bool export_beta = !betaData.empty() && (betaField!=nullptr);
+  if (Teuchos::nonnull(ss_mesh_stk) && (export_effectivePressure || export_beta)) {
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
-      stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
-      const double* effectivePressureVal = stk::mesh::field_data(*effectivePressureField,node);      
-      effectivePressureData[vertexLayerShift * ib] = effectivePressureVal[0];
-    }
-  }
-
-  if (Teuchos::nonnull(ss_mesh_stk) && !betaData.empty() && (betaField!=nullptr)) {
-    for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
-      stk::mesh::Entity node = ss_mesh_stk->bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[ib]);
-      const double* betaVal = stk::mesh::field_data(*betaField,node);
-      betaData[ib] = betaVal[0];
+      const stk::mesh::Entity node = basalNodes[ib];
+      if (export_effectivePressure) {
+        const double* effectivePressureVal = stk::mesh::field_data(*effectivePressureField,node);
+        effectivePressureData[vertexLayerShift * ib] = effectivePressureVal[0];
+      }
+      if (export_beta) {
+        const double* betaVal = stk::mesh::field_data(*betaField,node);
+        betaData[ib] = betaVal[0];
+      }
     }
   }
 
@@ -465,6 +522,8 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
 
 void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
 #ifdef ALBANY_SEACAS
+  InterfaceCallTimer callTimer;
+  auto exportTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Export FO Velocity"));
   Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(reducedComm));
   mesh_data->set_bulk_data(*meshStruct->bulkData);
   size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
@@ -478,19 +537,25 @@ int velocity_solver_init_mpi(MPI_Comm comm) {
     Kokkos::initialize();
     kokkosInitializedByAlbany = true;
   }
-  stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver"));
+  // The base timer is not started here: InterfaceCallTimer starts and stops it
+  // at each call into Albany, so it does not include the time spent in MPAS.
+  stackedTimer = Teuchos::rcp(new Teuchos::StackedTimer("Albany Velocity Solver", false));
   Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
   return 0;
 }
 
 void velocity_solver_finalize() {
-  meshStruct = Teuchos::null;
-  albanyApp = Teuchos::null;
-  paramList = Teuchos::null;
-  slvrfctry = Teuchos::null;
-  MPAS_dt = Teuchos::null;
-  solver = Teuchos::null;
-  mpiComm = Teuchos::null;
+  {
+    InterfaceCallTimer callTimer;
+    auto finalizeTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Finalize"));
+    meshStruct = Teuchos::null;
+    albanyApp = Teuchos::null;
+    paramList = Teuchos::null;
+    slvrfctry = Teuchos::null;
+    MPAS_dt = Teuchos::null;
+    solver = Teuchos::null;
+    mpiComm = Teuchos::null;
+  }
 
   // Print Teuchos timers into file
   std::ostream* os = &std::cout;
@@ -499,7 +564,7 @@ void velocity_solver_finalize() {
     ofs.open("log.albany.timers.out", std::ofstream::out);
     os = &ofs;
   }
-  stackedTimer->stop("Albany Velocity Solver");
+  // No need to stop the base timer: it only runs inside the interface calls (see InterfaceCallTimer).
   Teuchos::StackedTimer::OutputOptions options;
   options.output_fraction = true;
   options.output_minmax = true;
@@ -556,6 +621,7 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
  */
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
+  InterfaceCallTimer callTimer;
   auto grid2DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Compute 2D Grid"));
   keptMesh = false;
   mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
@@ -592,7 +658,21 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& iceMarginEdgesIds) {
 
+  InterfaceCallTimer callTimer;
   auto grid3DTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Extrude 3D Grid"));
+
+  // The FEM grid is being regenerated: release the objects built on the previous grid before
+  // building the new ones, so that their teardown is timed on its own and, on GPUs, their device
+  // memory is freed before the new application, mesh and discretization are allocated.
+  // The solver goes first, since it references the application, which references the mesh.
+  releasePreviousSolver();
+  if (Teuchos::nonnull(albanyApp) || Teuchos::nonnull(meshStruct)) {
+    auto releaseTimer = Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Albany: Release Previous Application And Mesh"));
+    albanyApp = Teuchos::null;
+    meshStruct = Teuchos::null;
+  }
+
+  PhaseTimer phase("Albany: Setup Parameters");
 
   paramList = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromYamlFileAndBroadcast("albany_input.yaml", paramList.ptr(), *mpiComm);
@@ -622,9 +702,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   MPAS_dt = Teuchos::rcp(new double(0.0));
   if (probParamList.get<std::string>("Name") == "LandIce Coupled FO H 3D") {
-    // probParamList.sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
-    *MPAS_dt = probParamList.get("Time Step", 0.0);
-    probParamList.set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
+    probParamList.set("Time Step Ptr", MPAS_dt);
   }
 
   if(probParamList.isSublist("LandIce BCs"))  
@@ -909,6 +987,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   basal_req.set<int>("Number Of Fields",bfp);
 
+  phase.start("Albany: Create Application");
   // Register LandIce problems
   auto& pb_factories = Albany::FactoriesContainer<Albany::ProblemFactory>::instance();
   pb_factories.add_factory(LandIce::LandIceProblemFactory::instance());
@@ -917,6 +996,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
   albanyApp->initialSetUp(paramList);
 
+  phase.start("Albany: Create Mesh");
   //temporary fix, TODO: use GO for indexToTriangleID (need to synchronize with MPAS).
   std::vector<GO> indexToTriangleGOID;
   indexToTriangleGOID.assign(indexToTriangleID.begin(), indexToTriangleID.end());
@@ -969,6 +1049,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
 
   albanyApp->createMeshSpecs(meshStruct);
 
+  // buildProblem and createDiscretization have their own timers
+  phase.stop();
   albanyApp->buildProblem();
 
   albanyApp->createDiscretization();

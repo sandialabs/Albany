@@ -491,7 +491,9 @@ OmegahGenericMesh::createSideSets()
     std::cout << "ss " << name << " tag:";
     for (int i=0; i<tag.size(); ++i) { std::cout << " " << static_cast<int>(tag[i]); } std::cout << "\n";
 #endif
-    this->declare_part(name,side_topo,tag,false);
+    // Mark downward (e.g., edge sides also tag their vertices), so that node-based dof managers
+    // (e.g., the one used for the basal mesh of an extruded discretization) can compute masks for side sets
+    this->declare_part(name,side_topo,tag,sideDim>0);
   }
   return ssNames;
 }

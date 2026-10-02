@@ -30,6 +30,7 @@
 #include "LandIce_ThicknessResid.hpp"
 #include "LandIce_StokesFOImplicitThicknessUpdateResid.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"  
+#include "PHAL_ScatterScalarNodalParameter.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -47,6 +48,11 @@ namespace LandIce
 
    When the proble is unsteady, the thickness and the mesh vertical coordinates are updated implicitly.
    We use Tempus implicit schemes to march forward in time. 
+
+   Alternatively, the thickness can be advanced with Tempus explicit schemes. The diagnostic
+   (velocity) solve is then performed at every stage, for the stage thickness, and the prognostic
+   (thickness) update is explicit. Albany::SolverFactory switches to that path whenever the Tempus
+   stepper is explicit (see getDAEMasks and Albany::ExplicitODEModelEvaluator).
  */
 class StokesFOThickness : public StokesFOBase {
 public:
@@ -78,6 +84,15 @@ public:
   //! Each problem must generate it's list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
+  //! This is a semi-explicit index-1 DAE: the velocity is diagnostic (no time derivative:
+  //! it is determined by the FO equations for the current thickness), and the thickness
+  //! change at the level where the thickness equation is scattered is prognostic (minus
+  //! the dofs with a Dirichlet condition). The thickness dofs at the other levels are
+  //! copies of it, kept constant in time.
+  bool getDAEMasks (const Albany::AbstractDiscretization& disc,
+                    Teuchos::RCP<Thyra_Vector>& diagnostic_mask,
+                    Teuchos::RCP<Thyra_Vector>& prognostic_mask) const;
+
   //! Main problem setup routine. Not directly called, but indirectly by following functions
   template <typename EvalT>
   Teuchos::RCP<const PHX::FieldTag>
@@ -103,6 +118,7 @@ protected:
   void setFieldsProperties ();
 
   std::string initial_ice_thickness_name;
+  std::string lateralSideName;
 
   bool unsteady;
   Teuchos::ArrayRCP<std::string> dof_names_dot;
@@ -237,6 +253,13 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<bool>("Unsteady", unsteady);
   if(unsteady) {
     p->set<std::string>("Thickness Dot Variable Name", dof_names_dot[1]);
+  } else {
+    if(this->params->isParameter("Time Step Ptr")) {
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
+    } else {
+      Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
+      p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
+    }
   }
 
   p->set<std::string>("Thickness Change Variable Name", dof_names[1]);
@@ -246,12 +269,10 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<int>("Cubature Degree",4);
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
-  if(this->params->isParameter("Time Step Ptr")) {
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
-  } else {
-    Teuchos::RCP<double> dt = Teuchos::rcp(new double(this->params->get<double>("Time Step")));
-    p->set<Teuchos::RCP<double> >("Time Step Ptr", dt);
-  }
+  p->set<std::string>("Lateral Side Set Name", lateralSideName);
+  p->set<std::string>("Forcing Name", "thickness_forcing");
+  p->set<std::string>("Stabilization", this->params->get<std::string>("Thickness Stabilization", "None"));
+  p->set<bool>("Lump Mass Matrix", this->params->get<bool>("Lump Time Derivative Mass Matrix", false));
 
   //Output
   p->set<std::string>("Residual Name", resid_names[1]);
@@ -291,31 +312,14 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
     p->set<std::string>("Old Coords Name",  "Coord Vec Old");
     p->set<std::string>("New Coords Name",  Albany::coord_vec_name);
     p->set<std::string>("Thickness Name",   ice_thickness_name);
+    p->set<std::string>("Thickness Increment Name",    "Extruded " + dof_names[1]);
+    p->set<std::string>("Past Thickness Name" ,initial_ice_thickness_name);
     p->set<std::string>("Top Surface Name", surface_height_name);
     p->set<std::string>("Bed Topography Name", bed_topography_name);
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("LandIce Physical Parameters"));
     p->set<bool>("Allow Loss Of Derivative Terms", params->get("Allow Loss Of Derivative Terms", false));
 
     ev = Teuchos::rcp(new LandIce::UpdateZCoordinateMovingTopBase<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p, dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-
-    const std::string layout = e2str(FL::Node) + " Scalar";
-    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(surface_height_name, "lateralside", layout, cellType, surface_height_name + "_lateralside");
-          fm0.template registerEvaluator<EvalT> (ev);
-
-    //--- Compute actual thickness --- //
-    p = Teuchos::rcp(new Teuchos::ParameterList("Update Thickness"));
-
-    // Input
-    p->set<std::string> ("Input Field Name","Extruded " + dof_names[1]);
-    p->set<std::string> ("Parameter Field 1",initial_ice_thickness_name);
-    p->set<Teuchos::RCP<PHX::DataLayout>> ("Field Layout",dl->node_scalar);
-
-    // Output
-    p->set<std::string> ("Output Field Name",ice_thickness_name);
-
-    ev = Teuchos::rcp(new LandIce::BinarySumOp<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT, typename EvalT::ParamScalarT>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -78,6 +78,7 @@ set(SOURCES
   problems/LandIce_StokesFOThermoCoupled.cpp
   problems/LandIce_StokesFOThickness.cpp
   problems/LandIce_StokesFOHydrology.cpp
+  problems/LandIce_ThicknessEvolution.cpp
   evaluators/hydrology/LandIce_HydrologyBasalGravitationalWaterPotential.cpp
   evaluators/hydrology/LandIce_EffectivePressure.cpp
   evaluators/hydrology/LandIce_HydraulicPotential.cpp
@@ -208,6 +209,7 @@ set(HEADERS
   problems/LandIce_StokesFOThermoCoupled.hpp
   problems/LandIce_StokesFOThickness.hpp
   problems/LandIce_StokesFOHydrology.hpp
+  problems/LandIce_ThicknessEvolution.hpp
 )
 
 # This is not very satisfactory, since it injects CISM specific stuff into

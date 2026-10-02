@@ -3,6 +3,8 @@
 #include "Albany_CombineAndScatterManager.hpp"
 #include "Albany_ThyraUtils.hpp"
 
+#include <algorithm>
+
 #include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
@@ -486,8 +488,12 @@ fillField (const std::string& field_name,
           "Error! The given field value array has size 0.\n");
       TEUCHOS_TEST_FOR_EXCEPTION (values.size()==1 && !scalar , Teuchos::Exceptions::InvalidParameter,
           "Error! The given field value array has size 1, but the field is not scalar.\n");
-      TEUCHOS_TEST_FOR_EXCEPTION (values.size()>1 && scalar , Teuchos::Exceptions::InvalidParameter,
-          "Error! The given field value array has size >1, but the field is scalar.\n");
+      // A layered scalar field has one value per layer
+      const size_t max_scalar_size = layered ? std::max<size_t>(norm_layers_coords.size(),1) : 1;
+      TEUCHOS_TEST_FOR_EXCEPTION (scalar && static_cast<size_t>(values.size())>1 &&
+                                  static_cast<size_t>(values.size())!=max_scalar_size, Teuchos::Exceptions::InvalidParameter,
+          "Error! The given field value array has size >1, but the field is scalar"
+          << (layered ? " (for layered scalar fields, the size must be equal to the number of layers).\n" : ".\n"));
     } else if (field_params.isType<double>("Field Value")) {
       if (scalar) {
         values.resize(1);
@@ -520,6 +526,12 @@ fillField (const std::string& field_name,
       }
     } else {
       *out << "  - Filling " << field_type << " field '" << field_name << "' with constant value " << values << ".\n";
+    }
+
+    // For a layered scalar field, a single value is used for all layers
+    if (layered && scalar && values.size()==1 && norm_layers_coords.size()>1) {
+      const double v = values[0];
+      values.resize(norm_layers_coords.size(),v);
     }
 
     field_mv = Thyra::createMembers(entities_vs,values.size());

@@ -63,6 +63,8 @@ set (SOURCES
   PHAL_Setup.cpp
   Albany_Application.cpp
   InitialCondition.cpp
+  Albany_AlgebraicConstraintModelEvaluator.cpp
+  Albany_ExplicitODEModelEvaluator.cpp
   Albany_Memory.cpp
   Albany_ModelEvaluator.cpp
   Albany_NullSpaceUtils.cpp
@@ -84,6 +86,8 @@ set(HEADERS
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DualView.hpp
   Albany_DualDynRankView.hpp
+  Albany_AlgebraicConstraintModelEvaluator.hpp
+  Albany_ExplicitODEModelEvaluator.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp
   Albany_Memory.hpp
