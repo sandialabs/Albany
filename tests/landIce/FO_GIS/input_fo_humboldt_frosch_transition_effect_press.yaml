@@ -31,7 +31,7 @@ ANONYMOUS:
           Mu Type: Exponent of Field
           Mu Field Name: mu_log
           Power Exponent: 0.33333333
-          Effective Pressure Type: Transition
+          Effective Pressure Type: Transition Computed At Nodes
           Use Pressurized Bed Above Sea Level: true
           Minimum Flotation Fraction: 0.85
           Length Scale Factor: 0.1
@@ -347,6 +347,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value:  5.997259703835e+07
+    Test Value:  5.996865307778e+07
     Relative Tolerance: 1.0e-06
 ...
