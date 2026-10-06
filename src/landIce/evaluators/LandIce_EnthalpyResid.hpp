@@ -56,6 +56,7 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>                phiGrad;        //[km^{-1}
   PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>            meltTempGrad; // [K km^{-1}]
   PHX::MDField<const ScalarT,Cell,Node>                         basalResid; // [k^{2} W], k =1000
+  PHX::MDField<const ScalarT,Cell,Node>                         EnthalpyDot; // [MW s m^{-3} yr^{-1}], optional
 
   PHX::MDField<const ScalarT,Dim>                               homotopy;
 
@@ -63,6 +64,9 @@ private:
   PHX::MDField<ScalarT,Cell,Node> Residual; // [k^3 W]  = [km^3 Pa s^{-1} ], k =1000
 
   unsigned int numQPs, numNodes;
+
+  bool enableTransient; // the enthalpy time derivative is available (set at construction)
+  bool transientTerms;  // the current evaluation provides it, i.e. x_dot was passed (set in evaluateFields)
 
   double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
   double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice

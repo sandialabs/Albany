@@ -81,6 +81,16 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
   this->addDependentField(diss);
   
+  // Optional time derivative of the enthalpy (nodal). The term is added only when the solver
+  // passes x_dot, e.g. NOX "Pseudo-Transient" with "Number Of Time Derivatives: 1".
+  enableTransient = p.isParameter("Enthalpy Time Derivative Variable Name");
+  transientTerms = false;
+  if (enableTransient)
+  {
+    EnthalpyDot = decltype(EnthalpyDot)(p.get<std::string> ("Enthalpy Time Derivative Variable Name"), dl->node_scalar);
+    this->addDependentField(EnthalpyDot);
+  }
+
   this->addEvaluatedField(Residual);
   this->setName("EnthalpyResid");
 
@@ -159,6 +169,11 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
   ScalarT retval = powm3*basalResid(cell,node);  //go to zero in temperate region
 
   for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    // Time derivative of the enthalpy, with lumped mass (nodal value times the integral of the test
+    // function) and time in years: [MW s m^{-3} yr^{-1}] / scyr * [km^3], same units as the advection term.
+    if (transientTerms)
+      retval += EnthalpyDot(cell,node)*wBF(cell,node,qp)/scyr;
+
     retval -= (diss(cell,qp))*wBF(cell,node,qp);
 
     ScalarT w = verticalVel(cell,qp);
@@ -286,6 +301,9 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(basalResid,fm);
   this->utils.setFieldData(diss,fm);
 
+  if (enableTransient)
+    this->utils.setFieldData(EnthalpyDot,fm);
+
   this->utils.setFieldData(Residual,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
@@ -308,6 +326,9 @@ evaluateFields(typename Traits::EvalData d)
 #endif
 
   TEUCHOS_TEST_FOR_EXCEPTION (numNodes > 8, std::runtime_error, "Error! numNodes is larger than expected.\n");
+
+  // When x_dot is not passed, the gather does not fill EnthalpyDot, so it must not be read.
+  transientTerms = enableTransient && d.transientTerms;
 
   if(stabilization == STABILIZATION_TYPE::UPWIND){
     Kokkos::parallel_for(Upwind_Stabilization_Policy(0,d.numCells), *this);
