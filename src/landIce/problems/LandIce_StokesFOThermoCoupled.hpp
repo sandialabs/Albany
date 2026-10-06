@@ -263,7 +263,10 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Velocity Side QP Variable Name", dof_names[0] + "_" + basalSideName);
+  p->set<std::string>("BF Variable Name", Albany::bf_name);
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
+  p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
+  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<std::string>("BF Side Name", Albany::bf_name + "_" + basalSideName);
   p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + basalSideName);
   p->set<std::string>("Side Normal Name", Albany::normal_name + "_" + basalSideName);
