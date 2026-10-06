@@ -293,8 +293,9 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  // Gather solution
-  ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names[2], dof_offsets[2]);
+  // Gather solution, and its time derivative. The latter is filled only when x_dot is passed
+  // (pseudo-transient continuation or a transient run), otherwise the enthalpy equation is steady.
+  ev = evalUtils.constructGatherSolutionEvaluator(false, dof_names[2], dof_names[2] + "_dot", dof_offsets[2]);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Scatter residual
@@ -404,6 +405,7 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<std::string>("Enthalpy QP Variable Name", dof_names[2]);
   p->set<std::string>("Enthalpy Gradient QP Variable Name", dof_names[2] + " Gradient");
+  p->set<std::string>("Enthalpy Time Derivative Variable Name", dof_names[2] + "_dot");
   p->set<std::string>("Enthalpy Hs QP Variable Name", melting_enthalpy_name);
   p->set<std::string>("Velocity QP Variable Name", dof_names[0]);
   p->set<std::string>("Vertical Velocity QP Variable Name", dof_names[1]);

@@ -76,6 +76,9 @@ if (ALBANY_FROSCH)
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_lubricated.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_lubricated.yaml)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_Humboldt_lubricated_pseudo_transient.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_Humboldt_lubricated_pseudo_transient.yaml)
   
   # Create the tests
   set (testName ${testNameRoot}_Wet_Bed_FROSch)
@@ -94,6 +97,10 @@ if (ALBANY_FROSCH)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_lubricated.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
 
+  set (testName ${testNameRoot}_Humboldt_lubricated_pseudo_transient)
+  add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_lubricated_pseudo_transient.yaml)
+  set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch;PseudoTransient")
+
   if (NOT ALBANY_PARALLEL_EXODUS)
     set_tests_properties(${testNameRoot}_Humboldt_fluxDiv
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
@@ -102,6 +109,9 @@ if (ALBANY_FROSCH)
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_lubricated
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_lubricated_pseudo_transient
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
   endif()
 endif()
