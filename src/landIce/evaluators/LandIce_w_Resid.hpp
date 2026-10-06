@@ -37,10 +37,8 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;  // []
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
   PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim>  wGradBF; // [km^2]
-  PHX::MDField<const MeshScalarT,Cell,Node,Dim>  coordVec; // [km]
   PHX::MDField<const RealType> sideBF;  // []
   PHX::MDField<const MeshScalarT> side_w_measure;  // [km^2]
   PHX::MDField<const MeshScalarT>   normals;
@@ -59,10 +57,10 @@ private:
   std::string sideName;
   Kokkos::DualView<int**, PHX::Device> sideNodes;
   unsigned int numNodes;
-  unsigned int numVertEdges; // vertical edge k joins node k (bottom face) and node k+numVertEdges (top face)
   unsigned int numSideNodes;
   unsigned int numQPs;
   unsigned int numSideQPs;
+  bool upwind; //wether to use upwind derivative from bed. Only correct for linear elements in the vertical direction 
 
 public:
 

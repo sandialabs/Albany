@@ -263,10 +263,8 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   //Input
   p->set<std::string>("Velocity Side QP Variable Name", dof_names[0] + "_" + basalSideName);
-  p->set<std::string>("BF Variable Name", Albany::bf_name);
   p->set<std::string>("Weighted BF Variable Name", Albany::weighted_bf_name);
   p->set<std::string>("Weighted Gradient BF Variable Name", Albany::weighted_grad_bf_name);
-  p->set<std::string>("Coordinate Vector Name", Albany::coord_vec_name);
   p->set<std::string>("BF Side Name", Albany::bf_name + "_" + basalSideName);
   p->set<std::string>("Weighted Measure Side Name", Albany::weighted_measure_name + "_" + basalSideName);
   p->set<std::string>("Side Normal Name", Albany::normal_name + "_" + basalSideName);
@@ -276,6 +274,7 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string>("Velocity Gradient QP Variable Name", dof_names[0] + " Gradient");
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+  p->set<bool>("Upwind Integration From Bed", !this->depthIntegratedModel);
 
   //Output
   p->set<std::string>("Residual Variable Name", resid_names[1]);
