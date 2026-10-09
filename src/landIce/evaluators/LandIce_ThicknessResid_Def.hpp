@@ -318,8 +318,8 @@ void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData work
           gval[i][d]=Albany::convertScalar<RealType>(physGrad(0,i,0,d)); //P1 grad is constant in triangle
       for (int e=0;e<3;++e) {
         const auto i=triEdge[e][0],j=triEdge[e][1];
-        const RealType ex=Albany::convertScalar<RealType>(x[j][0]-x[i][0]);
-        const RealType ey=Albany::convertScalar<RealType>(x[j][1]-x[i][1]);
+        const RealType ex=Albany::convertScalar<RealType>(x[j][0])-Albany::convertScalar<RealType>(x[i][0]);
+        const RealType ey=Albany::convertScalar<RealType>(x[j][1])-Albany::convertScalar<RealType>(x[i][1]);
         const RealType length=std::sqrt(ex*ex+ey*ey);
         TEUCHOS_TEST_FOR_EXCEPTION(length<=0.0,std::runtime_error, "Zero-length thickness-triangle edge.");
         const RealType tx=ex/length,ty=ey/length;

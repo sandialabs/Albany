@@ -31,9 +31,10 @@ class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  typedef typename EvalT::ScalarT       ScalarT;
-  typedef typename EvalT::MeshScalarT   MeshScalarT;
-  typedef typename EvalT::ParamScalarT  ParamScalarT;
+  using ScalarT = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using ParamScalarT = typename EvalT::ParamScalarT;
+  using EffPressureOutT = typename Albany::StrongestScalarType<MeshScalarT,EffPressureST>::type;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl);
@@ -80,7 +81,7 @@ private:
 
   // Output:
   PHX::MDField<ScalarT>       beta;     // [kPa yr m^{-1}]
-  PHX::MDField<EffPressureST> outN;     // [kPa]
+  PHX::MDField<EffPressureOutT> outN;     // [kPa]
 
   std::string                 basalSideName;  // Only if is_side_equation=true
 
@@ -128,7 +129,7 @@ private:
   // (EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES). Reproduces (offline)
   // friction_law_conversion.py::effective_pressure4().
   KOKKOS_INLINE_FUNCTION
-  EffPressureST computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const;
+  EffPressureOutT computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const;
 
 public:
 

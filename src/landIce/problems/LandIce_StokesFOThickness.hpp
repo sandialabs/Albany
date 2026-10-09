@@ -118,6 +118,7 @@ protected:
   void setFieldsProperties ();
 
   std::string initial_ice_thickness_name;
+  std::string thickness_forcing_name;
   std::string lateralSideName;
 
   bool unsteady;
@@ -270,7 +271,7 @@ void StokesFOThickness::constructThicknessEvaluators (PHX::FieldManager<PHAL::Al
   p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", Teuchos::rcpFromRef(meshSpecs));
   p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
   p->set<std::string>("Lateral Side Set Name", lateralSideName);
-  p->set<std::string>("Forcing Name", "thickness_forcing");
+  p->set<std::string>("Forcing Name", thickness_forcing_name);
   p->set<std::string>("Stabilization", this->params->get<std::string>("Thickness Stabilization", "None"));
   p->set<bool>("Lump Mass Matrix", this->params->get<bool>("Lump Time Derivative Mass Matrix", false));
 

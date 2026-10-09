@@ -223,7 +223,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
       save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
-        outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        outN = PHX::MDField<EffPressureOutT>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
       }
     } else if (effectivePressureType == "HYDROSTATIC COMPUTED AT NODES") {
@@ -231,14 +231,14 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       use_pressurized_bed = beta_list.get<bool>("Use Pressurized Bed Above Sea Level", false);
       save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
-        outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        outN = PHX::MDField<EffPressureOutT>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
       }
     } else if (effectivePressureType == "TRANSITION COMPUTED AT NODES") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES;
       save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
       if(save_pressure_field && nodal) {
-        outN = PHX::MDField<EffPressureST>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        outN = PHX::MDField<EffPressureOutT>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
       }
     } else {
@@ -530,7 +530,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
   } 
 
   ParamScalarT muValue = 1.0;
-  typename Albany::StrongestScalarType<EffPressureST,MeshScalarT>::type NVal = N_val;
+  EffPressureOutT NVal = N_val;
 
   if(beta_type != BETA_TYPE::CONSTANT) {
     for (int ipt=0; ipt<dim; ++ipt) {
@@ -570,7 +570,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
+            outN(cell,ipt) = NVal;
           }
         } else {
           EffPressureST thickness(0);
@@ -592,7 +592,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,ipt)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,ipt),0.0) ),0.0);
           if(save_pressure_field) {
-            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
+            outN(cell,ipt) = NVal;
           }
         } else {
           NVal = 0;
@@ -608,7 +608,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
         if(nodal) {
           NVal = computeTransitionEffectivePressure(thickness_field(cell,ipt), bed_topo_field(cell,ipt));
           if(save_pressure_field) {
-            outN(cell,ipt) = Albany::convertScalar<EffPressureST>(NVal);
+            outN(cell,ipt) = NVal;
           }
         } else {
           NVal = 0;
@@ -771,7 +771,7 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
 KOKKOS_INLINE_FUNCTION
-EffPressureST
+typename BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::EffPressureOutT
 BasalFrictionCoefficient<EvalT, Traits, EffPressureST, VelocityST, TemperatureST>::
 computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshScalarT& bed_topo) const
 {
@@ -783,21 +783,21 @@ computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshSc
   // "transition_h_ocean" == "h_ocean" (all already in Albany's internal
   // km-scaled length units).
   EffPressureST ice_term = rho_i * thickness;
-  EffPressureST ocean_term = KU::max(-1.0 * rho_w * bed_topo, 0.0);
-  EffPressureST height_above_flotation =
+  MeshScalarT ocean_term = KU::max(-1.0 * rho_w * bed_topo, 0.0);
+  EffPressureOutT height_above_flotation =
       KU::max(bed_topo + (rho_i / rho_w) * thickness, 0.0);
 
   // Ocean-connected effective-pressure fraction (guard against division
   // by zero at ice-free cells: N will end up 0 there regardless, since N
   // is proportional to ice_term below).
-  EffPressureST q_ocean = (ice_term > 0.0) ?
-      EffPressureST(KU::max(1.0 - ocean_term / ice_term, 0.0)) : EffPressureST(0.0);
+  EffPressureOutT q_ocean = (ice_term > 0.0) ?
+      EffPressureOutT(KU::max(1.0 - ocean_term / ice_term, 0.0)) : EffPressureOutT(0.0);
 
   // Prescribed inland effective-pressure fraction: N/Pice_inland =
   // 1 - min_flotation_fraction (same convention as Albany's HYDROSTATIC(_AT_NODES)
   // types, where "Minimum Flotation Fraction" is subtracted from
   // a retained-overburden fraction of 1, not applied directly).
-  EffPressureST q_inland = 1.0 - min_flotation_fraction;
+  EffPressureOutT q_inland = 1.0 - min_flotation_fraction;
 
   // Ocean-connected value at the end of the fixed near-ocean region.
   // Guard the division against (near-)zero ice_term: N is proportional
@@ -806,17 +806,17 @@ computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshSc
   // additionally avoids an extreme/overflowing q_start for a vanishingly
   // small but nonzero thickness (same threshold convention used for
   // thin-ice guards elsewhere, e.g. LandIce_StokesFOLateralResid).
-  const EffPressureST thin_ice_threshold(1.0e-8); // [km]
-  EffPressureST q_start = (thickness > thin_ice_threshold) ?
-      EffPressureST(rho_w * transition_h_ocean / ice_term) : EffPressureST(0.0);
+  const EffPressureOutT thin_ice_threshold(1.0e-8); // [km]
+  EffPressureOutT q_start = (thickness > thin_ice_threshold) ?
+      EffPressureOutT(rho_w * transition_h_ocean / ice_term) : EffPressureOutT(0.0);
   // Ensure q is continuous when bed_topo>0
   q_start = KU::min(q_start, 1.0);
 
-  EffPressureST distance_into_transition =
+  EffPressureOutT distance_into_transition =
       KU::max(height_above_flotation - transition_h_ocean, 0.0);
-  EffPressureST transition_q = q_inland - (q_inland - q_start) *
+  EffPressureOutT transition_q = q_inland - (q_inland - q_start) *
       std::exp(-distance_into_transition / pressure_smoothing_length_scale);
-  EffPressureST q = (height_above_flotation <= transition_h_ocean) ? q_ocean : transition_q;
+  EffPressureOutT q = (height_above_flotation <= transition_h_ocean) ? q_ocean : transition_q;
 
   // Floor N at zero: q can go (slightly) negative from roundoff, or
   // substantially negative if "Minimum Flotation Fraction" > 1 makes
@@ -825,7 +825,7 @@ computeTransitionEffectivePressure (const EffPressureST& thickness, const MeshSc
   // NaN on a negative base. Note this only reinstates a floor at zero;
   // it does not reinstate the upper cap at q_inland that was removed
   // upstream.
-  return KU::max(g * ice_term * q, EffPressureST(0.0));
+  return KU::max(g * ice_term * q, EffPressureOutT(0.0));
 }
 //**********************************************************************
 template<typename EvalT, typename Traits, typename EffPressureST, typename VelocityST, typename TemperatureST>
