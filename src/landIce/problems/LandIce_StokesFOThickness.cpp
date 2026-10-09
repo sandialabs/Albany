@@ -72,6 +72,7 @@ StokesFOThickness::StokesFOThickness(
     surface_height_name += "_computed";
     ice_thickness_name += "_computed";
   }
+  thickness_forcing_name = "thickness_forcing";
   lateralSideName = this->params->get<std::string>("Lateral Side Name", "lateralside");
 
   effectivePressure_from_basalFrictionEval = true;
@@ -330,6 +331,7 @@ void StokesFOThickness::setFieldsProperties () {
     setSingleFieldProperties(surface_height_name, FRT::Scalar, FST::ParamScalar);
   }
   setSingleFieldProperties(initial_ice_thickness_name, FRT::Scalar, FST::ParamScalar);  
+  setSingleFieldProperties(thickness_forcing_name, FRT::Scalar, FST::Real);
 }
 
 } // namespace LandIce

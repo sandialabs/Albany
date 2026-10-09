@@ -168,7 +168,7 @@ LandIce::ThicknessEvolution::constructEvaluators (PHX::FieldManager<PHAL::Albany
     entity = Albany::StateStruct::NodalDataToElemNode;
     std::string stateName = "velocity";
     p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
-    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    ev = Teuchos::rcp(new PHAL::LoadStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -177,7 +177,7 @@ LandIce::ThicknessEvolution::constructEvaluators (PHX::FieldManager<PHAL::Albany
     entity = Albany::StateStruct::NodalDataToElemNode;
     std::string stateName = "forcing";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-    ev = Teuchos::rcp(new PHAL::LoadStateFieldMST<EvalT,PHAL::AlbanyTraits>(*p));
+    ev = Teuchos::rcp(new PHAL::LoadStateFieldRT<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
