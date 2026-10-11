@@ -47,7 +47,7 @@ namespace Albany
    RCP<const panzer::FieldPattern> buildFieldPattern()
    {
       // build a geometric pattern from a single basis
-      RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = rcp(new Intrepid2Type);
+      RCP<Intrepid2::Basis<PHX::Device, double, double>> basis = rcp(new Intrepid2Type);
       RCP<const panzer::FieldPattern> pattern = rcp(new panzer::Intrepid2FieldPattern(basis));
       return pattern;
    }
@@ -117,7 +117,7 @@ tests are a beginning, "work in progress."
          TEST_EQUALITY(dofManager.getConnManager(), connManager);
          TEST_EQUALITY(dofManager.getMaxSubFieldNumber(), -1);
 
-         RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+         RCP<const panzer::FieldPattern> patternC1 = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device, double, double>>();
 
          dofManager.addField("T", patternC1); // add it to all three blocks
 

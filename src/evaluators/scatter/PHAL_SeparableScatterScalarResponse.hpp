@@ -163,7 +163,7 @@ protected:
   }
 protected:
   int numNodes;
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 private:
   typedef typename AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -207,7 +207,7 @@ private:
   typedef typename AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 
 protected:
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
   MDFieldVectorRight<const ScalarT> global_response_reader;
   
@@ -319,7 +319,7 @@ private:
   typedef typename AlbanyTraits::HessianVec::ScalarT ScalarT;
 
 protected:
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
   MDFieldVectorRight<const ScalarT> global_response_reader;
 };

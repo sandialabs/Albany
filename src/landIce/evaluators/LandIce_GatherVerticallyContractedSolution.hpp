@@ -49,7 +49,7 @@ public:
 protected:
 
   using ScalarT     = typename EvalT::ScalarT;
-  using ExecSpace   = typename PHX::Device::execution_space;
+  using ExecSpace   = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecSpace>;
 
   using ref_t       = typename PHAL::Ref<ScalarT>::type;

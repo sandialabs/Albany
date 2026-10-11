@@ -23,7 +23,7 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   meltingTemp  (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
   enthalpyHs   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar)
 {
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
 
   numNodes = dims[1];

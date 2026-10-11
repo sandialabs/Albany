@@ -20,7 +20,7 @@ namespace LandIce
   epsilonSq   (p.get<std::string> ("EpsilonSq QP Variable Name"), dl->qp_scalar),
   diss        (p.get<std::string> ("Dissipation QP Variable Name"), dl->qp_scalar)
   {
-    std::vector<PHX::Device::size_type> dims;
+    std::vector<PHX::ExecutionSpace::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
 
     Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");

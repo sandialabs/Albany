@@ -48,7 +48,7 @@ private:
   int fieldDim;
   size_t dims_2;
   size_t dims_3;
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
 
   bool target_value, rmsScaling, extrudedParams, isFieldGradient;
   TargetScalarT target_value_val;
@@ -63,7 +63,7 @@ private:
 
   bool resp_depends_on_sol_column;
 
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 

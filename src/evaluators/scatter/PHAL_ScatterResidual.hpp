@@ -91,7 +91,7 @@ protected:
   int numDim;
   int tensorRank;
 
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 public:
   struct ResidAccessor {
@@ -206,7 +206,7 @@ protected:
   using Base::numNodes;
   using Base::m_fields_offsets;
 
-  static constexpr bool is_atomic = KU::NeedsAtomic<PHX::Device::execution_space>::value;
+  static constexpr bool is_atomic = KU::NeedsAtomic<PHX::ExecutionSpace>::value;
 };
 
 // **************************************************************
@@ -377,7 +377,7 @@ protected:
   using Base = ScatterResidual<AlbanyTraits::HessianVec, Traits>;
   using ScalarT = typename Base::ScalarT;
 
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
   using Base::get_resid;

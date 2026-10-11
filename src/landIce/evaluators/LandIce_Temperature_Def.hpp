@@ -28,7 +28,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
  , correctedTemp  (p.get<std::string> ("Corrected Temperature Variable Name"), dl->node_scalar)
  , diffEnth       (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
 {
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
 
   numNodes = dims[1];

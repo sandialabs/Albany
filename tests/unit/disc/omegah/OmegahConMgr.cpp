@@ -83,7 +83,7 @@ template <template <typename,typename,typename> class Intrepid2Type>
 Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
 {
   // build a geometric pattern from a single basis
-  auto basis = Teuchos::rcp(new Intrepid2Type<PHX::exec_space, double, double>());
+  auto basis = Teuchos::rcp(new Intrepid2Type<PHX::Device, double, double>());
   auto pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
   return pattern;
 }

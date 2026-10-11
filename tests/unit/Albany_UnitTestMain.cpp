@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
   {
     Teuchos::FancyOStream out(Teuchos::rcpFromRef(std::cout));
     out.setOutputToRootOnly(0);
-    PHX::exec_space exec_space; 
+    PHX::ExecutionSpace exec_space; 
     exec_space.print_configuration(out);
   }
 

@@ -46,7 +46,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   homotopy		 (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
   Residual 		 (p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
 {
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
