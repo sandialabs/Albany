@@ -667,7 +667,7 @@ buildBox (const int dim)
 template<typename CoordView1d, typename CoordView2d>
 void copyCoordsToViews(CoordView1d coords_d, const int mdim, const int num_ents,
     CoordView2d x, CoordView2d y, CoordView2d z) {
-  using exec_space = PHX::Device::execution_space;
+  using exec_space = PHX::ExecutionSpace;
   auto copy_coords = KOKKOS_LAMBDA(int i) {
     x(i,0) = coords_d(mdim*i);
     if (mdim>1) {
@@ -858,7 +858,7 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
       TEUCHOS_TEST_FOR_EXCEPTION(!nodal, std::logic_error, "Error! Only nodal fields can be computed from a mathematical expression.\n");
       TEUCHOS_TEST_FOR_EXCEPTION(layered, std::logic_error, "Error! Layered fields cannot be computed from a mathematical expression.\n");
 
-      using exec_space = PHX::Device::execution_space;
+      using exec_space = PHX::ExecutionSpace;
       using view_type = Kokkos::View<double**,DeviceView1d<double>::memory_space>;
 
       int num_ents = getLocalSubdim(vs);

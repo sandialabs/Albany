@@ -26,12 +26,12 @@
 #include "Albany_Macros.hpp"
 
 // The Kokkos node is determined from the Phalanx Device
-typedef Tpetra::KokkosCompat::KokkosDeviceWrapperNode<PHX::Device>  KokkosNode;
+typedef Tpetra::KokkosCompat::KokkosDeviceWrapperNode<PHX::ExecutionSpace, PHX::MemorySpace>  KokkosNode;
 
 namespace Albany
 {
 
-using DeviceMemSpace = PHX::Device::memory_space;
+using DeviceMemSpace = PHX::MemorySpace;
 using HostMemSpace   = Kokkos::HostSpace;
 
 template<typename DT, typename MemSpace = DeviceMemSpace>
@@ -39,7 +39,7 @@ using ViewLR = Kokkos::View<DT,Kokkos::LayoutRight,MemSpace>;
 // NOTE: Tpetra may use a different LO type (Albany uses int32, while tpetra uses int). When extracting local views/matrices,
 //       be careful about this. At worst, you may need to extract pointers and reinterpret_cast them.
 
-using DevLayout = PHX::Device::array_layout;
+using DevLayout = PHX::ExecutionSpace::array_layout;
 
 // kokkos 1d and 2d views to be used for on-device kernels
 template<typename Scalar, typename MemoryTraits = Kokkos::MemoryUnmanaged>

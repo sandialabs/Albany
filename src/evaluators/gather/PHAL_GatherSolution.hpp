@@ -124,7 +124,7 @@ protected:
   bool enableTransient;
   bool enableAcceleration;
 
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 
 public:
@@ -299,7 +299,7 @@ private:
   using Base::m_fields_offsets;
 
 protected:
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 

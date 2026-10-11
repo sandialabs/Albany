@@ -600,7 +600,7 @@ computeField (const std::string& field_name,
   // Extract coordinates of all nodes
   auto field_mv = Thyra::createMembers(entities_vs,field_dim);
 
-  using exec_space = PHX::Device::execution_space;
+  using exec_space = PHX::ExecutionSpace;
   using layout = typename Kokkos::View<double**,DeviceView1d<double>::memory_space>::traits::array_layout;
 
   // Set up the expression parser

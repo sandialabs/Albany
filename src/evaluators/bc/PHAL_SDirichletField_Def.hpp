@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   auto lJac = tJac->getLocalMatrixDevice();
   auto numLRows = lJac.numRows();
 
-  using range_policy = Kokkos::RangePolicy<PHX::Device::execution_space>;
+  using range_policy = Kokkos::RangePolicy<PHX::ExecutionSpace>;
   Kokkos::parallel_for("SDirichletField<Jacobian>::evaluateFields",
                         range_policy(0, numLRows), KOKKOS_LAMBDA(const int lrow) {
       const bool isRowDBC = col2DBCView(lrow, 0) > 0;

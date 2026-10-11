@@ -26,7 +26,7 @@
 //! PHalanx-ALbany Code base: templated evaluators for Sacado AD
 namespace PHAL {
 
-  typedef PHX::Device::size_type size_type;
+  typedef PHX::ExecutionSpace::size_type size_type;
 
   // Forward declaration since Workset needs AlbanyTraits
   struct Workset;

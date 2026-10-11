@@ -762,7 +762,7 @@ Application::setDynamicLayoutSizes(Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTr
   in_fm->buildDagForType<Traits>();
   for (auto& t : tags) {
     auto& t_dl = t->nonConstDataLayout();
-    std::vector<PHX::Device::size_type> t_dims;
+    std::vector<PHX::ExecutionSpace::size_type> t_dims;
     t_dl.dimensions(t_dims);
 
     // Check if dimension[0] is Side

@@ -27,7 +27,7 @@ namespace LandIce
     this->addEvaluatedField(w);
     this->setName("Vertical Velocity");
 
-    std::vector<PHX::Device::size_type> dims;
+    std::vector<PHX::ExecutionSpace::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
 
     numNodes = dims[1];

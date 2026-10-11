@@ -61,7 +61,7 @@ private:
   Albany::LocalSideSetInfo sideSet;
 
 protected:
-  using ExecutionSpace = typename PHX::Device::execution_space;
+  using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 

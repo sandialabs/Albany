@@ -56,7 +56,7 @@ StokesFOStress(const Teuchos::ParameterList& p,
 
   this->setName("StokesFOStress"+PHX::print<EvalT>());
 
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
   Ugrad.fieldTag().dataLayout().dimensions(dims);
   numQPs   = dims[1];
   vecDimFO  = dims[2];

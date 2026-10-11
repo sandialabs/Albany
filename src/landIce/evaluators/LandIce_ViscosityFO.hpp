@@ -97,7 +97,7 @@ private:
   PHAL::MDFieldMemoizer<Traits> memoizer;
 
 public:
-  typedef typename PHX::Device execution_space;
+  typedef typename PHX::ExecutionSpace execution_space;
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct ViscosityFO_EXPTRIG_Tag{};

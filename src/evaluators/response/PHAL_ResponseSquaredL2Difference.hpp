@@ -38,7 +38,7 @@ private:
 
   int numQPs;
   int fieldDim;
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
 
   bool target_value;
   TargetScalarT target_value_val;

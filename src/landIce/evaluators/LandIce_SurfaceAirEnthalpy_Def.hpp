@@ -23,7 +23,7 @@ SurfaceAirEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::L
 {
   fieldName =  p.get<std::string>("Surface Air Temperature Name");
 
-  std::vector<PHX::Device::size_type> dims;
+  std::vector<PHX::ExecutionSpace::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
 
   numNodes = dims[1];

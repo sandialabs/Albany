@@ -35,7 +35,7 @@ namespace Albany
   Teuchos::RCP<const panzer::FieldPattern> buildFieldPattern()
   {
     // build a geometric pattern from a single basis
-    Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis = Teuchos::rcp(new Intrepid2Type);
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, double, double>> basis = Teuchos::rcp(new Intrepid2Type);
     Teuchos::RCP<const panzer::FieldPattern> pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
     return pattern;
   }
@@ -190,8 +190,8 @@ namespace Albany
             std::string topo_name = eb_topology.getName();
             if (type == "HVOL_C0")
             {
-              Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
-                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
+              Teuchos::RCP<Intrepid2::Basis<PHX::Device, double, double>> basis =
+                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::Device, double, double>(eb_topology));
               pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
               n_dofs_per_field_per_element = 1;
             }
@@ -199,22 +199,22 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 4;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 3;
               }
               else if (topo_name == "Tetrahedron_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 4;
               }
               else if (topo_name == "Hexahedron_8")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 8;
               }
               else
@@ -224,25 +224,25 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }
               else if (topo_name == "Tetrahedron_4")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 10;
               }
               else if (topo_name == "Hexahedron_8")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 27;
               }
@@ -278,8 +278,8 @@ namespace Albany
             std::string topo_name = eb_topology.getName();
             if (type == "HVOL_C0")
             {
-              Teuchos::RCP<Intrepid2::Basis<PHX::exec_space, double, double>> basis =
-                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::exec_space, double, double>(eb_topology));
+              Teuchos::RCP<Intrepid2::Basis<PHX::Device, double, double>> basis =
+                  Teuchos::rcp(new Intrepid2::Basis_HVOL_C0_FEM<PHX::Device, double, double>(eb_topology));
               pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis));
               n_dofs_per_field_per_element = 1;
             }
@@ -287,12 +287,12 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 4;
               }
               else if (topo_name == "Triangle_3")
               {
-                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::exec_space, double, double>>();
+                pattern = buildFieldPattern<Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device, double, double>>();
                 n_dofs_per_field_per_element = 3;
               }
               else
@@ -302,13 +302,13 @@ namespace Albany
             {
               if (topo_name == "Quadrilateral_4")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 9;
               }
               else if (topo_name == "Triangle_3")
               {
-                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::exec_space, double, double>(2));
+                auto basis_ptr = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, double, double>(2));
                 pattern = Teuchos::rcp(new panzer::Intrepid2FieldPattern(basis_ptr));
                 n_dofs_per_field_per_element = 6;
               }

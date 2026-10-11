@@ -148,7 +148,7 @@ void scale(ArrayT& a, const T& val);
 // Create a MDALayout given tags and dimensions vector
 template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
          typename Tag4, typename Tag5, typename Tag6, typename Tag7>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=8, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -158,7 +158,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 
 template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
          typename Tag4, typename Tag5, typename Tag6>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=7, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -168,7 +168,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 
 template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
          typename Tag4, typename Tag5>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=6, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -178,7 +178,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 
 template<typename Tag0, typename Tag1, typename Tag2, typename Tag3,
          typename Tag4>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=5, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -187,7 +187,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 }
 
 template<typename Tag0, typename Tag1, typename Tag2, typename Tag3>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=4, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -195,7 +195,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 }
 
 template<typename Tag0, typename Tag1, typename Tag2>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=3, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -203,7 +203,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 }
 
 template<typename Tag0, typename Tag1>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=2, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -211,7 +211,7 @@ Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::siz
 }
 
 template<typename Tag0>
-Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::Device::size_type>& dims)
+Teuchos::RCP<PHX::DataLayout> createMDALayout(const std::vector<PHX::ExecutionSpace::size_type>& dims)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=1, Teuchos::Exceptions::InvalidParameter,
                               "Error! Dimensions vector size does not match the number of tags.\n");
@@ -225,7 +225,7 @@ struct ExtendLayout
   static Teuchos::RCP<PHX::DataLayout>
   apply(Teuchos::RCP<PHX::DataLayout>& dl, int new_dim)
   {
-    std::vector<PHX::Device::size_type> dims;
+    std::vector<PHX::ExecutionSpace::size_type> dims;
     dl->dimensions(dims);
     TEUCHOS_TEST_FOR_EXCEPTION (dims.size()!=sizeof...(Tags), Teuchos::Exceptions::InvalidParameter,
                               "Error! Input layout dimensions vector size does not match the number of tags.\n");

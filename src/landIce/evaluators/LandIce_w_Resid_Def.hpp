@@ -45,7 +45,7 @@ namespace LandIce
     normals    = decltype(normals)(p.get<std::string> ("Side Normal Name"), dl_side->qp_vector_spacedim);
     upwind = p.get<bool>("Upwind Integration From Bed");
 
-    std::vector<PHX::Device::size_type> dims;
+    std::vector<PHX::ExecutionSpace::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];

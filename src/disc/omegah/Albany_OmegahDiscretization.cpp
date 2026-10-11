@@ -22,8 +22,8 @@
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
-using ExecutionSpace = PHX::Device::execution_space;
-using MemorySpace = PHX::Device::memory_space;
+using ExecutionSpace = PHX::ExecutionSpace;
+using MemorySpace = PHX::MemorySpace;
 
 namespace {
   constexpr bool isMeshfieldsEnabled() {
