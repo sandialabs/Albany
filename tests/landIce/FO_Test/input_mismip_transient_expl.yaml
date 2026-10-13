@@ -113,7 +113,7 @@ ANONYMOUS:
         Restart Index: 1
         Exodus Output File Name: output/mismip_transient_gvisc_basal.exo
         Exodus Input File Name: ../AsciiMeshes/MISMIP/mismip_2d.exo
-        Use Serial Mesh: false
+        Use Serial Mesh: ${USE_SERIAL_MESH}
         Required Fields Info:
           Number Of Fields: 4
           Field 0:

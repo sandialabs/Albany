@@ -4,6 +4,18 @@ get_filename_component(parentDirName ${parentPath} NAME)
 get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set (testNameRoot ${parentDirName}_${dirName})
 
+# This variable will be set in the input files during the 'configure_file' call
+if (ALBANY_PARALLEL_EXODUS)
+  set (USE_SERIAL_MESH "true")
+else ()
+  # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
+  # OR execute with only one rank.
+  IF (NOT ${ALBANY_SEACAS_PATH})
+    MESSAGE (FATAL_ERROR "Error! Cannot execute some FO_Test tests in parallel without Iopx or decomp from Trilinos.\n")
+  ENDIF()
+ set (USE_SERIAL_MESH "false")
+endif()
+
 ####################################
 ###        FO dome tests         ###
 ####################################
