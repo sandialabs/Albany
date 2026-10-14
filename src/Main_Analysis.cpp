@@ -86,6 +86,32 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry.getAnalysisParameters().get("Analysis Package","Solve");
+    if(analysisPackage == "HDSA") {
+#ifdef ALBANY_HDSA
+      auto& hdsaPList = slvrfctry.getAnalysisParameters().sublist("HDSA");
+      if(hdsaPList.isParameter("Normal Random Generator Seed")) {
+        int seed = hdsaPList.get<int>("Normal Random Generator Seed");
+        hdsaPList.set("Normal Random Generator Seed", seed + comm->getRank());
+      }
+      const std::string p_sample_root_name = hdsaPList.get("Parameter Sample Root Name", "param_sample");
+      const std::string x_diff_root_name = hdsaPList.get("Solution Difference Root Name", "solution_diff_sample");
+      const auto distParamLib = albanyApp->getDistributedParameterLibrary();      
+      std::vector<Teuchos::RCP< Thyra::VectorBase<double> > > p_samples, u_diff_at_samples;
+      
+      //we clone these vectors because we don't want them to be modify somewhere else in the code as parameters. 
+      //for the HDSA analysis these are data
+      int num_samples=hdsaPList.get("Number Of Data Samples",2);
+      for(int i=0; i<num_samples; ++i) {
+        p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
+        u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
+      }
+      Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer, u_diff_at_samples, p_samples);
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+          "Error! 'Analysis Package: HDSA' requested, but Albany was configured without HDSA support.\n"
+          "       Reconfigure Albany with -DENABLE_HDSA=ON against a Trilinos whose Piro is built with HdsaLib and ROL.\n");
+#endif
+    } else
     Piro::PerformAnalysis(*solver, slvrfctry.getParameters()->sublist("Piro"), p, observer);
 
     Albany::RegressionTests regression(slvrfctry.getParameters());

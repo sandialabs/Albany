@@ -33,6 +33,10 @@
 // Whether the MeshFields interface is enabled
 #cmakedefine ALBANY_MESHFIELDS
 
+// Whether the HDSA (Hyper-Differential Sensitivity Analysis) capability is enabled
+// (requires Trilinos/Piro built with HdsaLib and ROL)
+#cmakedefine ALBANY_HDSA
+
 // Whether this is a nightly test build
 #cmakedefine ALBANY_NIGHTLY_TEST
 
