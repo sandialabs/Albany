@@ -15,6 +15,7 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Phalanx_KokkosView_HiddenDimensionForSFINAE.hpp"
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -227,6 +228,15 @@ postRegistrationSetup(typename Traits::SetupData d,
     dofCell_buffer = Sacado::createDynRankView(dof.get_view(), "dofCell", numCells, numNodes, numDOFsSet);
   }
 
+  // ParamScalarT with the derivative dimension of this evaluation type, as for the Phalanx fields
+  if constexpr (PHX::requires_dynamic_hidden_dimension<ParamScalarT>::value) {
+    const auto& deriv_dims = fm.template getKokkosExtendedDataTypeDimensions<EvalT>();
+    const PHX::index_size_type hDim = (deriv_dims.size()>0 ? deriv_dims[0] : 0) + 1;
+    paramScalarT_view = Kokkos::View<ParamScalarT*, PHX::Device>("NeumannParamScalarT", 1, hDim);
+  } else {
+    paramScalarT_view = Kokkos::View<ParamScalarT*, PHX::Device>("NeumannParamScalarT", 1);
+  }
+
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
 }
@@ -270,8 +280,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // neumann data type is always ScalarT, but the deriv dimension
-  // actually needed depends on BC type. For many it just needs
-  // deriv dimensions from MeshScalarT (cloned from coordVec).
+  // actually needed depends on BC type. The BCs that depend on the
+  // solution use the deriv dimension of the dof field. The others
+  // only depend on the mesh and on parameters (e.g., the "dudn" value
+  // can be a Sacado parameter), hence the deriv dimension of ParamScalarT.
   // "data" is same as neumann -- always ScalarT but not always
   // with full deriv dimension of a ScalarT variable.
 
@@ -279,7 +291,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   switch(bc_type){
     case INTJUMP:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
-         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+         (paramScalarT_view, "DDN", numCells, numNodes, numDOFsSet);
        break;
     case ROBIN:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
@@ -291,15 +303,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
        break;
     case NORMAL:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
-         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+         (paramScalarT_view, "DDN", numCells, numNodes, numDOFsSet);
        break;
     case PRESS:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
-         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+         (paramScalarT_view, "DDN", numCells, numNodes, numDOFsSet);
        break;
     case TRACTION:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
-         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+         (paramScalarT_view, "DDN", numCells, numNodes, numDOFsSet);
        break;
     case CLOSED_FORM:
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
@@ -308,7 +320,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     default:
     //std::cout << "NN1 " << std::endl;
        neumann = Sacado::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
-         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+         (paramScalarT_view, "DDN", numCells, numNodes, numDOFsSet);
        break;
   }
 

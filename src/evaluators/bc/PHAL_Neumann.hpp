@@ -155,6 +155,10 @@ protected:
   // Output:
   Kokkos::DynRankView<ScalarT, PHX::Device> neumann;
 
+  // View of ParamScalarT with the derivative dimension of the evaluation type, used as a template
+  // to allocate "neumann" for the BCs that do not depend on the solution (see evaluateNeumannContribution)
+  Kokkos::View<ParamScalarT*, PHX::Device> paramScalarT_view;
+
   int numSidesOnElem;
   bool vectorDOF;
 

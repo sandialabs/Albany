@@ -1,0 +1,203 @@
+# Problem BR: Problem B with the regularization 0.5*|d|^2 (weighted in time like the misfit).
+# The misfit is not zero at the optimum, which depends on the accuracy of the gradient.
+# Optimum of the discrete problem (ROL driver): FT |d| = 2.301529145591, SOT |d| = 2.261973262319.
+# The Tempus driver uses the continuous adjoint, whose O(dt) error moves the optimum by less than 5e-3.
+# Driver: Tempus, response type: Final Time.
+# See the description of the TransientHeat2D transient optimization tests in CMakeLists.txt.
+ALBANY:
+  Problem:
+    Name: Heat 2D
+    Solution Method: Transient
+    Compute Sensitivities: true
+    Dirichlet BCs:
+      DBC on NS NodeSet2 for DOF T prescribe Field: dirichlet_field    # d (bottom edge, y = 0)
+    Neumann BCs:
+      NBC on SS SideSet3 for DOF T set dudn: [1.0]    # unit flux on the top edge (y = 1)
+    Initial Condition:
+      Function: TemperatureLinear
+      Function Data: [1.0, 2.0, 0.0, 1.0, 1.0]        # T0 = 1 + y
+    Target Temperature:
+      Type: Linear Space-Time
+      Coefficients: [1.0, 0.0, 1.0, 0.0]              # T* = 1 + y
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Distributed
+        Name: dirichlet_field
+        Mesh Part: NodeSet2
+        Lower Bound: 0.0
+        Upper Bound: 5.0
+        Initial Uniform Value: 3.0
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:
+        Type: Sum Of Responses
+        Number Of Responses: 2
+        Response 0:
+          Name: Squared L2 Difference Source ST Target MST
+          Field Rank: Scalar
+          Source Field Name: Temperature
+          Target Field Name: Target Temperature
+          Scaling: 100.0
+        Response 1:                                   # 0.5*|d|^2
+          Name: Quadratic Linear Operator Based
+          Field Name: dirichlet_field
+          Scaling Coefficient: 0.5
+          Matrix A File Name: identity_6x6.mm
+          Matrix D File Name: identity_6x6.mm
+          Matrix A Is Symmetric: true
+          Verbose: false
+  Discretization:
+    1D Elements: 5
+    2D Elements: 5
+    1D Scale: 1.0
+    2D Scale: 1.0
+    Workset Size: 50
+    Method: STK2D
+  Regression For Response 0:
+    Relative Tolerance: 1.0e-06
+    Absolute Tolerance: 5.0e-03
+    Piro Analysis Test Two Norm: true
+    Piro Analysis Test Values: [2.301529145591]
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Analysis:
+      Transient: true
+      Analysis Package: ROL
+      ROL:
+        Number Of Parameters: 1
+        Parameter Initial Guess Type: From Model Evaluator
+        Bound Constrained: true
+        Check Derivatives: true
+        Derivative Checks:
+          Number Of Derivative Checks: 1
+        Tempus Driver: true
+        Tempus Output Filename: log_tempus_DirichletFieldReg_Tempus_FinalTime.txt
+        Response Type: Final Time
+        ROL Options:
+          General:
+            Output Level: 1
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+            Inexact Objective Function: false
+            Inexact Gradient: false
+            Inexact Hessian-Times-A-Vector: false
+            Projected Gradient Criticality Measure: false
+            Secant:
+              Type: Limited-Memory BFGS
+              Maximum Storage: 20
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein: 1
+            Krylov:
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+          Step:
+            Type: Trust Region
+            Trust Region:
+              Subproblem Model: Kelley-Sachs
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Step Acceptance Threshold: 0.05
+              Radius Shrinking Threshold: 0.05
+              Radius Growing Threshold: 0.9
+              Radius Shrinking Rate (Negative rho): 0.0625
+              Radius Shrinking Rate (Positive rho): 0.25
+              Radius Growing Rate: 2.5
+              Safeguard Size: 100.0
+          Status Test:
+            Gradient Tolerance: 1.0e-08
+            Step Tolerance: 1.0e-14
+            Iteration Limit: 100
+            Use Relative Tolerances: false
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 100
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control:
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 5.0e-02
+          Final Time: 1.0
+          Final Time Index: 10000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: Backward Euler
+        Solver Name: Demo Solver
+        Demo Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-12
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Full Step
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: false
+                Parameters: false
+                Details: false
+                Linear Solver Details: false
+                Stepper Iteration: false
+                Stepper Details: false
+                Stepper Parameters: false
+            Solver Options:
+              Status Test Check Type: Minimal
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Tolerance: 1.0e-10
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 10
+      # Linear solver of the time steps, and of the adjoint (and ROL Newton) solves
+      Stratimikos:
+        Linear Solver Type: Belos
+        Linear Solver Types:
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1.0e-12
+                Output Style: 1
+                Verbosity: 0
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types:
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings:
+              'fact: ilut level-of-fill': 1.0
+...
