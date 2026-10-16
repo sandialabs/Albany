@@ -405,14 +405,75 @@ Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_Lin
 } 
 
 void transpose (const Teuchos::RCP<Thyra_LinearOp> lop) {
-  Teuchos::RCP<Thyra_LinearOp> lopt;
-
   bool is_cast_null=true;
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
-    *tmat = *transposer.createTranspose();
+    // Compute the transpose, then copy its values into the matrix, which keeps its graph.
+    // Note: the matrix must not be replaced by the transpose (e.g., *tmat = *transpose).
+    //       The matrix is usually a Tpetra::FECrsMatrix, whose owned matrix shares its
+    //       values with the owned+shared matrix used for the FE assembly. The (shallow)
+    //       CrsMatrix assignment breaks this sharing, so all the matrices assembled later
+    //       in this linear op would not be seen: the op would be stuck with the values of
+    //       the first transposed matrix (with the Dirichlet rows of the later evaluations,
+    //       transposed back and forth). This is what happens to the adjoint Jacobians of a
+    //       transient adjoint, which are evaluated many times in the same op.
+    Teuchos::RCP<const Tpetra_CrsMatrix> tmat_t;
+    {
+      Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
+      tmat_t = transposer.createTranspose();
+    }
+
+    const auto& rowMap   = *tmat->getRowMap();
+    const auto& colMap   = *tmat->getColMap();
+    const auto& rowMap_t = *tmat_t->getRowMap();
+    const auto& colMap_t = *tmat_t->getColMap();
+
+    using indices_type = typename Tpetra_CrsMatrix::nonconst_local_inds_host_view_type;
+    using values_type  = typename Tpetra_CrsMatrix::nonconst_values_host_view_type;
+    const size_t maxNumEntries = std::max(tmat->getLocalMaxNumRowEntries(),
+                                          tmat_t->getLocalMaxNumRowEntries());
+    Teuchos::Array<LO> cols(maxNumEntries), cols_t(maxNumEntries);
+    Teuchos::Array<ST> vals(maxNumEntries), vals_t(maxNumEntries);
+    indices_type cols_view(cols.getRawPtr(),maxNumEntries);
+    indices_type cols_t_view(cols_t.getRawPtr(),maxNumEntries);
+    values_type  vals_view(vals.getRawPtr(),maxNumEntries);
+    values_type  vals_t_view(vals_t.getRawPtr(),maxNumEntries);
+
+    const LO invalid = Teuchos::OrdinalTraits<LO>::invalid();
+    beginModify(lop);
+    const LO numRows = tmat->getLocalNumRows();
+    for (LO lrow=0; lrow<numRows; ++lrow) {
+      const Tpetra_GO grow = rowMap.getGlobalElement(lrow);
+      const LO lrow_t = rowMap_t.getLocalElement(grow);
+      TEUCHOS_TEST_FOR_EXCEPTION (lrow_t==invalid, std::runtime_error,
+          "Error in transpose! The row map of the matrix differs from its domain map.\n");
+
+      size_t numEntries, numEntries_t;
+      tmat->getLocalRowCopy(lrow,cols_view,vals_view,numEntries);
+      tmat_t->getLocalRowCopy(lrow_t,cols_t_view,vals_t_view,numEntries_t);
+
+      // Same entries as the row of the matrix, with the values of the row of the transpose
+      for (size_t k=0; k<numEntries; ++k) {
+        vals[k] = 0.0;
+      }
+      for (size_t k=0; k<numEntries_t; ++k) {
+        const LO lcol = colMap.getLocalElement(colMap_t.getGlobalElement(cols_t[k]));
+        size_t pos = 0;
+        while (pos<numEntries && cols[pos]!=lcol) {
+          ++pos;
+        }
+        TEUCHOS_TEST_FOR_EXCEPTION (lcol==invalid || pos==numEntries, std::runtime_error,
+            "Error in transpose! The graph of the matrix is not structurally symmetric (row " << grow << ").\n");
+        vals[pos] = vals_t[k];
+      }
+      const LO numReplaced = tmat->replaceLocalValues(lrow,
+          Teuchos::ArrayView<const LO>(cols.getRawPtr(),numEntries),
+          Teuchos::ArrayView<const ST>(vals.getRawPtr(),numEntries));
+      TEUCHOS_TEST_FOR_EXCEPTION (numReplaced!=static_cast<LO>(numEntries), std::runtime_error,
+          "Error in transpose! Could not replace the values of row " << grow << ".\n");
+    }
+    endModify(lop);
     is_cast_null=false;
   }
 

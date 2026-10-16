@@ -1,5 +1,6 @@
 from mpi4py import MPI
 from PyAlbany import Utils
+import glob
 import os
 import sys
 import subprocess
@@ -26,12 +27,8 @@ def performGradientChecks(filename, parallelEnv, after):
 
 if len(sys.argv) == 1:
 
-    filenames = ["tempus_be_nox_analysis_integrated_response_distributed_param.yaml", 
-                "tempus_be_nox_analysis_integrated_response_scalar_params.yaml", 
-                "tempus_be_nox_analysis_rol_driven_scalar_params_2.yaml", 
-                "tempus_be_nox_analysis_rol_driven_scalar_params.yaml", 
-                "tempus_be_nox_analysis_tempus_driven_scalar_params_2.yaml", 
-                "tempus_be_nox_analysis_tempus_driven_scalar_params.yaml"]
+    # All the transient optimization inputs of this directory
+    filenames = sorted(glob.glob("transient_opt_*.yaml"))
 
     my_env = os.environ.copy()
     for filename in filenames:

@@ -15,6 +15,7 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_StringUtils.hpp"
+#include "Albany_DOFManager.hpp"
 
 #include "Piro_ProviderBase.hpp"
 #include "Piro_NOXSolver.hpp"
@@ -43,6 +44,7 @@
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
@@ -81,6 +83,73 @@ buildLinearSolveStrategy(const Teuchos::RCP<Teuchos::ParameterList>& stratParams
   linearSolverBuilder->setParameterList(stratParams);
   return createLinearSolveStrategy(*linearSolverBuilder);
 }
+
+// Value of a parameter of a const list, or a default if the parameter is not set
+template<typename T>
+T getOr (const Teuchos::ParameterList& pl, const std::string& name, const T& defaultValue)
+{
+  return pl.isType<T>(name) ? pl.get<T>(name) : defaultValue;
+}
+
+// Whether the transient sensitivities are computed by the adjoint sensitivity integrator of
+// Tempus: Tempus-driven transient optimization (analysis), or adjoint sensitivities of a
+// transient solve (forward mode). The ROL-driven transient optimization (ROL dynamic
+// constraints) uses discrete adjoints instead, which need the actual mass matrix.
+bool usesTempusAdjointIntegrator (const Teuchos::ParameterList& piroParams,
+                                  const Teuchos::ParameterList& problemParams,
+                                  const bool forwardMode)
+{
+  if (getOr<std::string>(problemParams,"Solution Method","Steady") != "Transient") {
+    return false;
+  }
+  if (forwardMode) {
+    return getOr<std::string>(piroParams,"Sensitivity Method","None") == "Adjoint" &&
+           getOr<bool>(problemParams,"Compute Sensitivities",false);
+  }
+  if (!piroParams.isSublist("Analysis")) {
+    return false;
+  }
+  const auto& analysisParams = piroParams.sublist("Analysis");
+  return getOr<bool>(analysisParams,"Transient",false) &&
+         getOr<std::string>(analysisParams,"Analysis Package","") == "ROL" &&
+         analysisParams.isSublist("ROL") &&
+         getOr<bool>(analysisParams.sublist("ROL"),"Tempus Driver",false);
+}
+
+// Vector in the residual space equal to 'value' on the rows of the (weak) Dirichlet
+// conditions, and to zero elsewhere
+Teuchos::RCP<Thyra_Vector>
+buildDirichletRowsVector (const Albany::Application& app, const double value)
+{
+  const auto problem = app.getProblem();
+  const auto disc    = app.getDiscretization();
+
+  auto v = Thyra::createMember(app.getVectorSpace());
+  v->assign(0.0);
+  auto v_data = Albany::getNonconstLocalData(v);
+
+  const auto& sol_dof_mgr = disc->getDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& nodeSets = disc->getNodeSets();
+  const auto nodeSetIDs = problem->getNodeSetIDs();
+  const auto offsets = problem->getOffsets();
+  for (size_t ns=0; ns<nodeSetIDs.size() && ns<static_cast<size_t>(offsets.size()); ++ns) {
+    const auto it = nodeSets.find(nodeSetIDs[ns]);
+    if (it==nodeSets.end()) {
+      continue;
+    }
+    for (const int eq : offsets[ns]) {
+      const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
+      for (const auto& ep : it->second) {
+        const int ielem = ep.first;
+        const int pos   = ep.second;
+        v_data[sol_elem_dof_lids(ielem,eq_offsets[pos])] = value;
+      }
+    }
+  }
+  return v;
+}
+
 }  // namespace
 
 namespace Albany
@@ -310,6 +379,13 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
     }
   }
 
+  if (solutionMethod=="Transient" && Teuchos::is_null(explicitOdeModel) &&
+      usesTempusAdjointIntegrator(*piroParams, *problemParams, forwardMode) &&
+      !(piroParams->isSublist("Tempus") && usesExplicitTempusStepper(piroParams->sublist("Tempus"))))
+  {
+    setupTempusAdjointWithDirichletBCs(model_tmp->getAlbanyApp());
+  }
+
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
   Teuchos::RCP<Thyra_ModelEvaluator> adjointModelWithSolve = Teuchos::null;
   if (Teuchos::nonnull(model->get_W_factory())) {
@@ -361,6 +437,60 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
   Piro::SolverFactory piroFactory;
   return piroFactory.createSolver<ST>(
        piroParams, modelWithSolve, adjointModelWithSolve, observer);
+}
+
+void SolverFactory::
+setupTempusAdjointWithDirichletBCs (const Teuchos::RCP<Application>& app)
+{
+  // The adjoint sensitivity integrator of Tempus computes the jumps of the adjoint at the
+  // response times ("Final Time", "Sum Over Times") with the mass matrix df/dx_dot. The rows
+  // of the (weak) Dirichlet conditions x_i = d_i(p,t) of the mass matrix are zero, unless
+  // Problem->"Perturb Dirichlet" is positive, in which case they are perturb*e_i. Tempus needs
+  // these rows to be nonsingular, and the vector gamma (perturb on the Dirichlet rows, zero
+  // elsewhere) as Tempus->Sensitivities->"Algebraic Equations Mass Diagonal", to add the
+  // contribution of the Dirichlet rows of the jumps and to remove gamma from df/dx_dot where
+  // the true df/dx_dot is needed. Without this, the gradients w.r.t. parameters entering the
+  // Dirichlet conditions (e.g., "dirichlet_field") are wrong.
+  const auto problem = app->getProblem();
+  const auto nodeSetIDs = problem->getNodeSetIDs();
+  if (nodeSetIDs.size()==0) {
+    return;
+  }
+  if (problem->useSDBCs()) {
+    // Strong Dirichlet conditions eliminate the Dirichlet rows and columns instead
+    *m_out << "Note: the problem has strong Dirichlet conditions (SDBC): Tempus->Sensitivities->\n"
+           << "      \"Algebraic Equations Mass Diagonal\" is not set, and the adjoint sensitivities of Tempus\n"
+           << "      w.r.t. parameters entering the Dirichlet conditions are not supported.\n";
+    return;
+  }
+
+  // Unless set by the user, use 1 on the diagonal of the Dirichlet rows of the mass matrix
+  const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
+  const bool userPerturb = problemParams->isParameter("Perturb Dirichlet") &&
+                           !problemParams->getEntry("Perturb Dirichlet").isDefault();
+  const double perturb = userPerturb ? app->getPerturbDirichlet() : 1.0;
+
+  const auto gamma = buildDirichletRowsVector(*app, 1.0);
+  if (gamma->norm_inf()==0.0) {
+    // No Dirichlet dof
+    return;
+  }
+  if (perturb<=0.0) {
+    *m_out << "WARNING: Problem->\"Perturb Dirichlet\" = " << perturb << " with the adjoint sensitivities of Tempus:\n"
+           << "         the Dirichlet rows of the mass matrix are zero, and the sensitivities may be inaccurate.\n";
+    return;
+  }
+  app->setPerturbDirichlet(perturb);
+  gamma->scale(perturb);
+
+  const std::string gammaName = "Algebraic Equations Mass Diagonal";
+  auto& sensParams = m_appParams->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
+  if (!sensParams.isParameter(gammaName)) {
+    sensParams.set<Teuchos::RCP<const Thyra_Vector>>(gammaName, gamma);
+  }
+  *m_out << "Note: the problem has Dirichlet conditions and uses the adjoint sensitivities of Tempus:\n"
+         << "      the Dirichlet rows of the mass matrix are " << perturb << " on the diagonal (Problem->\"Perturb Dirichlet\"),\n"
+         << "      and Tempus->Sensitivities->\"" << gammaName << "\" is set accordingly.\n";
 }
 
 void SolverFactory::

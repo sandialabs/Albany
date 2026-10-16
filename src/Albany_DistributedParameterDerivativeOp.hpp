@@ -11,6 +11,8 @@
 #include "Albany_ThyraTypes.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 
+#include "Thyra_MultiVectorStdOps.hpp"
+
 #include "Teuchos_RCP.hpp"
 
 namespace Albany {
@@ -68,19 +70,34 @@ namespace Albany {
     }
 
     //! Overrides Thyra::LinearOpBase purely virtual method
+    //! Y = alpha*op(df/dp)*X + beta*Y
     void applyImpl (const Thyra::EOpTransp M_trans,
                     const Thyra_MultiVector& X,
                     const Teuchos::Ptr<Thyra_MultiVector>& Y,
-                    const ST /* alpha */,
-                    const ST /* beta */) const {
+                    const ST alpha,
+                    const ST beta) const {
 
       bool use_transpose = (Thyra::real_trans(M_trans) == Thyra::TRANS);
+
+      // applyGlobalDistParamDerivImpl overwrites its output: unless Y = op(df/dp)*X,
+      // compute op(df/dp)*X in a work multivector, then update Y.
+      const bool overwrite = (alpha == ST(1.0)) && (beta == ST(0.0));
+      Teuchos::RCP<Thyra_MultiVector> opX = overwrite ? Teuchos::rcpFromPtr(Y) :
+          Thyra::createMembers(Y->range(), Y->domain()->dim());
       app->applyGlobalDistParamDerivImpl(time, x, xdot, xdotdot,
                                          *scalar_params,
                                          param_name,
                                          use_transpose,
                                          Teuchos::rcpFromRef(X),
-                                         Teuchos::rcpFromPtr(Y));
+                                         opX);
+      if (!overwrite) {
+        if (beta == ST(0.0)) {
+          Y->assign(0.0);
+        } else if (beta != ST(1.0)) {
+          Thyra::scale(beta, Y);
+        }
+        Thyra::update(alpha, *opX, Y);
+      }
     }
 
     //! Albany applications

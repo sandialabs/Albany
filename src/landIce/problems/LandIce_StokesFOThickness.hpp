@@ -128,6 +128,9 @@ protected:
 
   void setFieldsProperties ();
 
+  //! Adds the interpolations needed by thickness misfit responses on the surface side
+  void setupEvaluatorRequests ();
+
   std::string initial_ice_thickness_name;
   std::string thickness_forcing_name;
   std::string lateralSideName;

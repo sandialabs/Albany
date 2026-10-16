@@ -85,6 +85,10 @@ protected:
 
   void setSolverParamDefaults(Teuchos::ParameterList* appParams, int myRank);
 
+  //! Set the Dirichlet rows of the mass matrix and the corresponding Tempus option, for the
+  //! adjoint sensitivities of Tempus on a problem with (weak) Dirichlet conditions
+  void setupTempusAdjointWithDirichletBCs (const Teuchos::RCP<Application>& app);
+
   //! Parameter list specifying what solver to create
   Teuchos::RCP<Teuchos::ParameterList>      m_appParams;
 

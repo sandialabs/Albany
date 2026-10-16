@@ -341,4 +341,25 @@ void StokesFOThickness::setFieldsProperties () {
   setSingleFieldProperties(thickness_forcing_name, FRT::Scalar, FST::Real);
 }
 
+void StokesFOThickness::setupEvaluatorRequests ()
+{
+  StokesFOBase::setupEvaluatorRequests();
+
+  // Transient problem: thickness misfit responses on the surface side, e.g.,
+  //   Squared L2 Difference Side Source ST Target RT, with
+  //   Source Field Name: <ice_thickness_name>_<surface side>  (the computed thickness)
+  //   Target Field Name: observed_ice_thickness_<surface side>
+  // (the QP interpolation of the nodal input fields of the side, as the observed thickness,
+  // is requested by parseInputFields).
+  // Note: on the basal side, the thickness is already interpolated for the basal BCs. On any
+  //       side, the derivatives of the responses w.r.t. the thickness are scattered to its dofs
+  //       at the top level (see extruded_2d_field_offset in the constructor).
+  if (unsteady && !isInvalid(surfaceSideName)) {
+    ss_build_interp_ev[surfaceSideName][ice_thickness_name][IReq::CELL_TO_SIDE] = true;
+    ss_build_interp_ev[surfaceSideName][ice_thickness_name][IReq::QP_VAL      ] = true;
+
+    ss_utils_needed[surfaceSideName][UtilityRequest::BFS] = true;
+  }
+}
+
 } // namespace LandIce
