@@ -205,6 +205,18 @@ public:
     return adjoint_sens;
   }
 
+  //! Value on the diagonal of the rows of the (weak) Dirichlet conditions, when
+  //! the Jacobian is evaluated with beta = 0 (e.g., the mass matrix). These rows are
+  //! zero if the value is zero. See Problem->"Perturb Dirichlet".
+  double getPerturbDirichlet () const
+  {
+    return perturbBetaForDirichlets;
+  }
+  void setPerturbDirichlet (const double perturb)
+  {
+    perturbBetaForDirichlets = perturb;
+  }
+
   //! Return whether problem wants to use its own preconditioner
   bool
   suppliesPreconditioner() const;

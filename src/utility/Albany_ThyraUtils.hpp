@@ -127,6 +127,9 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val);
 
 Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
+// Replace the values of the linear op with those of its transpose. The linear op keeps its
+// matrix (graph and storage), so it can be filled again afterwards. This requires a
+// structurally symmetric graph (e.g., a FE Jacobian) with row map equal to the domain map.
 void transpose (const Teuchos::RCP<Thyra_LinearOp> lop);
 
 // Get a kokkos compatible object to view the content of the linear op on device
