@@ -91,9 +91,9 @@ check_topology (const shards::CellTopology& cell_topo) {
 }
 
 //**********************************************************************
-template<>
-void Gather2DField<PHALTraits::Residual, PHALTraits>::
-evaluateFields (typename PHALTraits::EvalData workset)
+template<typename EvalT, typename Traits>
+void Gather2DField<EvalT, Traits>::
+gatherValues (typename Traits::EvalData workset)
 {
   // Mesh data
   const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
@@ -166,6 +166,27 @@ evaluateFields (typename PHALTraits::EvalData workset)
       }
     }
   }
+}
+
+//**********************************************************************
+template<>
+void Gather2DField<PHALTraits::Residual, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
+{
+  gatherValues(workset);
+}
+
+//**********************************************************************
+// The derivatives are taken with respect to a distributed parameter, so the
+// 2D field (a solution component) and its time derivative are constant.
+// Note: without this specialization the fields would never be filled, and
+//       df/dp and dg/dp would be evaluated at the wrong thickness, e.g., with
+//       the coupled velocity-thickness problem (LandIce::StokesFOThickness).
+template<>
+void Gather2DField<PHALTraits::DistParamDeriv, PHALTraits>::
+evaluateFields (typename PHALTraits::EvalData workset)
+{
+  gatherValues(workset);
 }
 
 //**********************************************************************

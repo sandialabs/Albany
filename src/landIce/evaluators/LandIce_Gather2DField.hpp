@@ -38,14 +38,19 @@ public:
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
+  // Specialized for all the evaluation types (see LandIce_Gather2DField_Def.hpp)
   void evaluateFields (typename Traits::EvalData /* d */) {
-    TEUCHOS_TEST_FOR_EXCEPTION (false, std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
         "[Gather2DField::evaluateFields] Not yet implemented for EvalT=" + PHX::print<EvalT>() + "\n");
   }
 
 
 protected:
   void check_topology (const shards::CellTopology& topo);
+
+  // Gather the values of the 2D field (and of its time derivative), with no
+  // derivatives. Used by the Residual and DistParamDeriv evaluation types.
+  void gatherValues (typename Traits::EvalData workset);
 
   using ScalarT = typename EvalT::ScalarT;
   using ref_t   = typename PHAL::Ref<ScalarT>::type;
