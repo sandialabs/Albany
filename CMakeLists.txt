@@ -380,6 +380,27 @@ ELSE()
   SET(ALBANY_ROL FALSE)
 ENDIF()
 
+
+# HDSA (Hyper-Differential Sensitivity Analysis), provided by Piro through HdsaLib.
+SET (DEFAULT_HDSA OFF)
+IF (Piro_ENABLE_HdsaLib AND Piro_ENABLE_ROL)
+  SET (DEFAULT_HDSA ON)
+ENDIF()
+
+OPTION (ENABLE_HDSA "Whether to enable HDSA analysis in Albany" ${DEFAULT_HDSA})
+IF (ENABLE_HDSA)
+  IF (Piro_ENABLE_HdsaLib AND Piro_ENABLE_ROL)
+    MESSAGE("-- HDSA ...                                    Enabled.")
+    SET(ALBANY_HDSA TRUE)
+  ELSE()
+    MESSAGE (FATAL_ERROR "User manually enabled HDSA support, but Piro does not support it")
+  ENDIF()
+ELSE()
+  MESSAGE("-- HDSA ...                                NOT Enabled.")
+  SET(ALBANY_HDSA FALSE)
+ENDIF()
+
+
 # Check if Trilinos has DTK
 LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
 IF (DataTransferKit_List_ID GREATER -1)

@@ -29,7 +29,7 @@ QuadraticLinearOperatorBasedResponseFunction(const Teuchos::RCP<const Albany::Ap
   auto file_name_D = responseParams.get<std::string>("Matrix D File Name");
   bool symmetricA = responseParams.isParameter("Matrix A Is Symmetric") ?  responseParams.get<bool>("Matrix A Is Symmetric") : false;
   bool diagonalD = responseParams.isParameter("Matrix D Is Diagonal") ? responseParams.get<bool>("Matrix D Is Diagonal") : false;
-  bool verbose = responseParams.isParameter("Verbose") ? responseParams.get<bool>("Verbose") : true;
+  bool verbose = responseParams.isParameter("Verbose") ? responseParams.get<bool>("Verbose") : false;
   Teuchos::RCP<Teuchos::ParameterList> solverParamList = responseParams.isSublist("D Solver Settings") ? 
       Teuchos::rcp(new Teuchos::ParameterList(responseParams.sublist("D Solver Settings"))) : Teuchos::null;
   twoAtDinvA_ = Teuchos::rcp(new AtDinvA_LOWS(file_name_A,file_name_D,2.0*coeff,solverParamList,symmetricA,diagonalD,verbose));
