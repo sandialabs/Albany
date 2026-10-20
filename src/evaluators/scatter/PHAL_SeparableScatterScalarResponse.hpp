@@ -10,6 +10,9 @@
 #include "PHAL_ScatterScalarResponse.hpp"
 
 #include "Shards_CellTopologyData.h"
+#include "Teuchos_TestForException.hpp"
+
+#include <string>
 
 namespace PHAL {
 
@@ -133,6 +136,32 @@ protected:
 // **************************************************************
 // **************************************************************
 
+// Equation offset and level of a 2D solution field defined at one level of an extruded mesh,
+// read from the "Parameters From Problem" list of p ("Extruded 2D Field Offset", "Extruded 2D
+// Field Level"), or -1 if none (see SeparableScatterScalarResponse<Jacobian>).
+inline void
+getExtruded2DField (const Teuchos::ParameterList& p, int& offset, int& level)
+{
+  using PL = Teuchos::ParameterList;
+
+  offset = -1;
+  level  = -1;
+
+  const std::string pfp_name = "Parameters From Problem";
+  if (!p.isType<Teuchos::RCP<PL>>(pfp_name)) {
+    return;
+  }
+  const auto pfp = p.get<Teuchos::RCP<PL>>(pfp_name);
+  if (pfp.is_null() || !pfp->isParameter("Extruded 2D Field Offset")) {
+    return;
+  }
+  offset = pfp->get<int>("Extruded 2D Field Offset");
+  level  = pfp->get<int>("Extruded 2D Field Level");
+  TEUCHOS_TEST_FOR_EXCEPTION (offset<0 || level<0, std::logic_error,
+      "Error! Invalid extruded 2D field for the responses: offset " << offset
+      << ", level " << level << ".\n");
+}
+
 // **************************************************************
 // Jacobian
 // **************************************************************
@@ -160,9 +189,23 @@ protected:
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     numNodes = dl->node_scalar->extent(1);
+    setupExtruded2DField(p);
   }
+
+  // A 2D field defined at one level of an extruded mesh (e.g., the thickness of
+  // LandIce::StokesFOThickness) has dofs at all the nodes, but only the ones at its level are
+  // the dofs of its equation: its evaluators (e.g., LandIce::Gather2DField) gather the field at
+  // any node of a column from the dof at the field level, storing the derivative in the slot of
+  // the node. The derivatives w.r.t. such a field are then scattered to the dofs at the field
+  // level (as PHAL::ScatterResidualWithExtrudedField does for the residual), rather than to the
+  // dofs of the nodes. The field is given by the equation offset and level in the "Parameters
+  // From Problem" list ("Extruded 2D Field Offset", "Extruded 2D Field Level"), if any.
+  void setupExtruded2DField (const Teuchos::ParameterList& p);
+  void evaluateExtruded2DFieldDerivatives (typename Traits::EvalData d);
 protected:
   int numNodes;
+  int offset2DField = -1;  // equation offset of the extruded 2D field (-1 if none)
+  int fieldLevel2D  = -1;  // level of the extruded 2D field
   using ExecutionSpace = typename PHX::ExecutionSpace;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 private:
@@ -312,8 +355,12 @@ protected:
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     numNodes = dl->node_scalar->extent(1);
+    getExtruded2DField(p,offset2DField,fieldLevel2D);
   }
   int numNodes;
+  // Extruded 2D field
+  int offset2DField = -1;
+  int fieldLevel2D  = -1;
 
 private:
   typedef typename AlbanyTraits::HessianVec::ScalarT ScalarT;

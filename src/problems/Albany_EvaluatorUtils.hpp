@@ -242,16 +242,20 @@ namespace Albany {
         const std::string& field_name="") const = 0;
 
     //! Function to create parameter list for construction of GatherScalarExtruded2DNodalParameter
+    //! (field_level: level of the extruded mesh where the parameter is defined)
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructGatherScalarExtruded2DNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="") const = 0;
+        const std::string& field_name="",
+        const int field_level=0) const = 0;
 
     //! Function to create parameter list for construction of ScatterScalarExtruded2DNodalParameter
+    //! (field_level: level of the extruded mesh where the parameter is defined)
     Teuchos::RCP< PHX::Evaluator<Traits> >
     virtual constructScatterScalarExtruded2DNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="") const = 0;
+        const std::string& field_name="",
+        const int field_level=0) const = 0;
 
     //! Function to create parameter list for construction of DOFInterpolation
     //! evaluator with standard field names
@@ -635,16 +639,20 @@ namespace Albany {
         const std::string& field_name="") const;
 
     //! Function to create parameter list for construction of GatherScalarExtruded2DNodalParameter
+    //! (field_level: level of the extruded mesh where the parameter is defined)
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherScalarExtruded2DNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="") const;
+        const std::string& field_name="",
+        const int field_level=0) const;
 
     //! Function to create parameter list for construction of ScatterScalarExtruded2DNodalParameter
+    //! (field_level: level of the extruded mesh where the parameter is defined)
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructScatterScalarExtruded2DNodalParameter(
         const std::string& param_name,
-        const std::string& field_name="") const;
+        const std::string& field_name="",
+        const int field_level=0) const;
 
     //! Function to create parameter list for construction of DOFInterpolation
     //! evaluator with standard field names

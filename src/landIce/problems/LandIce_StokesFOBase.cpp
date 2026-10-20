@@ -386,8 +386,24 @@ void StokesFOBase::parseInputFields ()
       param_name = param_list.get<std::string>("Name");
       dist_params_name_to_mesh_part[param_name] = param_list.get<std::string>("Mesh Part","");
       is_extruded_param[param_name] = param_list.get<bool>("Extruded",false);
-      int extruded_param_level = param_list.get<int>("Extruded Param Level",0);
-      extruded_params_levels.insert(std::make_pair(param_name, extruded_param_level));
+      if (is_extruded_param[param_name]) {
+        // Level of the extruded mesh where the parameter is defined. Only the extruded parameters
+        // are in this map: its users (the gather of the parameter, and the residual and response
+        // scatters with extruded params) map the parameter of all the nodes of a column to its
+        // dof at this level. The other parameters are gathered and scattered node by node.
+        extruded_params_levels[param_name] = param_list.get<int>("Extruded Param Level",0);
+
+        // The parameter must have dofs at its level: "bottom" is level 0, "top" is level NumLayers
+        const auto& mesh_part = dist_params_name_to_mesh_part[param_name];
+        const int level = extruded_params_levels[param_name];
+        const int num_layers = discParams->isType<int>("NumLayers") ? discParams->get<int>("NumLayers") : -1;
+        TEUCHOS_TEST_FOR_EXCEPTION (
+            (mesh_part=="bottom" && level!=0) || (mesh_part=="top" && level!=num_layers),
+            std::logic_error,
+            "Error! The extruded parameter " << param_name << " is defined on mesh part \""
+            << mesh_part << "\" but has \"Extruded Param Level\" = " << level << ".\n"
+            "       Use level 0 for \"bottom\" and level NumLayers for \"top\".\n");
+      }
       save_sensitivities[param_name]=param_list.get<bool>("Save Sensitivity",false);
       is_dist_param[param_name] = true;
       is_input_field[param_name] = true;

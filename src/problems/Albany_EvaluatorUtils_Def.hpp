@@ -330,7 +330,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarExtruded2DNodalParameter(
        const std::string& param_name,
-       const std::string& field_name) const
+       const std::string& field_name,
+       const int field_level) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -344,7 +345,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructGatherScalarExtruded2DNoda
     else
       p->set<std::string>("Field Name", param_name);
 
-    p->set<int>("Field Level", 0);
+    p->set<int>("Field Level", field_level);
     return rcp(new PHAL::GatherScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
@@ -352,7 +353,8 @@ template<typename EvalT, typename Traits, typename ScalarType>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterScalarExtruded2DNodalParameter(
        const std::string& param_name,
-       const std::string& field_name) const
+       const std::string& field_name,
+       const int field_level) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -367,7 +369,7 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructScatterScalarExtruded2DNod
       p->set<std::string>("Field Name", param_name);
     }
 
-    p->set<int>("Field Level", 0);
+    p->set<int>("Field Level", field_level);
     return rcp(new PHAL::ScatterScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
