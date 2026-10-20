@@ -58,28 +58,29 @@ ANONYMOUS:
         Use AD for Hessian-vector products (default): true
         Reconstruct H_pp: true
         Parameter 0:
-          Linear Solver Type: Belos
-          Linear Solver Types:
-            Belos:
-              Solver Type: Block GMRES
-              Solver Types:
-                Block GMRES:
-                  Maximum Iterations: 200
-                  Convergence Tolerance: 1e-7
-                  Num Blocks: 200
-                  Output Frequency: 20
-                  Output Style: 1
-                  Verbosity: 33
-              VerboseObject:
-                Verbosity Level: medium
-          Preconditioner Type: Ifpack2
-          Preconditioner Types:
-            Ifpack2:
-              Overlap: 0
-              Prec Type: Amesos2
-              Ifpack2 Settings: 
-                Amesos2: {}
-                Amesos2 solver name: klu
+          H_pp Solver:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Maximum Iterations: 200
+                    Convergence Tolerance: 1e-7
+                    Num Blocks: 200
+                    Output Frequency: 20
+                    Output Style: 1
+                    Verbosity: 33
+                VerboseObject:
+                  Verbosity Level: medium
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2
+                Ifpack2 Settings: 
+                  Amesos2: {}
+                  Amesos2 solver name: klu
 
       Write Hessian MatrixMarket: true
     LandIce Viscosity: 
@@ -196,7 +197,7 @@ ANONYMOUS:
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
         Exodus Output File Name: ./humboldt_basal.exo
         Required Fields Info: 
-          Number Of Fields: 8
+          Number Of Fields: 7
           Field 0: 
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -235,13 +236,6 @@ ANONYMOUS:
             Number Of Layers: 2
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
-          Field 7: 
-            Field Name: effective_pressure
-            Field Type: Node Scalar
-            #Field Origin: Mesh
-            Field Origin: File
-            File Name:  ../AsciiMeshes/Humboldt/effective_pressure.ascii
-            #Field Value: 1.0
       upperside:
         Workset Size: -1
         Method: SideSetSTK
@@ -269,7 +263,6 @@ ANONYMOUS:
       ROL:
         Number Of Parameters: 1
         Check Derivatives: false
-        Print Output: true
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: -5.7e+00
         Min And Max Of Random Parameter Guess: [-1.0, 2.0]
