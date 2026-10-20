@@ -9,6 +9,9 @@
 
 #include "PHAL_ScatterResidual.hpp"
 
+#include <set>
+#include <string>
+
 namespace PHAL {
 
 // Scatter a cell-based residual field of a 2D equation defined
@@ -41,6 +44,9 @@ protected:
   int fieldLevel; // The node-layer where the 2d field is defined
 
   std::string meshPart;
+
+  // Parameters extruded from one level of the mesh
+  std::set<std::string> extrudedParamNames;
 };
 
 // Scatter a cell-based residual field of a 3D equation when
@@ -70,6 +76,9 @@ protected:
 
   int offset2DField;
   int fieldLevel; // Node level where field is defined
+
+  // Parameters extruded from one level of the mesh
+  std::set<std::string> extrudedParamNames;
 };
 
 } // namespace PHAL

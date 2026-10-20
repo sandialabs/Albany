@@ -245,8 +245,8 @@ constructVerticalVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names[1], dof_offsets[1]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Scatter residual
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names[1], dof_offsets[1], scatter_names[1]);
+  // Scatter residual (the vertical velocity equation may depend on extruded parameters, e.g., through the geometry)
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_names[1], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[1], scatter_names[1]);
   fm0.template registerEvaluator<EvalT> (ev);
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 
@@ -298,8 +298,8 @@ constructEnthalpyEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructGatherSolutionEvaluator(false, dof_names[2], dof_names[2] + "_dot", dof_offsets[2]);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Scatter residual
-  ev = evalUtils.constructScatterResidualEvaluator(false, resid_names[2], dof_offsets[2], scatter_names[2]);
+  // Scatter residual (the enthalpy equation may depend on extruded parameters, e.g., on the stiffening factor, or through the geometry)
+  ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(false, resid_names[2], Teuchos::rcpFromRef(extruded_params_levels), dof_offsets[2], scatter_names[2]);
   fm0.template registerEvaluator<EvalT> (ev);
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 

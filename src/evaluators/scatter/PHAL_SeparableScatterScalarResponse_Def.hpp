@@ -78,6 +78,13 @@ SeparableScatterScalarResponse(const Teuchos::ParameterList& p,
 
 template<typename Traits>
 void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
+setupExtruded2DField (const Teuchos::ParameterList& p)
+{
+  getExtruded2DField(p,offset2DField,fieldLevel2D);
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Initialize derivatives
@@ -121,6 +128,10 @@ evaluateFields(typename Traits::EvalData workset)
   const auto elem_lids_dev = Kokkos::subview(elem_lids.dev(),ws,Kokkos::ALL);
 
   for (int eq_dof=0; eq_dof<neq; eq_dof++) {
+    // The derivatives w.r.t. an extruded 2D field go to the dofs at its level (see below)
+    if (eq_dof==offset2DField) {
+      continue;
+    }
     auto offsets = dof_mgr->getGIDFieldOffsetsKokkos(eq_dof);
     const int num_nodes = offsets.size();
     Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
@@ -141,6 +152,72 @@ evaluateFields(typename Traits::EvalData workset)
       } // column nodes
     }); // cell
   } // column equations
+
+  if (offset2DField>=0) {
+    // Release the device view before accessing the host data
+    dg_data = decltype(dg_data)();
+    Kokkos::fence();
+    evaluateExtruded2DFieldDerivatives(workset);
+  }
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponse<AlbanyTraits::Jacobian, Traits>::
+evaluateExtruded2DFieldDerivatives(typename Traits::EvalData workset)
+{
+  // Note: host loops, as in evaluate2DFieldsDerivativesDueToColumnContraction
+  const auto dgdx    = workset.overlapped_dgdx;
+  const auto dgdxdot = workset.overlapped_dgdxdot;
+  const auto dg = dgdx.is_null() ? dgdxdot : dgdx;
+
+  auto dg_data = Albany::getNonconstLocalData(dg);
+
+  // Layers data
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::logic_error,
+      "Error! The responses of a problem with an extruded 2D field require a layered mesh.\n");
+  const int bot = layers_data.bot_side_pos;
+  const int top = layers_data.top_side_pos;
+
+  // Cell layer that contains the level of the field, and side of the cells of that layer on it
+  const int field_layer = fieldLevel2D==0 ? 0 : fieldLevel2D-1;
+  const int field_pos   = field_layer==fieldLevel2D ? bot : top;
+
+  // Dof mgr data
+  const auto& dof_mgr       = workset.disc->getDOFManager();
+  const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
+  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  const auto& elem_lids     = workset.disc->getElementLIDs_host(workset.wsIndex);
+
+  // Derivative slots of the field at the cell nodes
+  const auto& field_offsets = dof_mgr->getGIDFieldOffsets(offset2DField);
+
+  // Field dofs on the side at the field level, and the bottom/top cell nodes vertically
+  // aligned with them (offsets on top/bot ordered as on side $field_pos)
+  const auto& field_side_offsets = dof_mgr->getGIDFieldOffsetsSide(offset2DField,field_pos);
+  const auto& top_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,top,field_pos);
+  const auto& bot_nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,bot,field_pos);
+  const int numSideNodes = field_side_offsets.size();
+
+  std::vector<LO> field_lids(numNodes);
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    // Dofs of the field at the field level of the column of the cell, for each cell node
+    const int elem_LID = elem_lids(cell);
+    const int basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
+    const int field_elem_LID = layers_data.cell.lid->getId(basal_elem_LID,field_layer);
+    for (int node2d=0; node2d<numSideNodes; ++node2d) {
+      const LO lid = elem_dof_lids(field_elem_LID,field_side_offsets[node2d]);
+      field_lids[bot_nodes[node2d]] = lid;
+      field_lids[top_nodes[node2d]] = lid;
+    }
+
+    for (std::size_t res=0; res<this->global_response.size(); ++res) {
+      auto val = this->local_response(cell, res);
+      for (int node=0; node<numNodes; ++node) {
+        dg_data[res][field_lids[node]] += val.dx(field_offsets[node]);
+      }
+    }
+  }
 }
 
 template<typename Traits>
@@ -504,6 +581,17 @@ evaluateFields(typename Traits::EvalData workset)
   const bool do_scalar_pp = !hess_vec_prod_g_pp.is_null() && !distributed;
   const bool do_dist_px   = !hess_vec_prod_g_px.is_null() &&  distributed;
   const bool do_dist_pp   = !hess_vec_prod_g_pp.is_null() &&  distributed;
+
+  // The xx and xp products w.r.t. an extruded 2D field would have to be scattered to the dofs at
+  // the field level, as in the Jacobian specialization. This is not implemented, since they are
+  // not used for such problems (the scatters of the residual of such a field,
+  // ScatterResidual2D and ScatterResidualWithExtrudedField, do not specialize HessianVec either).
+  TEUCHOS_TEST_FOR_EXCEPTION (offset2DField>=0 && (do_xx || do_xp), std::logic_error,
+      "Error! The Hessian-vector products H_xx(g)v and H_xp(g)v of the responses are not\n"
+      "       implemented for a problem with a 2D solution field defined at one level of an\n"
+      "       extruded mesh (e.g., the thickness of LandIce::StokesFOThickness).\n"
+      "       Use finite differences instead, setting\n"
+      "       Problem->Hessian->\"Use AD for Hessian-vector products (default)\" = false.\n");
 
   // Get some data from the discretization
   const auto param_name = workset.dist_param_deriv_name;

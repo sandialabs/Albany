@@ -65,6 +65,13 @@ StokesFOThickness::StokesFOThickness(
   dof_offsets.resize(2,0);
   dof_offsets[1] = vecDimFO;
 
+  // The thickness (change) is a 2D field defined at the top level of the extruded mesh
+  // (see constructThicknessEvaluators): tell the responses (see StokesFOBase)
+  if (discParams->isType<int>("NumLayers")) {
+    extruded_2d_field_offset = dof_offsets[1];
+    extruded_2d_field_level  = discParams->get<int>("NumLayers");
+  }
+
   // We have two values for ice_thickness: the initial one, and the updated one.
   initial_ice_thickness_name = ice_thickness_name;
 

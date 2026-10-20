@@ -29,6 +29,12 @@ ScatterResidual2D(const Teuchos::ParameterList& p,
 
   fieldLevel = p.get<int>("Field Level");
   meshPart   = p.get<std::string>("Mesh Part");
+
+  if (p.isType<Teuchos::Array<std::string>>("Extruded Param Names")) {
+    for (const auto& name : p.get<Teuchos::Array<std::string>>("Extruded Param Names")) {
+      extrudedParamNames.insert(name);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -43,6 +49,12 @@ ScatterResidualWithExtrudedField(const Teuchos::ParameterList& p,
     offset2DField = numFields-1;
   }
   fieldLevel = p.get<int>("Field Level");
+
+  if (p.isType<Teuchos::Array<std::string>>("Extruded Param Names")) {
+    for (const auto& name : p.get<Teuchos::Array<std::string>>("Extruded Param Names")) {
+      extrudedParamNames.insert(name);
+    }
+  }
 }
 
 // **********************************************************************
@@ -283,6 +295,96 @@ evaluateFields(typename AlbanyTraits::EvalData workset)
       }
     }
   }
+}
+
+// **********************************************************************
+// Specializations: DistParamDeriv and HessianVec
+// **********************************************************************
+//
+// These use the base class implementation, which is not correct for some
+// derivatives, and throw for them instead:
+//  - The Hessian-vector products H_xx(f)v and H_xp(f)v w.r.t. the solution: the
+//    base class only scatters the derivatives w.r.t. the fields of this
+//    evaluator, to the dofs of the cell nodes, while the Jacobian
+//    specializations above also scatter the derivatives w.r.t. the other
+//    fields, w.r.t. the 2D field (to its dofs at the field level), and the
+//    column-coupled derivatives.
+//  - The derivatives w.r.t. a parameter extruded from one level of the mesh,
+//    when they map the parameter dofs to the cell nodes (transposed df/dp,
+//    H_px(f)v, H_pp(f)v): the base class maps the parameter derivative of a
+//    node to the parameter dof of that node, rather than to the dof at the
+//    level of the parameter (see ScatterResidualWithExtrudedParams).
+// The other derivatives (df/dp times a direction, H_px(f)v and H_pp(f)v for
+// parameters that are not extruded) are computed by the base class.
+
+namespace {
+
+void throwIfHessVecWrtSolution (const PHAL::Workset& workset, const std::string& name)
+{
+  const auto& hws = workset.hessianWorkset;
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      !hws.hess_vec_prod_f_xx.is_null() || !hws.hess_vec_prod_f_xp.is_null(), std::logic_error,
+      "Error! " << name << ": the Hessian-vector products H_xx(f)v and H_xp(f)v of\n"
+      "       the residual are not implemented for an equation of (or depending on) a 2D field\n"
+      "       defined at one level of an extruded mesh. Use finite differences instead, setting\n"
+      "       Problem->Hessian->\"Use AD for Hessian-vector products (default)\" = false.\n");
+}
+
+void throwIfExtrudedParam (const std::set<std::string>& extrudedParamNames,
+                           const std::string& pname, const std::string& name)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (extrudedParamNames.count(pname)>0, std::logic_error,
+      "Error! " << name << ": the derivatives w.r.t. the parameter \"" << pname << "\",\n"
+      "       extruded from one level of the mesh, are not implemented for this residual\n"
+      "       (transposed df/dp, H_px(f)v, H_pp(f)v).\n");
+}
+
+} // anonymous namespace
+
+template<>
+void ScatterResidual2D<AlbanyTraits::DistParamDeriv, AlbanyTraits>::
+evaluateFields(typename AlbanyTraits::EvalData workset)
+{
+  if (workset.transpose_dist_param_deriv && workset.local_Vp.size()>0) {
+    throwIfExtrudedParam(extrudedParamNames,workset.dist_param_deriv_name,"PHAL::ScatterResidual2D");
+  }
+  Base::evaluateFields(workset);
+}
+
+template<>
+void ScatterResidual2D<AlbanyTraits::HessianVec, AlbanyTraits>::
+evaluateFields(typename AlbanyTraits::EvalData workset)
+{
+  throwIfHessVecWrtSolution(workset,"PHAL::ScatterResidual2D");
+  const auto& hws = workset.hessianWorkset;
+  if (!hws.hess_vec_prod_f_px.is_null() || !hws.hess_vec_prod_f_pp.is_null()) {
+    throwIfExtrudedParam(extrudedParamNames,workset.dist_param_deriv_name,"PHAL::ScatterResidual2D");
+  }
+  Base::evaluateFields(workset);
+}
+
+template<>
+void ScatterResidualWithExtrudedField<AlbanyTraits::DistParamDeriv, AlbanyTraits>::
+evaluateFields(typename AlbanyTraits::EvalData workset)
+{
+  if (workset.transpose_dist_param_deriv && workset.local_Vp.size()>0) {
+    throwIfExtrudedParam(extrudedParamNames,workset.dist_param_deriv_name,
+                         "PHAL::ScatterResidualWithExtrudedField");
+  }
+  Base::evaluateFields(workset);
+}
+
+template<>
+void ScatterResidualWithExtrudedField<AlbanyTraits::HessianVec, AlbanyTraits>::
+evaluateFields(typename AlbanyTraits::EvalData workset)
+{
+  throwIfHessVecWrtSolution(workset,"PHAL::ScatterResidualWithExtrudedField");
+  const auto& hws = workset.hessianWorkset;
+  if (!hws.hess_vec_prod_f_px.is_null() || !hws.hess_vec_prod_f_pp.is_null()) {
+    throwIfExtrudedParam(extrudedParamNames,workset.dist_param_deriv_name,
+                         "PHAL::ScatterResidualWithExtrudedField");
+  }
+  Base::evaluateFields(workset);
 }
 
 } // namespace PHAL
