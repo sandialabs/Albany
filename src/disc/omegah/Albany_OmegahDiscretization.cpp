@@ -35,11 +35,14 @@ namespace {
   }
 
 #ifdef ALBANY_MESHFIELDS
-  Omega_h::Reals getEffectiveStrainRate(Omega_h::Mesh &mesh) {
-    auto array = mesh.get_array<Omega_h::Real>(2, "solution_grad_norm");
+  Omega_h::Reals getIndicatorField(Omega_h::Mesh &mesh, const std::string& name) {
+    TEUCHOS_TEST_FOR_EXCEPTION (not mesh.has_tag(2, name), std::runtime_error,
+      "Error! Adaptation indicator field '" + name + "' not found in the mesh.\n"
+      "  - Make sure the problem registers it as an Elem Scalar state.\n");
+    auto array = mesh.get_array<Omega_h::Real>(2, name);
     TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
-      "Error! solution_grad_norm array should have one component per element.\n");
-    //Phalanx fills this memory with values for the effective strain rate for
+      "Error! " + name + " array should have one component per element.\n");
+    //Phalanx fills this memory with values for the indicator field for
     //**owned elements only**; indices corresponding to ghosted/unowned
     //elements are not included in the array.
     //Thus, we need to apply a permutation to map the dense array without ghost
@@ -666,7 +669,11 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
         "Error! At least one process has no mesh elements.\n");
 
 #ifdef ALBANY_MESHFIELDS
-    auto effectiveStrain = getEffectiveStrainRate(*mesh);
+    TEUCHOS_TEST_FOR_EXCEPTION (not adapt_params.isParameter("Indicator Field Name"), std::runtime_error,
+        "Error! SPR adaptation requires 'Indicator Field Name' in the 'Mesh Adaptivity' sublist.\n"
+        "  - This is the name of the Elem Scalar field driving the adaptation.\n");
+    const auto& indicator_name = adapt_params.get<std::string>("Indicator Field Name");
+    auto effectiveStrain = getIndicatorField(*mesh, indicator_name);
     auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
     mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
         false, Omega_h::ArrayType::VectorND);
@@ -755,10 +762,11 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
   if( writeVtk ) {
-    if (ohMesh->dim() == 1) {
-      // solution_grad_norm tag is not set for 1d problems
+    if (ohMesh->dim() == 1 and adapt_params.isParameter("Indicator Field Name")) {
+      // indicator field tag is not set for 1d problems
       // avoid 'use of uninitialized values' valgrind error by setting the array to zero
-      ohMesh->set_tag(1, "solution_grad_norm", Omega_h::Read<Omega_h::Real>(ohMesh->nelems(), 0));
+      const auto& indicator_name = adapt_params.get<std::string>("Indicator Field Name");
+      ohMesh->set_tag(1, indicator_name, Omega_h::Read<Omega_h::Real>(ohMesh->nelems(), 0));
     }
     const auto outname = std::string("before_adapt") + std::to_string(adaptCount);
     const std::string vtkFileName = outname + ".vtk";

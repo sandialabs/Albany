@@ -261,6 +261,14 @@ protected:
   bool viscosity_use_p0_temperature;
   bool compute_dissipation;
 
+  // Mesh adaptation: if enabled, the disc needs an Elem Scalar indicator field
+  // to drive it. Unless the user picks an existing mesh field, we compute the
+  // norm of the velocity gradient and save it as a state.
+  bool adapt_enabled = false;
+  bool compute_adapt_indicator = false;
+  std::string adapt_indicator_name;
+  std::string velocity_gradient_norm_name;
+
   //if true, and the effective_pressure is not an input field,
   //  the effective pressure is computed by the BasalFriction Evaluator.
   //  Alternatively it's computed using the EffectivePressure Evaluator.
@@ -1370,6 +1378,40 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // Only PHAL::AlbanyTraits::Residual evaluates something
       if (ev->evaluatedFields().size()>0) {
         // Require save friction heat
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
+
+  // Saving the adaptation indicator field in the output mesh
+  if (compute_adapt_indicator) {
+    // Norm of the velocity gradient at qps
+    p = Teuchos::rcp(new Teuchos::ParameterList("Velocity Gradient Norm"));
+
+    // Input
+    p->set<std::string>("Field Name", velocity_name + " Gradient");
+    p->set<std::string>("Field Layout", "Cell QuadPoint Vector Gradient");
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
+
+    // Output
+    p->set<std::string>("Field Norm Name", adapt_indicator_name);
+
+    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Interpolate norm from qps to a single cell scalar
+    ev = evalUtils.constructCellAverageEvaluator(adapt_indicator_name, FL::QuadPoint, FRT::Scalar);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // Save the indicator field
+    auto entity = Albany::StateStruct::ElemData;
+    p = stateMgr.registerStateVariable(adapt_indicator_name, dl->cell_scalar2, meshSpecs.ebName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0) {
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
       }
     }

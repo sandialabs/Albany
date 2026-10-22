@@ -35,6 +35,8 @@ ANONYMOUS:
     Mesh Creation Method: Box2D
     Mesh Adaptivity:
       Type: SPR # superconvergent patch recovery
+      # Name of the Elem Scalar field driving the adaptation
+      Indicator Field Name: solution_grad_norm
       # 'Adapt Ratio' defines the acceptable margin of error,
       #   expressed as a factor greater than zero.
       #   Setting this equal to zero would request zero element

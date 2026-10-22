@@ -63,6 +63,13 @@ FieldFrobeniusNormBase (const Teuchos::ParameterList& p,
 
     dl->qp_gradient->dimensions(dims);
   }
+  else if (layout=="Cell QuadPoint Vector Gradient")
+  {
+    field      = decltype(field)(fieldName, dl->qp_vecgradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
+
+    dl->qp_vecgradient->dimensions(dims);
+  }
   else if (layout=="Cell Side Vector")
   {
     sideSetName = p.get<std::string>("Side Set Name");
@@ -299,6 +306,24 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFieldsCell (typenam
           for (unsigned int dim(0); dim<dims[2]; ++dim)
           {
             norm += std::pow(field(cell,i,dim),2);
+          }
+          field_norm(cell,i) = std::sqrt(norm + regularization);
+        }
+      }
+      break;
+    case 4:
+      // <Cell,QuadPoint,Vector,Gradient>
+      for (unsigned int cell(0); cell<workset.numCells; ++cell)
+      {
+        for (unsigned int i(0); i<dims[1]; ++i)
+        {
+          norm = 0;
+          for (unsigned int comp(0); comp<dims[2]; ++comp)
+          {
+            for (unsigned int dim(0); dim<dims[3]; ++dim)
+            {
+              norm += std::pow(field(cell,i,comp,dim),2);
+            }
           }
           field_norm(cell,i) = std::sqrt(norm + regularization);
         }
