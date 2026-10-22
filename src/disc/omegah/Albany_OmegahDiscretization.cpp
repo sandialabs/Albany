@@ -36,11 +36,11 @@ namespace {
 
 #ifdef ALBANY_MESHFIELDS
   Omega_h::Reals getIndicatorField(Omega_h::Mesh &mesh, const std::string& name) {
-    TEUCHOS_TEST_FOR_EXCEPTION (not mesh.has_tag(2, name), std::runtime_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (not mesh.has_tag(mesh.dim(), name), std::runtime_error,
       "Error! Adaptation indicator field '" + name + "' not found in the mesh.\n"
       "  - Make sure the problem registers it as an Elem Scalar state.\n");
-    auto array = mesh.get_array<Omega_h::Real>(2, name);
-    TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nents(2), std::runtime_error,
+    auto array = mesh.get_array<Omega_h::Real>(mesh.dim(), name);
+    TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nelems(), std::runtime_error,
       "Error! " + name + " array should have one component per element.\n");
     //Phalanx fills this memory with values for the indicator field for
     //**owned elements only**; indices corresponding to ghosted/unowned
@@ -52,16 +52,16 @@ namespace {
     Omega_h::parallel_for(perm.size(), OMEGA_H_LAMBDA(const LO &i) {
       reordered[perm[i]] = array[i];
     });
-    return mesh.sync_array<Omega_h::Real>(2, reordered, 1);
+    return mesh.sync_array<Omega_h::Real>(mesh.dim(), reordered, 1);
   }
 
   void addEffectiveStrainRateTag(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrainRate) {
     const auto tagName = std::string("effectiveStrainRate");
-    auto synced = mesh.sync_array<Omega_h::Real>(2, effectiveStrainRate, 1);
-    if( mesh.has_tag(2, tagName) ) {
-      mesh.set_tag<Omega_h::Real>(2, tagName, synced);
+    auto synced = mesh.sync_array<Omega_h::Real>(mesh.dim(), effectiveStrainRate, 1);
+    if( mesh.has_tag(mesh.dim(), tagName) ) {
+      mesh.set_tag<Omega_h::Real>(mesh.dim(), tagName, synced);
     } else {
-      mesh.add_tag<Omega_h::Real>(2, tagName, 1, synced);
+      mesh.add_tag<Omega_h::Real>(mesh.dim(), tagName, 1, synced);
     }
   }
 
