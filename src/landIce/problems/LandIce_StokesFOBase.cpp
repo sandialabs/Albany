@@ -67,6 +67,20 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
 
+  // If mesh adaptation is enabled, make sure the disc knows which field drives it.
+  // Unless the user picked one, we use the effective strain rate (computed by this problem)
+  effective_strain_rate_name = "effective_strain_rate";
+  if (discParams->isSublist("Mesh Adaptivity")) {
+    auto& adapt_pl = discParams->sublist("Mesh Adaptivity");
+    adapt_enabled = adapt_pl.get<std::string>("Type","None")!="None";
+    if (adapt_enabled) {
+      if (not adapt_pl.isParameter("Indicator Field Name")) {
+        adapt_pl.set<std::string>("Indicator Field Name",effective_strain_rate_name);
+      }
+      adapt_indicator_name = adapt_pl.get<std::string>("Indicator Field Name");
+    }
+  }
+
   if (!physics_list.isParameter("Atmospheric Pressure Melting Temperature")) {
     physics_list.set("Atmospheric Pressure Melting Temperature", 273.15);
   }
@@ -437,6 +451,7 @@ void StokesFOBase::parseInputFields ()
   std::string fieldType, fieldUsage, meshPart;
   FRT rank;
   FL loc;
+  bool found_adapt_indicator = false;
 
   for (int ifield=0; ifield<num_fields; ++ifield) {
     Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(util::strint("Field", ifield));
@@ -502,6 +517,22 @@ void StokesFOBase::parseInputFields ()
     if (loc==FL::Cell && !is_input_field[stateName]) {
       build_interp_ev[stateName][IReq::CELL_VAL] = true;
     }
+
+    if (adapt_enabled && stateName==adapt_indicator_name) {
+      TEUCHOS_TEST_FOR_EXCEPTION (loc!=FL::Cell || rank!=FRT::Scalar, std::logic_error,
+          "Error! The adaptation indicator field '" + stateName + "' must be an Elem Scalar field.\n");
+      found_adapt_indicator = true;
+    }
+  }
+
+  // If adaptation is on, the indicator field must be either one of the required fields,
+  // or the effective strain rate, which we compute
+  if (adapt_enabled && !found_adapt_indicator) {
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_indicator_name!=effective_strain_rate_name, std::logic_error,
+        "Error! Invalid adaptation indicator field name.\n"
+        "  - Indicator Field Name: " + adapt_indicator_name + "\n"
+        "  - Valid choices: '" + effective_strain_rate_name + "', or an Elem Scalar field in 'Required Fields Info'.\n");
+    compute_adapt_indicator = true;
   }
 
   // Side set requirements

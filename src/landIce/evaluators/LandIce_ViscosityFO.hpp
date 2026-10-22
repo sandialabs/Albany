@@ -58,6 +58,7 @@ private:
   const double scyr;       // [s yr^{-1}]
 
   bool extractStrainRateSq;
+  bool extractEffStrainRate;
   bool useStereographicMap;
   bool useStiffeningFactor;
   bool useDamageFactor;
@@ -84,6 +85,7 @@ private:
   // Output:
   PHX::MDField<OutputScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
   PHX::MDField<OutputScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}], k=1000
+  PHX::MDField<OutputScalarT,Cell,QuadPoint> effStrainRate; // [(k yr)^{-1}], k=1000
 
   ScalarT printedFF;
 
@@ -134,6 +136,14 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void glenslaw (const int& cell) const;
+
+  // Store strain rate outputs at (cell,qp), given the squared effective strain rate
+  KOKKOS_INLINE_FUNCTION
+  void setStrainRate (const int& cell, const int& qp, const OutputScalarT& epsSq) const;
+
+  // Compute strain rate outputs for viscosity types that do not need them (Constant, ExpTrig)
+  KOKKOS_INLINE_FUNCTION
+  void extractStrainRate (const int& cell) const;
 
   double R, x_0, y_0, R2;
 };
