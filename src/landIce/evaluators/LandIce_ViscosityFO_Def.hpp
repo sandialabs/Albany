@@ -40,7 +40,12 @@ ViscosityFO(const Teuchos::ParameterList& p,
 {
   std::string viscType = visc_list->get("Type", "Constant");
 
-  extractStrainRateSq = visc_list->get("Extract Strain Rate Sq", false);
+  // The problem may request the strain rate regardless of the viscosity sublist settings
+  extractStrainRateSq = p.isParameter("Extract Strain Rate Sq")
+                      ? p.get<bool>("Extract Strain Rate Sq")
+                      : visc_list->get("Extract Strain Rate Sq", false);
+  extractEffStrainRate = p.isParameter("Effective Strain Rate QP Variable Name");
+  extractStrainRateSq |= extractEffStrainRate;
   useStiffeningFactor = visc_list->get("Use Stiffening Factor", false);
   useDamageFactor = visc_list->get("Use Damage Factor", false);
 
@@ -145,6 +150,10 @@ ViscosityFO(const Teuchos::ParameterList& p,
     epsilonSq = decltype(epsilonSq)(p.get<std::string> ("EpsilonSq QP Variable Name"), dl->qp_scalar),
     this->addEvaluatedField(epsilonSq);
   }
+  if (extractEffStrainRate) {
+    effStrainRate = decltype(effStrainRate)(p.get<std::string> ("Effective Strain Rate QP Variable Name"), dl->qp_scalar);
+    this->addEvaluatedField(effStrainRate);
+  }
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
@@ -186,6 +195,8 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_CONSTANT_Tag&, const int& cell) const{
   for (unsigned int qp=0; qp < numQPs; ++qp)
           mu(cell,qp) = 1.0;
+  if (extractStrainRateSq)
+    extractStrainRate(cell);
 }
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
@@ -201,6 +212,41 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::operator () (const ViscosityFO_EX
     MeshScalarT muargt = (a*a + 4.0*pi*pi - 2.0*pi*a)*sin(y2pi)*sin(y2pi) + 1.0/4.0*(2.0*pi+a)*(2.0*pi+a)*cos(y2pi)*cos(y2pi);
     muargt = sqrt(muargt)*exp(a*x);
     mu(cell,qp) = 1.0/2.0*pow(flowRateScaling*A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
+  }
+  if (extractStrainRateSq)
+    extractStrainRate(cell);
+}
+
+template<typename EvalT, typename Traits, typename VelT, typename TemprT>
+KOKKOS_INLINE_FUNCTION
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::
+setStrainRate (const int& cell, const int& qp, const OutputScalarT& epsSq) const
+{
+  epsilonSq(cell,qp) = epsSq;
+  if (extractEffStrainRate) {
+    // Avoid sqrt at 0, whose derivative is infinite
+    if (epsSq>0.0)
+      effStrainRate(cell,qp) = sqrt(epsSq);
+    else
+      effStrainRate(cell,qp) = 0.0;
+  }
+}
+
+template<typename EvalT, typename Traits, typename VelT, typename TemprT>
+KOKKOS_INLINE_FUNCTION
+void ViscosityFO<EvalT, Traits, VelT, TemprT>::
+extractStrainRate (const int& cell) const
+{
+  for (unsigned int qp=0; qp < numQPs; ++qp) {
+    typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+    typename PHAL::Ref<const VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+    OutputScalarT epsSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+    epsSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
+
+    for (unsigned int dim = 2; dim < numDims; ++dim) //3D case
+      epsSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
+
+    setStrainRate(cell,qp,epsSq);
   }
 }
 
@@ -229,7 +275,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const int& cell) const
         OutputScalarT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
 
         epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
-        epsilonSq(cell,qp) = epsilonEqpSq;
+        setStrainRate(cell,qp,epsilonEqpSq);
         epsilonEqpSq += ff; //add regularization "fudge factor"
         mu(cell,qp) *= pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
       }
@@ -264,7 +310,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const int& cell) const
         for (unsigned int dim = 2; dim < numDims; ++dim) //3D case
           epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
 
-        epsilonSq(cell,qp) = epsilonEqpSq;
+        setStrainRate(cell,qp,epsilonEqpSq);
         epsilonEqpSq += ff; //add regularization "fudge factor"
         mu(cell,qp) *= (scale + (1.0-scale)*pow(epsilonEqpSq,  power)); //non-linear viscosity, given by Glen's law
       }

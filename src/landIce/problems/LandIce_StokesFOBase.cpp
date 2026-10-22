@@ -68,14 +68,14 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   compute_dissipation = params->sublist("LandIce Viscosity").get("Extract Strain Rate Sq", false);
 
   // If mesh adaptation is enabled, make sure the disc knows which field drives it.
-  // Unless the user picked one, we use the velocity gradient norm (computed by this problem)
-  velocity_gradient_norm_name = "velocity_gradient_norm";
+  // Unless the user picked one, we use the effective strain rate (computed by this problem)
+  effective_strain_rate_name = "effective_strain_rate";
   if (discParams->isSublist("Mesh Adaptivity")) {
     auto& adapt_pl = discParams->sublist("Mesh Adaptivity");
     adapt_enabled = adapt_pl.get<std::string>("Type","None")!="None";
     if (adapt_enabled) {
       if (not adapt_pl.isParameter("Indicator Field Name")) {
-        adapt_pl.set<std::string>("Indicator Field Name",velocity_gradient_norm_name);
+        adapt_pl.set<std::string>("Indicator Field Name",effective_strain_rate_name);
       }
       adapt_indicator_name = adapt_pl.get<std::string>("Indicator Field Name");
     }
@@ -510,12 +510,12 @@ void StokesFOBase::parseInputFields ()
   }
 
   // If adaptation is on, the indicator field must be either one of the required fields,
-  // or the velocity gradient norm, which we compute
+  // or the effective strain rate, which we compute
   if (adapt_enabled && !found_adapt_indicator) {
-    TEUCHOS_TEST_FOR_EXCEPTION (adapt_indicator_name!=velocity_gradient_norm_name, std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_indicator_name!=effective_strain_rate_name, std::logic_error,
         "Error! Invalid adaptation indicator field name.\n"
         "  - Indicator Field Name: " + adapt_indicator_name + "\n"
-        "  - Valid choices: '" + velocity_gradient_norm_name + "', or an Elem Scalar field in 'Required Fields Info'.\n");
+        "  - Valid choices: '" + effective_strain_rate_name + "', or an Elem Scalar field in 'Required Fields Info'.\n");
     compute_adapt_indicator = true;
   }
 

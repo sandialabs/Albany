@@ -263,11 +263,11 @@ protected:
 
   // Mesh adaptation: if enabled, the disc needs an Elem Scalar indicator field
   // to drive it. Unless the user picks an existing mesh field, we compute the
-  // norm of the velocity gradient and save it as a state.
+  // effective strain rate and save it as a state.
   bool adapt_enabled = false;
   bool compute_adapt_indicator = false;
   std::string adapt_indicator_name;
-  std::string velocity_gradient_norm_name;
+  std::string effective_strain_rate_name;
 
   //if true, and the effective_pressure is not an input field,
   //  the effective pressure is computed by the BasalFriction Evaluator.
@@ -1306,6 +1306,10 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "LandIce Viscosity");
   p->set<std::string>("EpsilonSq QP Variable Name", "LandIce EpsilonSq");
+  p->set<bool>("Extract Strain Rate Sq", compute_dissipation);
+  if (compute_adapt_indicator) {
+    p->set<std::string>("Effective Strain Rate QP Variable Name", effective_strain_rate_name);
+  }
 
   // The st of T for viscosity is complicated: you need to get the st of the T used (temp or corrected temp),
   // and consider that you do Nodes->Cell interp, which introduces MeshScalar type in the result.
@@ -1385,27 +1389,13 @@ constructVelocityEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Saving the adaptation indicator field in the output mesh
   if (compute_adapt_indicator) {
-    // Norm of the velocity gradient at qps
-    p = Teuchos::rcp(new Teuchos::ParameterList("Velocity Gradient Norm"));
-
-    // Input
-    p->set<std::string>("Field Name", velocity_name + " Gradient");
-    p->set<std::string>("Field Layout", "Cell QuadPoint Vector Gradient");
-    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("LandIce Field Norm"));
-
-    // Output
-    p->set<std::string>("Field Norm Name", adapt_indicator_name);
-
-    ev = Teuchos::rcp(new PHAL::FieldFrobeniusNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    // Interpolate norm from qps to a single cell scalar
-    ev = evalUtils.constructCellAverageEvaluator(adapt_indicator_name, FL::QuadPoint, FRT::Scalar);
+    // Interpolate effective strain rate (computed by ViscosityFO) from qps to a single cell scalar
+    ev = evalUtils.constructCellAverageEvaluator(effective_strain_rate_name, FL::QuadPoint, FRT::Scalar);
     fm0.template registerEvaluator<EvalT> (ev);
 
     // Save the indicator field
     auto entity = Albany::StateStruct::ElemData;
-    p = stateMgr.registerStateVariable(adapt_indicator_name, dl->cell_scalar2, meshSpecs.ebName, true, &entity);
+    p = stateMgr.registerStateVariable(effective_strain_rate_name, dl->cell_scalar2, meshSpecs.ebName, true, &entity);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
