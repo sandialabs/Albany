@@ -62,7 +62,10 @@ if (ALBANY_TRILINOS_DIR)
   list(PREPEND CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR})
 endif()
 message ("-- Looking for trilinos installation ...")
-message ("     ALBANY_TRILINOS_DIR: ${ALBANY_TRILINOS_DIR}") 
+message ("     ALBANY_TRILINOS_DIR: ${ALBANY_TRILINOS_DIR}")
+# STK's exported targets reference LAPACK::LAPACK.
+find_package(LAPACK REQUIRED)
+message("-- Looking for lapack installation ... Found.\n")
 find_package(Trilinos 17.0 REQUIRED)
 message("-- Looking for trilinos installation ... Found.\n")
 
