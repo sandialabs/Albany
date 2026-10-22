@@ -59,8 +59,8 @@ ANONYMOUS:
         Q-: 6.0e4
         Q+: 1.81e5
         T*: 262.0 
-        A-: 3.9954338e-13 
-        A+: 5.9931507e+10
+        A-: 3.9954338e-19 
+        A+: 5.9931507e+4
     LandIce Physical Parameters:
       Conductivity of ice: 2.1
       Diffusivity temperate ice: 1.1e-08
@@ -460,6 +460,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 2.559357399930e+04
+    Test Value: 2.624922479885e+01
     Relative Tolerance: 1.0e-06
 ...
