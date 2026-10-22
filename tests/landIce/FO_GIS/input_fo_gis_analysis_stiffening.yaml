@@ -266,7 +266,7 @@ ANONYMOUS:
           Matrix Type: Hessian Of Response
           Matrix Types:
             Hessian Of Response:
-              Lump Matrix: false
+              Lump Matrix: true
               Response Index: 1
 
         ROL Options:
@@ -416,7 +416,7 @@ ANONYMOUS:
     Sensitivity For Parameter 1:
       Test Value:   2.138436447346e+00
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [84.1869970371]
+    Piro Analysis Test Values: [71.6720259808]
 
   Regression For Response 1:
     Relative Tolerance: 1.0e-06

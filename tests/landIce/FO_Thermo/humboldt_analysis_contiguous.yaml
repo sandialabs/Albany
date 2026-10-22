@@ -266,7 +266,7 @@ ANONYMOUS:
         Parameter Initial Guess Type: Uniform Vector
         Uniform Parameter Guess: -5.7e+00
         Min And Max Of Random Parameter Guess: [-1.0, 2.0]
-        Bound Constrained: true
+        Bound Constrained: false
 
         Full Space: false
         Use NOX Solver: true        
