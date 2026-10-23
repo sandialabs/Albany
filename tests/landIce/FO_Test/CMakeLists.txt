@@ -118,6 +118,26 @@ IF(NOT Kokkos_ENABLE_CUDA)
                     ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_sensitivity.yaml)
     add_test(${testName} ${Albany.exe} input_mismip_transient_sensitivity.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+    if (ALBANY_ROL)
+      # Transient optimization of the coupled FO-thickness problem (AlbanyAnalysis, ROL driver,
+      # i.e., discrete adjoint of Backward Euler), with a misfit of the thickness at the final
+      # time on the upper surface. The controls are the (log of the) friction coefficient: a
+      # scalar (Mu), or a distributed field on the bed (basal_friction_log) with a gradient
+      # regularization. Each test checks the gradient at the initial guess (output only), then
+      # optimizes. Exact derivatives require ALBANY_MESH_DEPENDS_ON_SOLUTION.
+      set (testName ${testNameRoot}_MIMSIP_TransientOpt_Mu_ROL_FinalTime)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Scalar" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+      set (testName ${testNameRoot}_MIMSIP_TransientOpt_Beta_ROL_FinalTime)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_beta.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_beta.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_beta.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Distributed" FIXTURES_REQUIRED MismipMeshSetup2d)
+    endif()
   else()
     set (testName ${testNameRoot}_MIMSIP_Transient_Impl)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient.yaml
