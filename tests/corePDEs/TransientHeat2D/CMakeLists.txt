@@ -31,7 +31,7 @@ if (ALBANY_ROL)
     #    exact optimum d = 1.
     #  - DirichletFieldReg: DirichletField with the regularization 0.5*|d|^2; the misfit is not zero at
     #    the optimum, which depends on the accuracy of the gradient. With the Tempus driver, the Dirichlet
-    #    rows need the "Algebraic Equations Mass Diagonal" option of the Tempus adjoint (set by Albany).
+    #    rows are algebraic equations, given to the Tempus adjoint by Albany ("Algebraic Equations Mask").
     #  - ActiveBound: FluxSource with the source bounded by 0.3 < 0.5.
     # The expected optima come from an independent implementation of the discrete problems.
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/identity_6x6.mm

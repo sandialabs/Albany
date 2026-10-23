@@ -50,6 +50,8 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
 
+#include <algorithm>
+
 namespace {
 
 void
@@ -383,7 +385,7 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
       usesTempusAdjointIntegrator(*piroParams, *problemParams, forwardMode) &&
       !(piroParams->isSublist("Tempus") && usesExplicitTempusStepper(piroParams->sublist("Tempus"))))
   {
-    setupTempusAdjointWithDirichletBCs(model_tmp->getAlbanyApp());
+    setupTempusAdjointDAE(model_tmp->getAlbanyApp());
   }
 
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
@@ -440,57 +442,70 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
 }
 
 void SolverFactory::
-setupTempusAdjointWithDirichletBCs (const Teuchos::RCP<Application>& app)
+setupTempusAdjointDAE (const Teuchos::RCP<Application>& app)
 {
   // The adjoint sensitivity integrator of Tempus computes the jumps of the adjoint at the
-  // response times ("Final Time", "Sum Over Times") with the mass matrix df/dx_dot. The rows
-  // of the (weak) Dirichlet conditions x_i = d_i(p,t) of the mass matrix are zero, unless
-  // Problem->"Perturb Dirichlet" is positive, in which case they are perturb*e_i. Tempus needs
-  // these rows to be nonsingular, and the vector gamma (perturb on the Dirichlet rows, zero
-  // elsewhere) as Tempus->Sensitivities->"Algebraic Equations Mass Diagonal", to add the
-  // contribution of the Dirichlet rows of the jumps and to remove gamma from df/dx_dot where
-  // the true df/dx_dot is needed. Without this, the gradients w.r.t. parameters entering the
-  // Dirichlet conditions (e.g., "dirichlet_field") are wrong.
-  const auto problem = app->getProblem();
-  const auto nodeSetIDs = problem->getNodeSetIDs();
-  if (nodeSetIDs.size()==0) {
-    return;
-  }
-  if (problem->useSDBCs()) {
-    // Strong Dirichlet conditions eliminate the Dirichlet rows and columns instead
-    *m_out << "Note: the problem has strong Dirichlet conditions (SDBC): Tempus->Sensitivities->\n"
-           << "      \"Algebraic Equations Mass Diagonal\" is not set, and the adjoint sensitivities of Tempus\n"
-           << "      w.r.t. parameters entering the Dirichlet conditions are not supported.\n";
-    return;
-  }
-
-  // Unless set by the user, use 1 on the diagonal of the Dirichlet rows of the mass matrix
-  const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
-  const bool userPerturb = problemParams->isParameter("Perturb Dirichlet") &&
-                           !problemParams->getEntry("Perturb Dirichlet").isDefault();
-  const double perturb = userPerturb ? app->getPerturbDirichlet() : 1.0;
-
-  const auto gamma = buildDirichletRowsVector(*app, 1.0);
-  if (gamma->norm_inf()==0.0) {
-    // No Dirichlet dof
-    return;
-  }
-  if (perturb<=0.0) {
-    *m_out << "WARNING: Problem->\"Perturb Dirichlet\" = " << perturb << " with the adjoint sensitivities of Tempus:\n"
-           << "         the Dirichlet rows of the mass matrix are zero, and the sensitivities may be inaccurate.\n";
-    return;
-  }
-  app->setPerturbDirichlet(perturb);
-  gamma->scale(perturb);
-
-  const std::string gammaName = "Algebraic Equations Mass Diagonal";
+  // response times ("Final Time", "Sum Over Times") with the mass matrix df/dx_dot. If some
+  // equations do not depend on x_dot (algebraic equations), the mass matrix is singular, and
+  // Tempus needs the structure of the (index-1) DAE: the vector flagging the
+  // algebraic equations with 1, Tempus->Sensitivities->"Algebraic Equations Mask". The jumps
+  // are then computed with df/dx on the algebraic rows and df/dx_dot on the other rows. The
+  // algebraic equations are
+  //  - the algebraic dofs of the problem (AbstractProblem::getDAEMasks), e.g., the velocity of
+  //    the coupled velocity-thickness problem of LandIce;
+  //  - the rows of the weak Dirichlet conditions, f_i = x_i - d_i(p,t), whose rows of the mass
+  //    matrix are zero (with strong Dirichlet conditions, these rows keep the diagonal of the
+  //    mass matrix, and the parameters entering the Dirichlet conditions are not supported).
+  // Without the mask, the gradients of these responses are wrong when the response depends on
+  // the algebraic unknowns, or when the parameters enter the algebraic equations (e.g.,
+  // "dirichlet_field"). The model must return the true mass matrix, with zero rows on the
+  // algebraic equations.
+  const std::string maskName = "Algebraic Equations Mask";
   auto& sensParams = m_appParams->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
-  if (!sensParams.isParameter(gammaName)) {
-    sensParams.set<Teuchos::RCP<const Thyra_Vector>>(gammaName, gamma);
+  if (sensParams.isParameter(maskName)) {
+    return;
   }
-  *m_out << "Note: the problem has Dirichlet conditions and uses the adjoint sensitivities of Tempus:\n"
-         << "      the Dirichlet rows of the mass matrix are " << perturb << " on the diagonal (Problem->\"Perturb Dirichlet\"),\n"
-         << "      and Tempus->Sensitivities->\"" << gammaName << "\" is set accordingly.\n";
+
+  const auto problem = app->getProblem();
+  auto mask = Thyra::createMember(app->getVectorSpace());
+  mask->assign(0.0);
+  std::string flagged;
+
+  // Algebraic dofs of the problem
+  Teuchos::RCP<Thyra_Vector> algebraic_mask, differential_mask;
+  if (problem->getDAEMasks(*app->getDiscretization(),algebraic_mask,differential_mask)) {
+    mask->update(1.0,*algebraic_mask);
+    flagged = "the algebraic dofs of the problem";
+  }
+
+  // Rows of the weak Dirichlet conditions
+  if (problem->getNodeSetIDs().size()>0 && !problem->useSDBCs()) {
+    const auto dbc_rows = buildDirichletRowsVector(*app, 1.0);
+    if (dbc_rows->norm_inf()>0.0) {
+      const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
+      const double perturb = getOr<double>(*problemParams,"Perturb Dirichlet",0.0);
+      TEUCHOS_TEST_FOR_EXCEPTION (perturb!=0.0, std::logic_error,
+          "Error! Problem->\"Perturb Dirichlet\" = " << perturb << " cannot be used with the adjoint\n"
+          "       sensitivities of Tempus: the rows of the Dirichlet conditions of the mass matrix\n"
+          "       must be zero, since Tempus treats them as algebraic equations.\n");
+      auto mask_data = Albany::getNonconstLocalData(mask);
+      const auto dbc_data = Albany::getLocalData(dbc_rows.getConst());
+      for (int i=0; i<static_cast<int>(mask_data.size()); ++i) {
+        mask_data[i] = std::max(mask_data[i],dbc_data[i]);
+      }
+      flagged += flagged.empty() ? "" : " and ";
+      flagged += "the rows of the weak Dirichlet conditions";
+    }
+  }
+
+  if (mask->norm_inf()==0.0) {
+    // An ODE: nothing to do
+    return;
+  }
+
+  sensParams.set<Teuchos::RCP<const Thyra_Vector>>(maskName, mask);
+  *m_out << "Note: the problem is a DAE and uses the adjoint sensitivities of Tempus: Tempus->Sensitivities->\n"
+         << "      \"" << maskName << "\" flags " << flagged << ".\n";
 }
 
 void SolverFactory::

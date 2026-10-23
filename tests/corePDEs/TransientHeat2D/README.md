@@ -43,12 +43,15 @@ reads the matrices with the map of the parameter, which must be contiguous: the 
 
 ## Dirichlet conditions and the Tempus adjoint
 
-With weak Dirichlet conditions (rows f_i = x_i - d_i) the mass matrix df/dx_dot is singular,
-and the Tempus adjoint sensitivities need special treatment for the jumps of the adjoint of the
-FT and SOT responses. When the Tempus adjoint is used, Albany puts `Perturb Dirichlet` (1 if not
-set) on the diagonal of these rows of the mass matrix and gives the vector of these values to
-Tempus (`Sensitivities`->`Algebraic Equations Mass Diagonal`), which corrects the gradient.
-The Tempus-driven BR tests fail without this correction (|d|_2 = 2.2823 for FT, 2.2366 for SOT).
+With weak Dirichlet conditions (rows f_i = x_i - d_i) the mass matrix df/dx_dot is singular: the
+problem is a differential-algebraic system whose algebraic equations are the Dirichlet rows. The
+adjoint of the FT and SOT responses jumps at the response times, and Tempus computes these jumps
+with df/dx on the algebraic rows and df/dx_dot on the other rows, which also accounts for the
+parameters entering the algebraic equations (the `dirichlet_field` of B and BR). When the Tempus
+adjoint is used, Albany gives the Dirichlet rows (and the algebraic dofs of the problem, if any)
+to Tempus (`Sensitivities`->`Algebraic Equations Mask`). The model must return the true mass
+matrix, so `Perturb Dirichlet` must not be set. Without the mask, the jumps would require
+solving with the singular mass matrix.
 
 ## Tests and tolerances
 
