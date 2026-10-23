@@ -137,6 +137,22 @@ IF(NOT Kokkos_ENABLE_CUDA)
                       ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_beta.yaml)
       add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_beta.yaml)
       set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Distributed" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+      # The Mu test with the Tempus driver (adjoint sensitivities of Tempus, continuous adjoint),
+      # for the Final Time and Sum Over Times responses. Their adjoint jumps need the algebraic
+      # equations of the DAE (the velocity), which Albany gives to Tempus ("Algebraic Equations
+      # Mask").
+      set (testName ${testNameRoot}_MIMSIP_TransientOpt_Mu_Tempus_FinalTime)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;FinalTime;Scalar" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+      set (testName ${testNameRoot}_MIMSIP_TransientOpt_Mu_Tempus_SumOverTimes)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;SumOverTimes;Scalar" FIXTURES_REQUIRED MismipMeshSetup2d)
     endif()
   else()
     set (testName ${testNameRoot}_MIMSIP_Transient_Impl)

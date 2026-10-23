@@ -1,0 +1,373 @@
+%YAML 1.1
+---
+# Transient optimization of the coupled FO-thickness problem (MISMIP setup of
+# input_mismip_transient_sensitivity.yaml: depth-integrated FO, 1 layer, Backward Euler,
+# dt = 0.5, t in (0, 1]).
+#  - Control: the scalar friction coefficient of the power law, as log(Mu) ("Exponentiate
+#    Scalar Parameters", so the Power Exponent is given as log(1/3) as well).
+#  - Objective (Final Time): squared L2 misfit between the computed thickness at the final
+#    time and the observed thickness (here, the initial thickness) on the upper surface
+#    (see input_mismip_transient_opt_mu_basal_misfit.yaml for the basal side).
+#  - Gradient: Tempus driver (adjoint sensitivities of Tempus: continuous adjoint, first
+#    order in dt, so the gradient check shows an O(dt) difference with the discrete
+#    objective). The velocity is algebraic (no time derivative), and the adjoint jumps of
+#    the Final Time response need its algebraic equations, given to Tempus by Albany
+#    (Tempus->Sensitivities->"Algebraic Equations Mask", see AbstractProblem::getDAEMasks).
+# Requires ALBANY_MESH_DEPENDS_ON_SOLUTION ("Allow Loss Of Derivative Terms: false").
+# The thickness Edge Stabilization drops the derivatives of its coefficients w.r.t. the
+# velocity, so the gradient check may show an error floor.
+ANONYMOUS:
+  Debug Output:
+          #Write Solution to MatrixMarket: -1
+          #Write Jacobian to MatrixMarket: -1
+          #Write Residual to MatrixMarket: -1
+  Problem:
+    Depth Integrated Model: true
+    Phalanx Graph Visualization Detail: 1
+    Use MDField Memoization: False
+    Solution Method: Transient
+    Name: LandIce Coupled FO H 3D
+    Compute Sensitivities: true
+    Allow Loss Of Derivative Terms: false
+    Thickness Stabilization: Edge Stabilization
+    Basal Side Name: basalside
+    Surface Side Name: upperside
+    Flat Bed Approximation: false
+    Cubature Degrees (Horiz Vert): [4, 7]
+    Basal Cubature Degree: 4
+    Surface Cubature Degree: 4
+    LandIce Field Norm:
+      sliding_velocity_basalside:
+        Regularization Type: Given Value
+        Regularization Value: 1.0e-05
+    Response Functions:
+      Number Of Responses: 1
+      Response 0:                     # misfit of the thickness [km] on the upper surface
+        Name: Squared L2 Difference Side Source ST Target RT
+        Side Set Name: upperside
+        Field Rank: Scalar
+        Source Field Name: ice_thickness_computed_upperside
+        Target Field Name: observed_ice_thickness_upperside
+        Scaling: 1.0e+03
+    Dirichlet BCs:
+      SDBC on NS extruded_boundary_node_set_1 for DOF U0: 0.0
+      SDBC on NS extruded_boundary_node_set_1 for DOF U1: 0.0
+      SDBC on NS extruded_boundary_node_set_3 for DOF U1: 0.0
+    Neumann BCs: {}
+    LandIce BCs:
+      Number: 2
+      BC 0:
+        Type: Basal Friction
+        Side Set Name: basalside
+        Basal Friction Coefficient:
+          Type: Power Law
+          Exponentiate Scalar Parameters: true   # Mu = exp(param Mu), power = exp(param Power Exponent)
+          Mu Type: Constant
+          Mu: 9.210340371976184                  # log(1.0e+04)
+          Zero Beta On Floating Ice: true
+          Power Exponent: -1.0986122886681098    # log(1/3)
+          Effective Pressure Type: Constant
+          Effective Pressure: 1.0
+          Use Pressurized Bed Above Sea Level: false
+      BC 1:
+        Type: Lateral
+        Cubature Degree: 4
+        Side Set Name: lateralside
+    Parameters:
+      Number Of Parameters: 1
+      Parameter 0:
+        Type: Scalar
+        Name: Mu                      # log of the friction coefficient
+        Lower Bound: 6.907755278982137  # log(1.0e+03)
+        Upper Bound: 11.51292546497023  # log(1.0e+05)
+    LandIce Physical Parameters:
+      Water Density: 1.028e+03
+      Ice Density: 9.10e+02
+      Gravity Acceleration: 9.81e+00
+      Clausius-Clapeyron Coefficient: 0.0
+    LandIce Viscosity:
+      Type: Glen's Law
+      Glen's Law Homotopy Parameter: 0.3
+      Glen's Law A: 6.3419584e-25           # [Pa^-n s^-1
+      Glen's Law n: 3.0
+      Flow Rate Type: Uniform
+    Body Force:
+      Type: FO INTERP SURF GRAD
+  Discretization:
+    Method: STKExtruded
+    Number Of Time Derivatives: 1
+    Exodus Output File Name: output/mismip_transient_opt_mu_tempus_final_time.exo
+    Columnwise Ordering: false
+    NumLayers: 1
+    Thickness Field Name: ice_thickness
+    Use Glimmer Spacing: true
+    Extrude Basal Node Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
+    Basal Node Fields Ranks: [1, 1, 1, 1]
+    Required Fields Info:
+      Number Of Fields: 6
+      Field 0:
+        Field Name: ice_thickness
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 1:
+        Field Name: surface_height
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 2:
+        Field Name: bed_topography
+        Field Type: Node Scalar
+        Field Origin: Mesh
+      Field 3:
+        Field Name: ice_thickness_computed
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 4:
+        Field Name: surface_height_computed
+        Field Type: Node Scalar
+        Field Origin: Mesh
+        Field Usage: Output
+      Field 5:
+        Field Name: thickness_forcing
+        Field Type: Node Scalar
+        Field Origin: Mesh
+    Side Set Discretizations:
+      Side Sets: [basalside, upperside]
+      basalside:
+        Method: Ioss
+        Number Of Time Derivatives: 1
+        Restart Index: 1
+        Exodus Output File Name: output/mismip_transient_opt_mu_tempus_final_time_basal.exo
+        Exodus Input File Name: ../AsciiMeshes/MISMIP/mismip_2d.exo
+        Use Serial Mesh: ${USE_SERIAL_MESH}
+        Required Fields Info:
+          Number Of Fields: 4
+          Field 0:
+            Field Name: ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/MISMIP/thickness.ascii
+          Field 1:
+            Field Name: surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/MISMIP/surface_height.ascii
+            #Field Expression: ['L_x = 640','L_y = 80','x_hat = x / L_x','y_hat = y / L_y','rho_i = 910','rho_w = 1024','H = 0.1','B_x = -0.150 - 0.7288 * (x / 300)^2 + 0.34391 * (x / 300)^4 - 0.05057 * (x / 300)^6','B_y = 0.500 / (1.0 + exp(-2.0 * (y - 40.0 - 24.0) / 4.0)) + 0.500 / (1.0 + exp(2.0 * (y - 40.0 + 24.0) / 4.0))','B = (B_x + B_y) < -0.720 ? -0.720 : B_x + B_y','(rho_i*H+rho_w*B) > 0.0 ? B+H : (1.0-rho_i/rho_w)*H']
+          Field 2:
+            Field Name: bed_topography #surface_height
+            Field Type: Node Scalar
+            Field Origin: File
+            #Field Expression: ['L_x = 640','L_y = 80','x_hat = x / L_x','y_hat = y / L_y','B_x = -0.150 - 0.7288 * (x / 300)^2 + 0.34391 * (x / 300)^4 - 0.05057 * (x / 300)^6','B_y = 0.500 / (1.0 + exp(-2.0 * (y - 40.0 - 24.0) / 4.0)) + 0.500 / (1.0 + exp(2.0 * (y - 40.0 + 24.0) / 4.0))','(B_x + B_y) < -0.720 ? -0.720 : B_x + B_y']
+            File Name: ../AsciiMeshes/MISMIP/bed_topography.ascii #surface_height.ascii
+          Field 3:
+            Field Name: thickness_forcing
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.3
+      upperside:
+        Method: SideSetSTK
+        Number Of Time Derivatives: 1
+        Required Fields Info:
+          Number Of Fields: 1
+          Field 0:
+            # Same values as the initial thickness. The upper surface mesh keeps the node ids
+            # of the 3D mesh, which (layer-wise ordering) are sorted as the basal nodes.
+            Field Name: observed_ice_thickness
+            Field Type: Node Scalar
+            Field Origin: File
+            File Name: ../AsciiMeshes/MISMIP/thickness.ascii
+
+  Piro:
+    Sensitivity Method: Adjoint
+    Enable Explicit Matrix Transpose: true
+    Analysis:
+      Transient: true
+      Analysis Package: ROL
+      ROL:
+        Number Of Parameters: 1
+        Parameter Initial Guess Type: From Model Evaluator
+        Bound Constrained: true
+        Check Derivatives: true
+        Derivative Checks:
+          Number Of Derivative Checks: 1
+        Tempus Driver: true
+        Tempus Output Filename: log_tempus_mismip_transient_opt_mu_tempus_final_time.txt
+        Response Type: Final Time
+        ROL Options:
+          General:
+            Output Level: 1
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.0
+            Inexact Objective Function: false
+            Inexact Gradient: false
+            Inexact Hessian-Times-A-Vector: false
+            Projected Gradient Criticality Measure: false
+            Secant:
+              Type: Limited-Memory BFGS
+              Maximum Storage: 20
+              Use Default Scaling: true
+              Initial Hessian Scale: 1.0
+              Barzilai-Borwein: 1
+            Krylov:
+              Type: Conjugate Gradients
+              Absolute Tolerance: 1.0e-04
+              Relative Tolerance: 1.0e-02
+              Iteration Limit: 20
+          Step:
+            Type: Trust Region
+            Trust Region:
+              Subproblem Model: Kelley-Sachs
+              Subproblem Solver: Truncated CG
+              Initial Radius: -1.0
+              Step Acceptance Threshold: 0.05
+              Radius Shrinking Threshold: 0.05
+              Radius Growing Threshold: 0.9
+              Radius Shrinking Rate (Negative rho): 0.0625
+              Radius Shrinking Rate (Positive rho): 0.25
+              Radius Growing Rate: 2.5
+              Safeguard Size: 100.0
+          Status Test:
+            Gradient Tolerance: 1.0e-06
+            Step Tolerance: 1.0e-10
+            Iteration Limit: 30
+            Use Relative Tolerances: true
+    Tempus:
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Screen Output Index List: '1'
+        Screen Output Index Interval: 1
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 20
+        Time Step Control:
+          Initial Time: 0.0
+          Initial Time Index: 0
+          Initial Time Step: 0.5
+          Final Time: 1.0
+          #Final Time Index: 1000
+          Maximum Absolute Error: 1.0e-08
+          Maximum Relative Error: 1.0e-08
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.0e+01
+          #Output Index Interval: 1000
+          Maximum Number of Stepper Failures: 10
+          Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: Backward Euler
+        VerboseObject:
+          Verbosity Level: medium
+        Solver Name: Demo Solver
+        Demo Solver:
+          VerboseObject:
+            Verbosity Level: medium
+          NOX:
+            Thyra Group Options:
+              Function Scaling: Row Sum #Row Sum
+              Update Row Sum Scaling: Before Each Nonlinear Solve
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Norm Type: Two Norm
+                Scale Type: Unscaled
+                Tolerance: 1.0e-04
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 100
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Linear Solver:
+                  Write Linear System: false
+                  Tolerance: 1.0e-4  #used for forward solve
+                Stratimikos Linear Solver:
+                  NOX Stratimikos Options: {}
+                  Stratimikos:
+                    Linear Solver Type: Belos
+                    Linear Solver Types:
+                      Belos:
+                        VerboseObject:
+                          Verbosity Level: medium
+                        Solver Type: Block GMRES
+                        Solver Types:
+                          Block GMRES:
+                            Convergence Tolerance: 1.0e-07
+                            Output Frequency: 10
+                            Output Style: 1
+                            Verbosity: 33
+                            Maximum Iterations: 500
+                            Block Size: 1
+                            Num Blocks: 50
+                            Flexible Gmres: false
+                    Preconditioner Type: Ifpack2
+                    Preconditioner Types:
+                      Ifpack2:
+                        Overlap: 0
+                        Prec Type: Amesos2 # RILUK
+                        Ifpack2 Settings:
+                          Amesos2: {}
+                          Amesos2 solver name: klu
+                          'fact: iluk level-of-fill': 0
+                Rescue Bad Newton Solve: true
+            Line Search:
+              Full Step:
+                Full Step: 1.0
+              Method: Backtrack
+            Nonlinear Solver: Line Search Based
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: false
+                Details: false
+                Linear Solver Details: false
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+
+      Stratimikos:
+            Linear Solver Type: Belos
+            Linear Solver Types:
+              Belos:
+                VerboseObject:
+                  Verbosity Level: medium
+                Solver Type: Block GMRES
+                Solver Types:
+                  Block GMRES:
+                    Convergence Tolerance: 1.0e-07
+                    Output Frequency: 10
+                    Output Style: 1
+                    Verbosity: 33
+                    Maximum Iterations: 500
+                    Block Size: 1
+                    Num Blocks: 50
+                    Flexible Gmres: false
+            Preconditioner Type: Ifpack2
+            Preconditioner Types:
+              Ifpack2:
+                Overlap: 0
+                Prec Type: Amesos2 # RILUK
+                Ifpack2 Settings:
+                  Amesos2: {}
+                  Amesos2 solver name: klu
+                  'fact: iluk level-of-fill': 0
+
+
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    # TODO: set to the optimal log(Mu) of the first converged run; without it, the test
+    #       only checks that the optimization runs.
+    #Piro Analysis Test Values: [ ]
+...
