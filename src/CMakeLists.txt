@@ -64,6 +64,7 @@ set (SOURCES
   Albany_Application.cpp
   InitialCondition.cpp
   Albany_AlgebraicConstraintModelEvaluator.cpp
+  Albany_ConsistentInitialStateSolver.cpp
   Albany_ExplicitODEModelEvaluator.cpp
   Albany_Memory.cpp
   Albany_ModelEvaluator.cpp
@@ -87,6 +88,7 @@ set(HEADERS
   Albany_DualView.hpp
   Albany_DualDynRankView.hpp
   Albany_AlgebraicConstraintModelEvaluator.hpp
+  Albany_ConsistentInitialStateSolver.hpp
   Albany_ExplicitODEModelEvaluator.hpp
   InitialCondition.hpp
   Albany_KokkosTypes.hpp

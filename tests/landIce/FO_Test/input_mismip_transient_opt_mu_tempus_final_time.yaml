@@ -13,6 +13,11 @@
 #    objective). The velocity is algebraic (no time derivative), and the adjoint jumps of
 #    the Final Time response need its algebraic equations, given to Tempus by Albany
 #    (Tempus->Sensitivities->"Algebraic Equations Mask", see AbstractProblem::getDAEMasks).
+#    Before each forward integration, Albany solves for the initial velocity with the current
+#    Mu (Problem->Consistent Initial State, on by default with the adjoint sensitivities of
+#    Tempus): the last step of the adjoint integration evaluates the model at the initial
+#    state, and an inconsistent initial velocity gives a gradient error that is O(dt), but
+#    with a large constant (about half the gradient with dt = 0.5).
 # Requires ALBANY_MESH_DEPENDS_ON_SOLUTION ("Allow Loss Of Derivative Terms: false").
 # The thickness Edge Stabilization drops the derivatives of its coefficients w.r.t. the
 # velocity, so the gradient check may show an error floor.
