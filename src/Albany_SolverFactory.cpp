@@ -9,6 +9,7 @@
 #include "Albany_PiroTempusObserver.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_ExplicitODEModelEvaluator.hpp"
+#include "Albany_ConsistentInitialStateSolver.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
@@ -22,6 +23,7 @@
 #include "Piro_SolverFactory.hpp"
 #include "Piro_StratimikosUtils.hpp"
 #include "Piro_ProductModelEval.hpp"
+#include "Piro_TempusSolver.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
@@ -116,6 +118,42 @@ bool usesTempusAdjointIntegrator (const Teuchos::ParameterList& piroParams,
          getOr<std::string>(analysisParams,"Analysis Package","") == "ROL" &&
          analysisParams.isSublist("ROL") &&
          getOr<bool>(analysisParams.sublist("ROL"),"Tempus Driver",false);
+}
+
+// The "NOX" list of the nonlinear solver of the Tempus stepper (Piro->Tempus list), or null
+// if the stepper has no solver list of its own (e.g., Tempus default solver)
+const Teuchos::ParameterList*
+getTempusStepperNOXParams (const Teuchos::ParameterList& tempusParams)
+{
+  const auto integratorName = getOr<std::string>(tempusParams,"Integrator Name","");
+  if (integratorName.empty() || !tempusParams.isSublist(integratorName)) {
+    return nullptr;
+  }
+  const auto stepperName = getOr<std::string>(tempusParams.sublist(integratorName),"Stepper Name","");
+  if (stepperName.empty() || !tempusParams.isSublist(stepperName)) {
+    return nullptr;
+  }
+  const auto& stepperParams = tempusParams.sublist(stepperName);
+  const auto solverName = getOr<std::string>(stepperParams,"Solver Name","");
+  if (solverName.empty() || !stepperParams.isSublist(solverName) ||
+      !stepperParams.sublist(solverName).isSublist("NOX")) {
+    return nullptr;
+  }
+  return &stepperParams.sublist(solverName).sublist("NOX");
+}
+
+// The Stratimikos list of a NOX list (Direction->Newton->Stratimikos Linear Solver->Stratimikos),
+// or null if there is none
+const Teuchos::ParameterList*
+getNOXStratimikosParams (const Teuchos::ParameterList& noxParams)
+{
+  if (noxParams.isSublist("Direction") &&
+      noxParams.sublist("Direction").isSublist("Newton") &&
+      noxParams.sublist("Direction").sublist("Newton").isSublist("Stratimikos Linear Solver") &&
+      noxParams.sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver").isSublist("Stratimikos")) {
+    return &noxParams.sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver").sublist("Stratimikos");
+  }
+  return nullptr;
 }
 
 // Vector in the residual space equal to 'value' on the rows of the (weak) Dirichlet
@@ -437,8 +475,110 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
   }
 
   Piro::SolverFactory piroFactory;
-  return piroFactory.createSolver<ST>(
+  const auto solver = piroFactory.createSolver<ST>(
        piroParams, modelWithSolve, adjointModelWithSolve, observer);
+
+  // With an explicit stepper, Albany::ExplicitODEModelEvaluator solves for the algebraic dofs
+  if (solutionMethod=="Transient" && Teuchos::is_null(explicitOdeModel)) {
+    setupConsistentInitialState(app, solver, forwardMode);
+  }
+
+  return solver;
+}
+
+void SolverFactory::
+setupConsistentInitialState (const Teuchos::RCP<Application>& app,
+                             const Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>& solver,
+                             const bool forwardMode)
+{
+  // Before each forward time integration, solve the algebraic equations of a DAE for the
+  // algebraic dofs of the initial state (e.g., the FO velocity for the initial thickness),
+  // with the current parameters. Implicit steppers do not need it, but the adjoint
+  // sensitivities of Tempus do: the last step of the adjoint integration evaluates the
+  // model at the initial state (see Albany::ConsistentInitialStateSolver). Hence the
+  // default: solve when the transient sensitivities come from the adjoint integrator.
+  const std::string listName = "Consistent Initial State";
+  const std::string solveName = "Solve For Algebraic Dofs";
+  const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
+  const auto piroParams    = Teuchos::sublist(m_appParams, "Piro");
+
+  Teuchos::ParameterList icParams(listName);
+  if (problemParams->isSublist(listName)) {
+    icParams = problemParams->sublist(listName);
+    icParams.validateParameters(*getValidConsistentInitialStateParameters(), 0);
+  }
+  const bool requested = icParams.isParameter(solveName) && icParams.get<bool>(solveName);
+  const bool solve = icParams.isParameter(solveName) ? icParams.get<bool>(solveName) :
+                     usesTempusAdjointIntegrator(*piroParams, *problemParams, forwardMode);
+  if (!solve) {
+    return;
+  }
+
+  // The algebraic dofs of the problem. The rows of weak Dirichlet conditions are algebraic
+  // equations too (see setupTempusAdjointDAE), but they are not solved for: the initial
+  // condition is expected to satisfy them.
+  Teuchos::RCP<Thyra_Vector> mask, differential_mask;
+  const bool is_dae = app->getProblem()->getDAEMasks(*app->getDiscretization(),mask,differential_mask);
+  if (!is_dae || mask.is_null() || mask->norm_inf()==0.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION (requested, std::logic_error,
+        "Error! Problem->" << listName << "->\"" << solveName << "\" is true, but the problem\n"
+        "       has no algebraic dofs (see AbstractProblem::getDAEMasks).\n");
+    return;
+  }
+
+  const auto tempusSolver = Teuchos::rcp_dynamic_cast<Piro::TempusSolver<ST>>(solver);
+  if (tempusSolver.is_null()) {
+    TEUCHOS_TEST_FOR_EXCEPTION (requested, std::logic_error,
+        "Error! Problem->" << listName << "->\"" << solveName << "\" requires the Tempus solver of Piro.\n");
+    return;
+  }
+
+  // Nonlinear solver: Problem->Consistent Initial State->NOX, or else the solver of the Tempus
+  // stepper (the time steps solve the same equations), or else Piro->NOX. Linear solver: the
+  // Stratimikos list of that NOX list, if any, or else the Piro->Tempus one.
+  Teuchos::ParameterList noxParams;
+  std::string noxSource;
+  const auto stepperNoxParams = piroParams->isSublist("Tempus") ?
+      getTempusStepperNOXParams(piroParams->sublist("Tempus")) : nullptr;
+  if (icParams.isSublist("NOX")) {
+    noxParams = icParams.sublist("NOX");
+    noxSource = "Problem->" + listName + "->NOX";
+  } else if (stepperNoxParams!=nullptr) {
+    noxParams = *stepperNoxParams;
+    noxSource = "the solver of the Tempus stepper";
+  } else {
+    noxParams = piroParams->sublist("NOX");
+    noxSource = "Piro->NOX";
+  }
+  const auto noxStratParams = getNOXStratimikosParams(noxParams);
+  const auto stratParams = Teuchos::rcp(new Teuchos::ParameterList(
+      noxStratParams!=nullptr ? *noxStratParams : *Piro::extractStratimikosParams(piroParams)));
+
+  const auto icSolver = Teuchos::rcp(new ConsistentInitialStateSolver(
+      mask, noxParams, buildLinearSolveStrategy(stratParams)));
+  tempusSolver->setConsistentInitialStateFunction(
+      [icSolver](const Teuchos::RCP<Thyra_ModelEvaluator>& model,
+                 const Thyra_InArgs& inArgs, Thyra_Vector& x0) {
+        icSolver->solve(model, inArgs, x0);
+      });
+
+  *m_out << "Note: the problem is a DAE. Before each forward time integration, the algebraic dofs of the\n"
+         << "      initial state are solved for with the current parameters (Problem->" << listName << "),\n"
+         << "      with the nonlinear solver settings of " << noxSource << ".\n";
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidConsistentInitialStateParameters() const
+{
+  auto validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidConsistentInitialStateParams"));
+  validPL->set<bool>("Solve For Algebraic Dofs", false,
+      "Whether to solve for the algebraic dofs of the initial state of a DAE (AbstractProblem::getDAEMasks), "
+      "for the current parameters, before each forward time integration with an implicit stepper. "
+      "Default: true if the transient sensitivities are computed by the adjoint integrator of Tempus.");
+  validPL->sublist("NOX", false,
+      "Nonlinear solver of the algebraic solve. Default: the NOX list of the solver of the Tempus "
+      "stepper, or Piro->NOX if the stepper has none.");
+  return validPL;
 }
 
 void SolverFactory::

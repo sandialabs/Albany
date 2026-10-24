@@ -135,6 +135,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Explicit Time Integration", false,
                    "Options used with an explicit Tempus stepper, for problems that provide "
                    "getDAEMasks (see Albany::ExplicitODEModelEvaluator)");
+  validPL->sublist("Consistent Initial State", false,
+                   "Solve for the algebraic dofs of the initial state of a DAE before each forward "
+                   "time integration (see Albany::SolverFactory::setupConsistentInitialState)");
   validPL->set<bool>("Overwrite Nominal Values With Final Point",false,
                      "Whether 'reportFinalPoint' should be allowed to overwrite nominal values");
   validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
