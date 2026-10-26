@@ -36,6 +36,8 @@ ANONYMOUS:
     Mesh Creation Method: Box1D
     Mesh Adaptivity:
       Type: Minimally-Oscillatory
+      # Elem Scalar field driving the adaptation (unused in 1D, other than for VTK output)
+      Indicator Field Name: solution_grad_norm
       Max Hessian: 10.0
       Refining Factor: 2
       Write VTK Files: true # write VTK files before and after adaptation
