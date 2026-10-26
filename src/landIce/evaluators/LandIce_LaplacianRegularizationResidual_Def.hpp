@@ -19,7 +19,7 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   laplacian_coeff = p.get<double>("Laplacian Coefficient");
   mass_coeff = p.get<double>("Mass Coefficient");
-  advection_vect = p.get<Teuchos::Array<double>>("Advection Vector");
+  const auto& advection_vect_param = p.get<Teuchos::Array<double>>("Advection Vector");
   robin_coeff = p.get<double>("Robin Coefficient");
   lumpedMassMatrix = p.get<bool>("Lump Mass Matrix");
 
@@ -106,8 +106,12 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   sideNodes.modify_host();
   sideNodes.sync_device();
 
-  TEUCHOS_TEST_FOR_EXCEPTION (advection_vect.size() != cellDim, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (advection_vect_param.size() != cellDim, std::runtime_error,
                               "Error! Advection Vector Side not compatible with problem dimension.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (cellDim > 3, std::runtime_error,
+                              "Error! Advection Vector supports at most 3 dimensions.\n");
+  for (unsigned int idim=0; idim<3; ++idim)
+    advection_vect[idim] = idim < cellDim ? advection_vect_param[idim] : 0.0;
 }
 
 // **********************************************************************
