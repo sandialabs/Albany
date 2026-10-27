@@ -32,7 +32,7 @@ set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 set (CTEST_BINARY_NAME build)
 
-set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
+set (CTEST_SOURCE_DIRECTORY "/ccs/proj/cli193/automated_testing/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
@@ -161,7 +161,7 @@ if (BUILD_TRILINOS)
   #
   # Configure the Trilinos build
   #
-  set(INSTALL_DIR /ccs/proj/cli193/automated_testing/rocm/builds/TrilinosInstall)
+  set(INSTALL_DIR /lustre/orion/cli193/proj-shared/automated_testing/rocm/builds/TrilinosInstall)
 
   set (CONFIGURE_OPTIONS
     CDASH-TRILINOS-FILE.TXT

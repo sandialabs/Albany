@@ -1,14 +1,15 @@
 #!/bin/bash
 # SCORPIO build script
 BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
-DEPLOY_DIR=/ccs/proj/cli193/automated_testing/rocm
+SRC_DIR=/ccs/proj/cli193/automated_testing
+DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
 
 mkdir -p ${BASE_DIR}/build/ScoBuildReleaseGcc
 cd ${BASE_DIR}/build/ScoBuildReleaseGcc
 
 rm -rf CMake*
 
-SCORPIO_SRC=${BASE_DIR}/repos/E3SM/externals/scorpio
+SCORPIO_SRC=${SRC_DIR}/repos/E3SM/externals/scorpio
 SCORPIO_INSTALL=${DEPLOY_DIR}/builds/scorpio-gnu
 
 cmake \

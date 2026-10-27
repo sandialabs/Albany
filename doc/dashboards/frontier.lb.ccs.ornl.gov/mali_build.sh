@@ -1,5 +1,6 @@
 BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
-DEPLOY_DIR=/ccs/proj/cli193/automated_testing/rocm
+SRC_DIR=/ccs/proj/cli193/automated_testing
+DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
 
 # Build SCORPIO
 bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
@@ -8,7 +9,7 @@ SCORPIO_DIR=${DEPLOY_DIR}/builds/scorpio-gnu
 ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
 TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
 
-cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
+cd ${SRC_DIR}/repos/E3SM/components/mpas-albany-landice
 
 source ${ALBANY_INSTALL_DIR}/export_albany.in
 export ALBANY_LINK_LIBS=${ALBANY_LINK_LIBS//"--hip-link "}

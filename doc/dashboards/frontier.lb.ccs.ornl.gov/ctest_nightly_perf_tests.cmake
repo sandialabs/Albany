@@ -21,11 +21,13 @@ set (CTEST_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
+set (MPICH_DIR $ENV{MPICH_DIR})
+
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 set (CTEST_BINARY_NAME build)
 
-set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
+set (CTEST_SOURCE_DIRECTORY "/ccs/proj/cli193/automated_testing/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
@@ -40,8 +42,8 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 
 execute_process(COMMAND bash delete_txt_files.sh 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set (TRILINOS_INSTALL "/ccs/proj/cli193/automated_testing/rocm/builds/TrilinosInstall")
-set (ALBANY_INSTALL "/ccs/proj/cli193/automated_testing/rocm/builds/AlbanyInstall")
+set (TRILINOS_INSTALL "/lustre/orion/cli193/proj-shared/automated_testing/rocm/builds/TrilinosInstall")
+set (ALBANY_INSTALL "/lustre/orion/cli193/proj-shared/automated_testing/rocm/builds/AlbanyInstall")
 execute_process(COMMAND grep "Trilinos_C_COMPILER " ${TRILINOS_INSTALL}/lib64/cmake/Trilinos/TrilinosConfig.cmake
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE MPICC_RESULT
@@ -55,6 +57,8 @@ execute_process(COMMAND cat mpicc.txt
 		OUTPUT_VARIABLE MPICC
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 #message("IKT mpicc = " ${MPICC}) 
+set (MPICC cc)
+set (HIPCC hipcc)
 execute_process(COMMAND ${MPICC} -dumpversion 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		RESULT_VARIABLE COMPILER_VERSION_RESULT
@@ -206,9 +210,8 @@ if (BUILD_ALI_PERF_TESTS)
     "-DSFAD12_EXE_DIR:FILEPATH=${DEPLOY_DIR}/builds/AlbanyInstallSfad12/bin"
     "-DSFAD24_EXE_DIR:FILEPATH=${DEPLOY_DIR}/builds/AlbanyInstallSfad24/bin"
     "-DMALI_EXE_DIR:FILEPATH=${DEPLOY_DIR}/builds/mali"
-    "-DMESH_FILE_DIR:FILEPATH=${DEPLOY_DIR}/../ali-perf-tests-meshes"
+    "-DMESH_FILE_DIR:FILEPATH=/ccs/proj/cli193/automated_testing/ali-perf-tests-meshes"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   )
 
