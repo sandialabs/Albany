@@ -65,7 +65,6 @@ namespace LandIce {
 
     ScalarT p_reg, reg;
     double laplacian_coeff, mass_coeff, robin_coeff;
-    // Teuchos::Array is host-only; use Kokkos::Array so it can be accessed on device
     Kokkos::Array<double,3> advection_vect;
 
     bool lumpedMassMatrix;
