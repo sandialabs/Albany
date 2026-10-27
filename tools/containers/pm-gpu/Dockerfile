@@ -112,11 +112,11 @@ ARG HDF5_VERSION=1.14.3
 ARG PNETCDF_VERSION=1.12.3
 ARG NETCDF_VERSION=4.9.2
 
-# HDF5 (cray-hdf5-parallel)
+# HDF5 (cray-hdf5-parallel). Note: the release tarball unpacks into ./hdfsrc
 RUN mkdir -p ${TPLS_ROOT}/src && cd ${TPLS_ROOT}/src && \
     HDF5_TAG=hdf5-$(echo ${HDF5_VERSION} | tr . _) && \
     wget -q https://github.com/HDFGroup/hdf5/releases/download/${HDF5_TAG}/${HDF5_TAG}.tar.gz -O hdf5.tar.gz && \
-    mkdir hdf5 && tar -xzf hdf5.tar.gz -C hdf5 --strip-components=1 && \
+    mkdir hdf5 && tar -xzf hdf5.tar.gz -C hdf5 --strip-components=2 && \
     cd hdf5 && \
     ./configure --prefix=${TPLS_ROOT} --enable-parallel --enable-shared --disable-static \
                 --enable-build-mode=production --disable-tests --disable-tools && \
