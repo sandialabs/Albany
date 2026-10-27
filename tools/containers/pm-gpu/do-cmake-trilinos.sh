@@ -1,145 +1,112 @@
-# Mimics doc/dashboards/perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos.
-# Differences are limited to paths/compilers that only exist on Perlmutter:
-#   cc/CC/ftn -> mpicc/nvcc_wrapper(mpicxx)/mpifort, srun -> mpiexec,
-#   libsci -> openblas, cuda math_libs -> ${CUDA_HOME}/lib64
+# Based on tools/containers/gcc-serial/do-cmake-trilinos.sh, plus the CUDA
+# settings from doc/dashboards/perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-trilinos
 SRC_DIR=${SOFTWARE_ROOT}/trilinos/source
 INSTALL_DIR=${SOFTWARE_ROOT}/trilinos/install
-ARCH_TRIPLET=$(gcc-14 -dumpmachine)
-BLAS_LAPACK_LIB=/usr/lib/${ARCH_TRIPLET}/libopenblas.so
+if command -v nc-config >/dev/null 2>&1; then
+  NETCDF_LIB_DIR=$(nc-config --libdir)
+  NETCDF_INCLUDE_DIR=$(nc-config --includedir)
+else
+  ARCH_TRIPLET=$(gcc -dumpmachine)
+  NETCDF_LIB_DIR=${NETCDF_C_ROOT:-/usr/lib/${ARCH_TRIPLET}/netcdf/mpi}
+  NETCDF_INCLUDE_DIR=${NETCDF_LIB_DIR}/include
+
+  if [ ! -d "${NETCDF_INCLUDE_DIR}" ]; then
+    NETCDF_INCLUDE_DIR=/usr/include
+  fi
+fi
 
 rm -rf CMakeFiles
 rm -f  CMakeCache.txt
 
-cmake -Wno-dev \
-  -D CMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} \
-  -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-  -D CMAKE_CXX_STANDARD=20 \
-\
-  -D CMAKE_C_COMPILER=mpicc \
-  -D CMAKE_CXX_COMPILER=${NVCC_WRAPPER} \
-  -D CMAKE_Fortran_COMPILER=mpifort \
-  -D CMAKE_C_FLAGS:STRING="" \
-  -D CMAKE_CXX_FLAGS:STRING="" \
-  -D CMAKE_Fortran_FLAGS:STRING="" \
-  -D CMAKE_EXE_LINKER_FLAGS="" \
-\
-  -D TPL_ENABLE_MPI:BOOL=ON \
-  -D MPI_EXEC=mpiexec \
-  -D MPI_EXEC_NUMPROCS_FLAG:STRING="-n" \
-\
-  -D TPL_ENABLE_SuperLU:BOOL=OFF \
-  -D TPL_ENABLE_BLAS:BOOL=ON \
-  -D TPL_BLAS_LIBRARIES:STRING="${BLAS_LAPACK_LIB}" \
-  -D TPL_ENABLE_LAPACK:BOOL=ON \
-  -D TPL_LAPACK_LIBRARIES:STRING="${BLAS_LAPACK_LIB}" \
-\
-  -D TPL_ENABLE_Boost:BOOL=ON \
-  -D Boost_INCLUDE_DIRS:PATH=/usr/include \
-\
-  -D TPL_ENABLE_Netcdf:BOOL=ON \
-  -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include \
-  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib \
-  -D TPL_Netcdf_PARALLEL:BOOL=ON \
-\
-  -D TPL_ENABLE_Pnetcdf:STRING=ON \
-  -D Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_DIR}/include \
-  -D Pnetcdf_LIBRARY_DIRS:PATH=${PNETCDF_DIR}/lib \
-\
-  -D TPL_ENABLE_HDF5:STRING=ON \
-  -D HDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include \
-  -D HDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib \
-\
-  -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
-  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
-  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
-  -D Trilinos_ENABLE_CXX11:BOOL=ON \
-  -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
-  -D Trilinos_ENABLE_Fortran:BOOL=ON \
-  -D Trilinos_ENABLE_SHADOW_WARNINGS=OFF \
-  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-  -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
-\
-  -D Kokkos_ENABLE_CUDA:BOOL=ON \
-  -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON \
-  -D Kokkos_ENABLE_CUDA_UVM:BOOL=OFF \
-  -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
-  -D Kokkos_ENABLE_OPENMP:BOOL=OFF \
-  -D Kokkos_ENABLE_SERIAL:BOOL=ON \
-  -D Kokkos_ENABLE_TESTS:BOOL=OFF \
-  -D Kokkos_ARCH_ZEN3:BOOL=ON \
-  -D Kokkos_ARCH_AMPERE80:BOOL=ON \
-  -D TPL_ENABLE_Thrust:BOOL=ON \
-  -D Thrust_INCLUDE_DIRS=${CUDA_HOME}/targets/x86_64-linux/include \
-  -D TPL_ENABLE_CUDA:BOOL=ON \
-  -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
-  -D CUDA_cublas_LIBRARY=${CUDA_HOME}/lib64/libcublas.so \
-  -D CUDA_cusolver_LIBRARY=${CUDA_HOME}/lib64/libcusolver.so \
-  -D CUDA_cufft_LIBRARY=${CUDA_HOME}/lib64/libcufft.so \
-\
-  -D Amesos2_ENABLE_KLU2:BOOL=ON \
-  -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
-  -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
-  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="CUDA" \
-  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-  -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=ON \
-  -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
-  -D Tpetra_INST_INT_INT:BOOL=OFF \
-  -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
-\
-  -D TPL_ENABLE_Matio:BOOL=OFF \
-  -D TPL_ENABLE_X11:BOOL=OFF \
-\
-  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
-  -D Trilinos_ENABLE_Anasazi:BOOL=ON \
-  -D Trilinos_ENABLE_Belos:BOOL=ON \
-  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
-  -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
-  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
-  -D Trilinos_ENABLE_MueLu:BOOL=ON \
-  -D Trilinos_ENABLE_NOX:BOOL=ON \
-  -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
-  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
-  -D Trilinos_ENABLE_Piro:BOOL=ON \
-  -D Trilinos_ENABLE_ROL:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASAprepro_lib:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASEpu:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASExodiff:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASNemslice:BOOL=ON \
-  -D Trilinos_ENABLE_SEACASNemspread:BOOL=ON \
-  -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
-  -D Trilinos_ENABLE_STKIO:BOOL=ON \
-  -D Trilinos_ENABLE_STKMesh:BOOL=ON \
-  -D Trilinos_ENABLE_Sacado:BOOL=ON \
-  -D Trilinos_ENABLE_Shards:BOOL=ON \
-  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
-  -D Trilinos_ENABLE_TESTS:BOOL=OFF \
-  -D Trilinos_ENABLE_Teko:BOOL=ON \
-  -D Trilinos_ENABLE_Tempus:BOOL=ON \
-  -D Trilinos_ENABLE_Teuchos:BOOL=ON \
-  -D Trilinos_ENABLE_Thyra:BOOL=ON \
-  -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
-  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
-  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
-  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
-\
-  -D TPL_FIND_SHARED_LIBS:BOOL=ON \
-  -D BUILD_SHARED_LIBS:BOOL=ON \
-  -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
-\
-  -D Kokkos_ENABLE_LIBDL:BOOL=ON \
-  -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON \
-  -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON \
-  -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON \
-\
-  -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF \
-\
-  -D Tacho_ENABLE_INT_INT:BOOL=ON \
-  -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON \
-\
-  -D gtest_INCLUDE_DIRS=/usr/include/gtest \
-  -D gtest_LIBRARY_DIRS=/usr/lib/${ARCH_TRIPLET} \
-\
+cmake -Wno-dev                                                    \
+  -D CMAKE_BUILD_TYPE:STRING=RELEASE                              \
+  -D CMAKE_INSTALL_PREFIX:STRING=${INSTALL_DIR}                   \
+  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF                              \
+  -D CMAKE_C_COMPILER:STRING="mpicc"                              \
+  -D CMAKE_CXX_COMPILER:STRING="${NVCC_WRAPPER}"                  \
+  -D CMAKE_CXX_STANDARD:STRING=20                                 \
+  -D CMAKE_Fortran_COMPILER:STRING="mpifort"                      \
+  -D BUILD_SHARED_LIBS:BOOL=ON                                    \
+  \
+  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF                          \
+  -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF                            \
+  -D Trilinos_ENABLE_TESTS:BOOL=OFF                               \
+  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON               \
+  -D Trilinos_ENABLE_OpenMP:BOOL=OFF                              \
+  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF                        \
+  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF               \
+  \
+  -D Trilinos_ENABLE_Amesos2:BOOL=ON                              \
+  -D Trilinos_ENABLE_Anasazi:BOOL=ON                              \
+  -D Trilinos_ENABLE_Belos:BOOL=ON                                \
+  -D Trilinos_ENABLE_Ifpack2:BOOL=ON                              \
+  -D Trilinos_ENABLE_Intrepid2:BOOL=ON                            \
+  -D Trilinos_ENABLE_Kokkos:BOOL=ON                               \
+  -D Trilinos_ENABLE_KokkosKernels:BOOL=ON                        \
+  -D Trilinos_ENABLE_MueLu:BOOL=ON                                \
+  -D Trilinos_ENABLE_NOX:BOOL=ON                                  \
+  -D Trilinos_ENABLE_Pamgen:BOOL=ON                               \
+  -D Trilinos_ENABLE_PanzerExprEval:BOOL=ON                       \
+  -D Trilinos_ENABLE_PanzerDofMgr:BOOL=ON                         \
+  -D Trilinos_ENABLE_Phalanx:BOOL=ON                              \
+  -D Trilinos_ENABLE_Piro:BOOL=ON                                 \
+  -D Trilinos_ENABLE_PyTrilinos:BOOL=OFF                          \
+  -D Trilinos_ENABLE_ROL:BOOL=ON                                  \
+  -D Trilinos_ENABLE_Sacado:BOOL=ON                               \
+  -D Trilinos_ENABLE_SEACAS:BOOL=ON                               \
+  -D Trilinos_ENABLE_SEACASExodus:BOOL=ON                         \
+  -D Trilinos_ENABLE_SEACASIoss:BOOL=ON                           \
+  -D Trilinos_ENABLE_Shards:BOOL=ON                               \
+  -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON                       \
+  -D Trilinos_ENABLE_STKExprEval:BOOL=ON                          \
+  -D Trilinos_ENABLE_STKIO:BOOL=ON                                \
+  -D Trilinos_ENABLE_STKMesh:BOOL=ON                              \
+  -D Trilinos_ENABLE_STKTopology:BOOL=ON                          \
+  -D Trilinos_ENABLE_Stratimikos:BOOL=ON                          \
+  -D Trilinos_ENABLE_Teko:BOOL=ON                                 \
+  -D Trilinos_ENABLE_Tempus:BOOL=ON                               \
+  -D Trilinos_ENABLE_Teuchos:BOOL=ON                              \
+  -D Trilinos_ENABLE_Thyra:BOOL=ON                                \
+  -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON                  \
+  -D Trilinos_ENABLE_Tpetra:BOOL=ON                               \
+  -D Trilinos_ENABLE_Zoltan:BOOL=ON                               \
+  -D Trilinos_ENABLE_Zoltan2:BOOL=ON                              \
+  \
+  -D Amesos2_ENABLE_KLU2:BOOL=ON                                  \
+  -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON                  \
+  -D Phalanx_ALLOW_MULTIPLE_EVALUATORS_FOR_SAME_FIELD:BOOL=OFF    \
+  -D Kokkos_ENABLE_OPENMP:BOOL=OFF                                \
+  -D Kokkos_ENABLE_SERIAL:BOOL=ON                                 \
+  -D Kokkos_ENABLE_CUDA:BOOL=ON                                   \
+  -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON                            \
+  -D Kokkos_ENABLE_CUDA_UVM:BOOL=OFF                              \
+  -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF                \
+  -D Kokkos_ARCH_AMPERE80:BOOL=ON                                 \
+  -D Phalanx_INDEX_SIZE_TYPE:STRING="INT"                         \
+  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="CUDA"                     \
+  -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF                        \
+  -D Tpetra_INST_INT_LONG_LONG:BOOL=ON                            \
+  -D Tpetra_INST_INT_INT:BOOL=OFF                                 \
+  -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON              \
+  -D STK_HIDE_DEPRECATED_CODE:BOOL=ON                             \
+  -D Tpetra_INST_SERIAL:BOOL=OFF                                  \
+  -D Tpetra_ENABLE_TESTS:BOOL=OFF                                 \
+  -D Zoltan_ENABLE_ULLONG_IDS:BOOL=ON                             \
+  \
+  -D TPL_ENABLE_MPI:BOOL=ON                                       \
+  -D TPL_ENABLE_CUDA:BOOL=ON                                      \
+  -D TPL_ENABLE_CUSPARSE:BOOL=OFF                                 \
+  -D TPL_ENABLE_Boost:BOOL=ON                                     \
+  -D TPL_ENABLE_HDF5:BOOL=ON                                      \
+  -D TPL_ENABLE_HWLOC:BOOL=OFF                                    \
+  -D TPL_ENABLE_Matio:BOOL=OFF                                    \
+  -D TPL_ENABLE_Netcdf:BOOL=ON                                    \
+  -D TPL_ENABLE_ParMETIS:BOOL=ON                                  \
+  -D TPL_Netcdf_PARALLEL:BOOL=ON                                  \
+  -D TPL_ENABLE_X11:BOOL=OFF                                      \
+  -D TPL_ENABLE_gtest:BOOL=OFF                                    \
+  \
+  -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF_LIB_DIR}                   \
+  -D Netcdf_INCLUDE_DIRS:PATH=${NETCDF_INCLUDE_DIR}               \
+  \
   -S ${SRC_DIR}

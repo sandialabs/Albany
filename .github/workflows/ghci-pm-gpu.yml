@@ -1,6 +1,6 @@
 name: pm-gpu-build
 
-# Build-only CI mimicking the Perlmutter GPU (pm-gpu) nightly build
+# Build-only CUDA CI, loosely modeled on the Perlmutter GPU (pm-gpu) nightly build
 # (see doc/dashboards/perlmutter.nersc.gov/cuda). Github runners have no GPUs,
 # so Albany is built and installed but no tests are run.
 
@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  slfad:
+  sfad12:
     runs-on:  [ubuntu-latest]
     # Compiling Albany with nvcc on a github runner is slow
     timeout-minutes: 360
@@ -48,7 +48,7 @@ jobs:
           # This prevents ssh errors when Albany tries to pull Omega_h from github
           git config --global url."https://github.com/".insteadOf git@github.com:
       - name: Configure Albany
-        # Mimics doc/dashboards/perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-albany-slfad
+        # Based on doc/dashboards/perlmutter.nersc.gov/cuda/do-cmake-pm_gpu-albany-sfad (FAD_SIZE=12)
         run: |
           export ALBANY_INSTALL=${GITHUB_WORKSPACE}/albany/install
           mkdir -p ${GITHUB_WORKSPACE}/albany/build && cd ${GITHUB_WORKSPACE}/albany/build
@@ -68,12 +68,12 @@ jobs:
             -D CMAKE_INSTALL_RPATH:PATH=${ALBANY_INSTALL}/lib64               \
             -D CMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON                      \
             \
-            -D ALBANY_HES_VEC_SLFAD_SIZE=100                                  \
-            -D ALBANY_TAN_SLFAD_SIZE=100                                      \
-            -D ALBANY_SLFAD_SIZE=90                                           \
-            -D ENABLE_FAD_TYPE:STRING="SLFad"                                 \
+            -D ENABLE_FAD_TYPE:STRING="SFad"                                  \
+            -D ALBANY_SFAD_SIZE=12                                            \
             -D ENABLE_TAN_FAD_TYPE:STRING="SLFad"                             \
-            -D ENABLE_HES_VEC_FAD_TYPE:STRING="SLFad"                         \
+            -D ALBANY_TAN_SLFAD_SIZE=6                                        \
+            -D ENABLE_HES_VEC_FAD_TYPE:STRING="SFad"                          \
+            -D ALBANY_HES_VEC_SFAD_SIZE=12                                    \
             \
             -D ENABLE_MPAS_INTERFACE:BOOL=ON                                  \
             -D ENABLE_OMEGAH:BOOL=OFF                                         \
