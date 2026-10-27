@@ -1,4 +1,4 @@
-# Build-only CUDA container, loosely modeled on the Perlmutter GPU (pm-gpu) build
+# Build-only gcc + CUDA container, loosely based on the Perlmutter CUDA build
 # (see doc/dashboards/perlmutter.nersc.gov/cuda). It does not reproduce the
 # Perlmutter environment exactly: to keep the image small, it reuses the
 # gcc-serial dependency stack (ubuntu packages, OpenMPI) and only installs

@@ -45,7 +45,7 @@ jobs:
         run: |
           podman push ghcr.io/sandialabs/albany:gcc-12-serial
 
-  pm-gpu:
+  gcc-cuda:
     runs-on:  [ubuntu-latest]
     # Building Trilinos with CUDA on a github runner is slow
     timeout-minutes: 360
@@ -68,11 +68,11 @@ jobs:
           path: albany/source
       - name: Build image
         run: |
-          cd albany/source/tools/containers/pm-gpu
-          podman build -f Dockerfile -t albany:pm-gpu
+          cd albany/source/tools/containers/gcc-cuda
+          podman build -f Dockerfile -t albany:gcc-cuda
       - name: Tag image
         run: |
-          podman tag albany:pm-gpu ghcr.io/sandialabs/albany:pm-gpu
+          podman tag albany:gcc-cuda ghcr.io/sandialabs/albany:gcc-cuda
       - name: Push image
         run: |
-          podman push ghcr.io/sandialabs/albany:pm-gpu
+          podman push ghcr.io/sandialabs/albany:gcc-cuda

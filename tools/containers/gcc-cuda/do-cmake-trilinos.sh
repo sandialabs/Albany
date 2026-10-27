@@ -58,6 +58,7 @@ cmake -Wno-dev                                                    \
   -D Trilinos_ENABLE_SEACASIoss:BOOL=ON                           \
   -D Trilinos_ENABLE_Shards:BOOL=ON                               \
   -D Trilinos_ENABLE_ShyLU_DDFROSch:BOOL=ON                       \
+  -D Trilinos_ENABLE_ShyLU_NodeTacho:BOOL=ON                      \
   -D Trilinos_ENABLE_STKExprEval:BOOL=ON                          \
   -D Trilinos_ENABLE_STKIO:BOOL=ON                                \
   -D Trilinos_ENABLE_STKMesh:BOOL=ON                              \
@@ -78,8 +79,6 @@ cmake -Wno-dev                                                    \
   -D Kokkos_ENABLE_OPENMP:BOOL=OFF                                \
   -D Kokkos_ENABLE_SERIAL:BOOL=ON                                 \
   -D Kokkos_ENABLE_CUDA:BOOL=ON                                   \
-  -D Kokkos_ENABLE_CUDA_LAMBDA:BOOL=ON                            \
-  -D Kokkos_ENABLE_CUDA_UVM:BOOL=OFF                              \
   -D Kokkos_ENABLE_IMPL_CUDA_MALLOC_ASYNC:BOOL=OFF                \
   -D Kokkos_ARCH_AMPERE80:BOOL=ON                                 \
   -D Phalanx_INDEX_SIZE_TYPE:STRING="INT"                         \
@@ -87,6 +86,7 @@ cmake -Wno-dev                                                    \
   -D Tpetra_ASSUME_CUDA_AWARE_MPI:BOOL=OFF                        \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=ON                            \
   -D Tpetra_INST_INT_INT:BOOL=OFF                                 \
+  -D Tacho_ENABLE_INT_INT:BOOL=ON                                 \
   -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON              \
   -D STK_HIDE_DEPRECATED_CODE:BOOL=ON                             \
   -D Tpetra_INST_SERIAL:BOOL=OFF                                  \

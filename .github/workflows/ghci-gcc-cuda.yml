@@ -1,6 +1,6 @@
-name: pm-gpu-build
+name: gcc-cuda
 
-# Build-only CUDA CI, loosely modeled on the Perlmutter GPU (pm-gpu) nightly build
+# Build-only gcc + CUDA CI, loosely based on the Perlmutter CUDA nightly build
 # (see doc/dashboards/perlmutter.nersc.gov/cuda). Github runners have no GPUs,
 # so Albany is built and installed but no tests are run.
 
@@ -34,7 +34,7 @@ jobs:
     # Compiling Albany with nvcc on a github runner is slow
     timeout-minutes: 360
     container:
-      image: ghcr.io/sandialabs/albany:pm-gpu
+      image: ghcr.io/sandialabs/albany:gcc-cuda
       credentials:
         username: ${{ github.actor }}  # Use the GitHub actor as the username
         password: ${{ secrets.GITHUB_TOKEN }}  # Use the GITHUB_TOKEN for authentication
