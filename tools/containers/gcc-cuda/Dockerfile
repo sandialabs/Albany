@@ -76,7 +76,8 @@ RUN cd /tmp && \
         libcublas-dev-${CUDA_VERSION}      \
         libcufft-dev-${CUDA_VERSION}       \
         libcusolver-dev-${CUDA_VERSION}    \
-        libcusparse-dev-${CUDA_VERSION} && \
+        libcusparse-dev-${CUDA_VERSION}    \
+        libnvjitlink-${CUDA_VERSION}    && \
     rm -rf /var/lib/apt/lists/*
 
 ENV CUDA_HOME=/usr/local/cuda
