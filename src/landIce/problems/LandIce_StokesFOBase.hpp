@@ -221,6 +221,11 @@ protected:
   Teuchos::RCP<IntrepidBasis>         cellDepthIntegratedBasis;
   Teuchos::RCP<IntrepidCubature>      cellCubature;
 
+  // Depth-integrated model: vertical averages over the column of the bed and top basis functions,
+  // {int_0^1 phiBed, int_0^1 phiTop}, computed from cellDepthIntegratedBasis. The vertically averaged
+  // velocity is depthIntegratedVertAvgWeights[0]*u_bed + depthIntegratedVertAvgWeights[1]*u_top.
+  Teuchos::Array<double>              depthIntegratedVertAvgWeights;
+
   // Topology, basis and cubature of side sets
   std::map<std::string,Teuchos::RCP<shards::CellTopology>>  sideType;
   std::map<std::string,Teuchos::RCP<IntrepidBasis>>         sideBasis;
@@ -2073,6 +2078,9 @@ void StokesFOBase::constructFluxDivEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   p->set<bool>("Use Upwind Stabilization",  flux_div_params.get("Use Upwind Stabilization", true));
   p->set<std::string>("Layered Flux Divergence Residual Name", resid_names[eqId]);
   p->set<bool>("Is Depth Integrated", depthIntegratedModel);
+  if (depthIntegratedModel) {
+    p->set<Teuchos::Array<double>>("Vertical Average Weights", depthIntegratedVertAvgWeights);
+  }
 
   ev = createEvaluatorWithOneScalarType<LayeredFluxDivergenceResidual,EvalT>(p,dl,get_scalar_type(ice_thickness_name));
   fm0.template registerEvaluator<EvalT>(ev);

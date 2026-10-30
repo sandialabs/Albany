@@ -6,6 +6,7 @@
 #include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_I4_FEM.hpp"
 #include "Intrepid2_DerivedBasis_HGRAD_WEDGE.hpp"
+#include "LandIce_DepthIntegratedBasisUtils.hpp"
 
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 
@@ -187,6 +188,10 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
     using line_basis = Intrepid2::Basis_HGRAD_LINE_I4_FEM<PHX::Device, RealType, RealType>;
     int degree = 1; //used only for the triangular basis
     cellDepthIntegratedBasis = Teuchos::rcp(new Intrepid2::Basis_Derived_HGRAD_WEDGE<tri_basis, line_basis>(degree));
+
+    // Vertical averages of the bed and top basis functions, used wherever a vertically averaged velocity is needed
+    const auto vertAvgWeights = computeDepthIntegratedVerticalAverageWeights(*cellDepthIntegratedBasis);
+    depthIntegratedVertAvgWeights = Teuchos::Array<double>{vertAvgWeights[0], vertAvgWeights[1]};
   }
 
   const int worksetSize     = meshSpecs[0]->worksetSize;

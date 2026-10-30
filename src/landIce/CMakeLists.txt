@@ -197,6 +197,7 @@ set(HEADERS
   evaluators/hydrology/LandIce_HydrologyWaterThickness_Def.hpp
   utility/Intrepid2_HGRAD_LINE_I4_FEM.hpp
   utility/Intrepid2_HGRAD_LINE_I4_FEMDef.hpp
+  utility/LandIce_DepthIntegratedBasisUtils.hpp
   problems/LandIce_ColumnCouplingTest.hpp
   problems/LandIce_Enthalpy.hpp
   problems/LandIce_EllipticMockModel.hpp
