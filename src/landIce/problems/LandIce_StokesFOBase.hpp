@@ -972,8 +972,12 @@ constructSideUtilityFields (PHX::FieldManager<PHAL::AlbanyTraits>& fm0)
     //---- Compute side basis functions
     if (it.second[UtilityRequest::BFS] || it.second[UtilityRequest::NORMALS]) {
       // BF, GradBF, w_measure, Tangents, Metric, Metric Det, Inverse Metric
+      // With the depth-integrated model, the side BF/GradBF must be the trace of the cell FE basis
+      // (P1 x quartic), which on lateral faces is not the bilinear basis used for the side geometry.
+      // On the basal and upper faces the trace coincides with the P1 triangle basis.
       ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis[ss_name], sideCubature[ss_name],
-                                                                 ss_name, it.second[UtilityRequest::NORMALS]);
+                                                                 ss_name, it.second[UtilityRequest::NORMALS], false,
+                                                                 depthIntegratedModel ? cellDepthIntegratedBasis : Teuchos::null);
       fm0.template registerEvaluator<EvalT> (ev);
     }
 

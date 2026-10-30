@@ -20,10 +20,17 @@
 
 namespace PHAL {
 
-/** \brief Finite Element Interpolation Evaluator
+/** \brief Compute side basis functions and side geometry
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator computes the side measure, metric, tangents (and optionally
+    normals), and the basis functions BF/GradBF at the side quadrature points.
 
+    The side geometry is always computed with the side basis ("Intrepid2 Basis Side").
+    By default, BF/GradBF are also given by the side basis. If the optional parameter
+    "Intrepid2 Cell FE Basis" is provided, BF/GradBF are instead the trace on the side
+    of that cell FE basis (see PHAL::computeSideTraceOfCellBasis). This is needed when
+    the FE space differs from the geometric map, e.g., for the depth-integrated
+    LandIce model (P1 x quartic on wedges), whose trace on lateral faces is not bilinear.
 */
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctionsSide : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -63,6 +70,13 @@ private:
 
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+
+  //! Optional cell FE basis: if provided, BF/GradBF are its trace on the side
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidCellFEBasis;
+  bool use_cell_fe_basis_trace;
+  //! Trace of the cell FE basis, for each side ordinal of the cell: (side, node, qp) and (side, node, qp, sideDim)
+  Kokkos::DynRankView<RealType, PHX::Device> trace_val_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> trace_grad_at_cub_points;
 
   // Output:
   //! Basis Functions and other quantities at quadrature points
