@@ -78,7 +78,7 @@ namespace {
     auto setFieldAtVertices = KOKKOS_LAMBDA(const int &vtx) {
       field(vtx, 0, 0, MeshField::Vertex) = recoveredStrain[vtx];
     };
-    MeshField::parallel_for(ExecutionSpace(), {0}, {mesh.nverts()},
+    MeshField::parallel_for<typename ShapeField::Ctrlr>({0}, {mesh.nverts()},
         setFieldAtVertices, "setFieldAtVertices");
   }
 #endif
