@@ -20,6 +20,7 @@
 
 #include "LandIce_ProblemFactory.hpp"
 #include "LandIce_StokesFO.hpp"
+#include "LandIce_DepthIntegratedBasisUtils.hpp"
 
 #include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
@@ -452,16 +453,24 @@ void velocity_solver_solve_fo(int nLayers, int globalVerticesStride,
   // If the observer is not called (e.g., the solve failed and only converged solutions are
   // written), the field holds the initial guess set above, as the previous code also returned.
   if(depthIntegratedModel) {
+    // Vertical profile of the depth-integrated velocity at the MPAS levels
+    std::vector<double> phiBed, phiTop;
+    const auto problem = Teuchos::rcp_dynamic_cast<LandIce::StokesFO>(albanyApp->getProblem());
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(problem), std::runtime_error,
+      "Error! Stokes FO Problem not defined. At the moment the depth integrated model only works for Stokes FO.\n");
+    const auto basis = problem->getCellDepthIntegratedBasis();
+    TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(basis), std::runtime_error,
+        "Error! The depth-integrated basis of the Stokes FO problem has not been built.\n");
+    LandIce::evalDepthIntegratedVerticalProfile(*basis, levelsNormalizedThickness, phiBed, phiTop);
+
     for(int ib = 0; ib < (int) indexToVertexID.size(); ++ib) {
       const double* solBed = stk::mesh::field_data(*solutionField, nodes3D[vertexLayerShift * ib]);
       const double* solTop = stk::mesh::field_data(*solutionField, nodes3D[nLayers * lVertexColumnShift + vertexLayerShift * ib]);
 
       for(int il=0; il<nLayers+1; ++il) {
         int j = il * lVertexColumnShift + vertexLayerShift * ib;
-        double z = 1.0 - levelsNormalizedThickness[il];
-        double fz = 1.0 - std::pow(z,4);
-        velocityOnVertices[j] = solBed[0] + fz * (solTop[0]-solBed[0]);
-        velocityOnVertices[j + numVertices3D]  = solBed[1] + fz * (solTop[1]-solBed[1]);
+        velocityOnVertices[j] = phiBed[il] * solBed[0] + phiTop[il] * solTop[0];
+        velocityOnVertices[j + numVertices3D]  = phiBed[il] * solBed[1] + phiTop[il] * solTop[1];
       }
     }
   } else {

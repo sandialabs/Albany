@@ -34,9 +34,17 @@ GatherVerticallyContractedSolution(const Teuchos::ParameterList& p,
     op = VerticalSum;
   else if (opType == "Vertical Average")
     op = VerticalAverage;
-  else if (opType == "Vertical MOLHO Average")
+  else if (opType == "Vertical MOLHO Average") {
     op = VerticalMOLHOAverage;
-  else {
+    // The weights depend on the vertical basis functions of the depth-integrated model, so they are provided by the problem
+    TEUCHOS_TEST_FOR_EXCEPTION (!p.isParameter("Vertical Average Weights"), std::runtime_error,
+                                "Error! Contraction Operator \"Vertical MOLHO Average\" requires parameter \"Vertical Average Weights\".\n");
+    const auto& w = p.get<Teuchos::Array<double>>("Vertical Average Weights");
+    TEUCHOS_TEST_FOR_EXCEPTION (w.size()!=2, std::runtime_error,
+                                "Error! \"Vertical Average Weights\" must have two entries (bottom and top).\n");
+    molhoWeightBot = w[0];
+    molhoWeightTop = w[1];
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
                                   "Error! \"" << opType << "\" is not a valid Contraction Operator. Valid Operators are: \"Vertical Sum\", \"Vertical Average\" and \"Vertical MOLHO Average\"");
   }
@@ -101,8 +109,10 @@ computeQuadWeights(const std::vector<double>& dz)
     for(int i=1; i<numLayers; ++i)
       quadWeights.host()(i) = 0.5*(dz[i-1] + dz[i]);
   } else  { //VerticalMOLHOAverage
-    quadWeights.host()(0) = 0.2*dz[0]; 
-    quadWeights.host()(numLayers) = 0.8*dz[numLayers-1]; //numLayers =1 for MOLHO
+    TEUCHOS_TEST_FOR_EXCEPTION (numLayers!=1, std::runtime_error,
+                                "Error! Contraction Operator \"Vertical MOLHO Average\" requires a mesh with one layer.\n");
+    quadWeights.host()(0) = molhoWeightBot*dz[0];
+    quadWeights.host()(numLayers) = molhoWeightTop*dz[numLayers-1];
   }
   quadWeights.sync_to_dev();
 

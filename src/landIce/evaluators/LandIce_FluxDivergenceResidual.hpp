@@ -52,6 +52,8 @@ namespace LandIce {
     unsigned int numNodes;
     bool upwindStabilization;
     bool depthIntegrated;
+    // Weights of the bottom and top nodes in the vertical average of the velocity over a layer
+    double c_bot, c_top;
 
 
     PHX::MDField<const MeshScalarT, Cell, Node, Dim> coords;
