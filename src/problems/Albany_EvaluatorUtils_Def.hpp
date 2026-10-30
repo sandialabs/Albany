@@ -623,7 +623,8 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
     const Teuchos::RCP<IntrepidCubature> cubatureSide,
     const std::string& sideSetName,
     const bool buildNormals,
-    const bool planar) const
+    const bool planar,
+    const Teuchos::RCP<IntrepidBasis> intrepidCellFEBasis) const
 {
     TEUCHOS_TEST_FOR_EXCEPTION (buildNormals && planar, std::runtime_error,
                                 "Error! Cannot compute normal for planar surfaces at the moment.\n");
@@ -644,6 +645,10 @@ EvaluatorUtilsImpl<EvalT,Traits,ScalarType>::constructComputeBasisFunctionsSideE
     p->set<std::string>("Side Coordinate Vector Name",coord_vec_name + "_" + sideSetName);
     p->set< RCP<IntrepidCubature> >("Cubature Side", cubatureSide);
     p->set< RCP<IntrepidBasis> >("Intrepid2 Basis Side", intrepidBasisSide);
+    if (!intrepidCellFEBasis.is_null()) {
+      // BF and GradBF will be the trace on the side of this cell basis (the geometry still uses intrepidBasisSide)
+      p->set< RCP<IntrepidBasis> >("Intrepid2 Cell FE Basis", intrepidCellFEBasis);
+    }
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name",sideSetName);
 

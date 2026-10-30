@@ -113,26 +113,26 @@ endif()
 
 IF(NOT Kokkos_ENABLE_CUDA)
   if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
-    set (testName ${testNameRoot}_MIMSIP_Transient_Sensitivity_Impl)
+    set (testName ${testNameRoot}_MISMIP_Transient_Sensitivity_Impl)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_sensitivity.yaml
                     ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_sensitivity.yaml)
     add_test(${testName} ${Albany.exe} input_mismip_transient_sensitivity.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
   else()
-    set (testName ${testNameRoot}_MIMSIP_Transient_Impl)
+    set (testName ${testNameRoot}_MISMIP_Transient_Impl)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient.yaml
                     ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient.yaml)
     add_test(${testName} ${Albany.exe} input_mismip_transient.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
   endif()
 
-  set (testName ${testNameRoot}_MIMSIP_Transient_2d_Impl)
+  set (testName ${testNameRoot}_MISMIP_Transient_2d_Impl)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_2d.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_2d.yaml)
   add_test(${testName} ${Albany.exe} input_mismip_transient_2d.yaml)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
 
-  set (testName ${testNameRoot}_MIMSIP_Transient_Expl)
+  set (testName ${testNameRoot}_MISMIP_Transient_Expl)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_expl.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_expl.yaml)
   add_test(${testName} ${Albany.exe} input_mismip_transient_expl.yaml)

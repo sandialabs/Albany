@@ -433,7 +433,8 @@ namespace Albany {
         const Teuchos::RCP<IntrepidCubature> cubatureSide,
         const std::string& sideSetName,
         const bool buildNormals = false,
-        const bool palanar = false) const = 0;
+        const bool palanar = false,
+        const Teuchos::RCP<IntrepidBasis> intrepidCellFEBasis = Teuchos::null) const = 0;
 
     protected:
 
@@ -792,7 +793,8 @@ namespace Albany {
         const Teuchos::RCP<IntrepidCubature> cubatureSide,
         const std::string& sideSetName,
         const bool buildNormals = false,
-        const bool planar = false) const;
+        const bool planar = false,
+        const Teuchos::RCP<IntrepidBasis> intrepidCellFEBasis = Teuchos::null) const;
 
   private:
 
