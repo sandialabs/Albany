@@ -48,7 +48,7 @@ ANONYMOUS:
       BC 1:
         Type: Lateral
         Cubature Degree: 4
-        Side Set Name: extruded_boundary_side_set_1
+        Side Set Name: lateralside
 
     Parameters:
       Number Of Parameters: 3

@@ -39,8 +39,8 @@ ANONYMOUS:
           Zero Beta On Floating Ice: true
       BC 1:
         Type: Lateral
-        Cubature Degree: 3
-        Side Set Name: extruded_boundary_side_set_1
+        Cubature Degree: 4
+        Side Set Name: lateralside
         Melange Force: 6.0e+07 #[N/m]
         Melange Submerged Thickness Threshold: 0.1 #[km]
         #Immersed Ratio: 0.893
@@ -454,6 +454,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 2.088767769758e+01
+    Test Value: 2.088981581229e+01
     Relative Tolerance: 1.0e-06
 ...

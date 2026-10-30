@@ -43,8 +43,8 @@ ANONYMOUS:
           Zero Beta On Floating Ice: true
       BC 1:
         Type: Lateral
-        Cubature Degree: 3
-        Side Set Name: extruded_boundary_side_set_1
+        Cubature Degree: 4
+        Side Set Name: lateralside
         #Immersed Ratio: 0.893
     Parameters:
       Number Of Parameters: 1
@@ -403,14 +403,14 @@ ANONYMOUS:
         Status Test Check Type: Minimal
   Regression For Response 0:
     Relative Tolerance: 1.0e-06
-    Test Value:  9.640181536512e+00
+    Test Value:  9.657445265408e+00 
     Sensitivity For Parameter 0:
-      Test Value: 2.440211465301e+00
+      Test Value: 2.440179487573e+00
   Regression For Response 1:
     Relative Tolerance: 1.0e-06
-    Test Value: 6.405288404936e-04
+    Test Value: 8.193695411842e-04
     Sensitivity For Parameter 0:
-      Test Value: 1.426531256163e-04
+      Test Value: 1.765845085110e-04
   Regression For Response 2:
     Relative Tolerance: 1.0e-06
     Test Value:  5.967986097162e+00
