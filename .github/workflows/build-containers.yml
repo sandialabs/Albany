@@ -76,3 +76,35 @@ jobs:
       - name: Push image
         run: |
           podman push ghcr.io/sandialabs/albany:gcc-cuda
+
+  gcc-hip:
+    runs-on:  [ubuntu-latest]
+    # Building Trilinos with HIP on a github runner is slow
+    timeout-minutes: 360
+    steps:
+      - name: Free disk space
+        run: |
+          # ROCm and the Trilinos HIP build need a lot of disk
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: Login on ghcr
+        run: |
+          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+      - name: Check out the repository
+        uses: actions/checkout@v5
+        with:
+          path: albany/source
+      - name: Build image
+        run: |
+          cd albany/source/tools/containers/gcc-hip
+          podman build -f Dockerfile -t albany:gcc-hip
+      - name: Tag image
+        run: |
+          podman tag albany:gcc-hip ghcr.io/sandialabs/albany:gcc-hip
+      - name: Push image
+        run: |
+          podman push ghcr.io/sandialabs/albany:gcc-hip
