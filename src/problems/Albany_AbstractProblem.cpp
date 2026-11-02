@@ -112,6 +112,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select outpuy of Phalanx Graph and level of detail");
+  validPL->set<bool>("Add Index To Phalanx Timer Names", false,
+                     "If true, Phalanx appends a unique index to each evaluator timer name. "
+                     "Set to false to reuse the same timers when field managers are rebuilt");
   validPL->set<bool>("Use Physics-Based Preconditioner", false,
                      "Flag to create signal that this problem will creat its own preconditioner");
   validPL->set<std::string>("Physics-Based Preconditioner", "None",
