@@ -30,4 +30,4 @@ make -j 12 gnu-cray \
 
 mkdir /global/cfs/cdirs/fanssie/automated_testing/weeklyCDashPerlmutter/serial/builds/mali
 cp landice_model ${DEPLOY_DIR}/builds/mali/landice_model
-cp -r default_inputs ${DEPLOY_DIR}/builds/mali}
+cp -r default_inputs ${DEPLOY_DIR}/builds/mali/
