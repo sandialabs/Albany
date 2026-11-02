@@ -4,6 +4,7 @@ ANONYMOUS:
   Problem: 
     Name: Heat 2D
     Compute Sensitivities: true
+    Add Index To Phalanx Timer Names: false
     Dirichlet BCs: 
       DBC on NS NodeSet0 for DOF T: 1.5
       DBC on NS NodeSet1 for DOF T: 1.0

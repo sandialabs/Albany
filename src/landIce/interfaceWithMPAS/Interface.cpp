@@ -720,6 +720,10 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   // ---- Setting Memoization ---- //
   probParamList.set<bool>("Use MDField Memoization", probParamList.get<bool>("Use MDField Memoization", true));
 
+  // ---- Phalanx timers: field managers are rebuilt during a MALI run, so keep timer names
+  //      free of the Phalanx index, otherwise each rebuild creates a new set of timers ---- //
+  probParamList.set<bool>("Add Index To Phalanx Timer Names", probParamList.get<bool>("Add Index To Phalanx Timer Names", false));
+
   // ------ whether to use the flat bed approximation (that is, tangent velocity to the bed is the same as horizontal velocity at bed)
   probParamList.set<bool>("Flat Bed Approximation", probParamList.get<bool>("Flat Bed Approximation", true));
 
