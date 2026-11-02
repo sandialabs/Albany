@@ -7,7 +7,6 @@ bash ${BASE_DIR}/do-cmake-scorpio-gcc-release
 SCORPIO_DIR=${DEPLOY_DIR}/builds/scorpio-gnu
 ALBANY_INSTALL_DIR=${DEPLOY_DIR}/builds/AlbanyInstallSfad12
 TRILINOS_INSTALL_DIR=${DEPLOY_DIR}/builds/TrilinosInstall
-SUPERLU_DIR=${SUPERLU_DIR:-/global/common/software/fanssie/superlu/7.0.1/gcc/14.3}
 
 cd ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice
 
@@ -24,7 +23,7 @@ make -j 12 gnu-cray \
   PIO=${SCORPIO_DIR} \
   NETCDF=${NETCDF_DIR} \
   PNETCDF=${PNETCDF_DIR} \
-  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL_DIR}/lib64 -Wl,-R${TRILINOS_INSTALL_DIR}/lib64 -Wl,-R${SUPERLU_DIR}/lib64" \
+  MPAS_EXTERNAL_LIBS="${ALBANY_LINK_LIBS} -Wl,-R${ALBANY_INSTALL_DIR}/lib64 -Wl,-R${TRILINOS_INSTALL_DIR}/lib64" \
   DEBUG=false \
   EXE_NAME=landice_model;
 
