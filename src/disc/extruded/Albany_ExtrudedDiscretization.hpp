@@ -118,19 +118,6 @@ public:
 
   Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
 
-  //! Write the 3d extruded mesh, as wedges, to a legacy VTK file.
-  //! The extruded mesh is implicit (a basal mesh + a layered numbering), so this
-  //! materializes it: the 3d nodes are m_nodes_coordinates, and each wedge is the
-  //! bottom triangle of a column element followed by its top triangle -- which is
-  //! exactly the layer-by-layer node ordering ExtrudedConnManager builds.
-  //! One file per rank, named <basename>_r<rank>.vtk (plus a .pvtu-free .visit index
-  //! written by rank 0), so it can be called at any point, including between a mesh
-  //! adaptation and the first writeSolution.
-  //! If 'solution' is null, only the mesh (plus layer/column ids) is written.
-  void writeWedgeVtk (const std::string& basename,
-                      const Teuchos::RCP<const Thyra_Vector>& solution = Teuchos::null,
-                      const bool solution_is_overlapped = false) const;
-
 protected:
 
   Teuchos::ParameterList& getAdaptParams () override;
