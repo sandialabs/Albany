@@ -110,6 +110,7 @@ FetchContent_Declare(
 	GIT_REPOSITORY https://github.com/pybind/pybind11.git
 	GIT_TAG        v2.10.4
 	GIT_SHALLOW    TRUE
+	SYSTEM
 )
 
 FetchContent_MakeAvailable(pybind11)
