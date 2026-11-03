@@ -141,8 +141,10 @@ ANONYMOUS:
             Ifpack2 Settings:
               'fact: ilut level-of-fill': 1.0e+00
   Regression For Response 0:
+    # This value differs slightly across CPU types (e.g., 6.6639e-02 on AMD EPYC 7763 (AVX2),
+    # while it is within 2e-05 of the target on AMD EPYC 9V45 (AVX-512)), so use a looser tolerance.
     Test Value: 6.661786260006e-02
-    Absolute Tolerance: 2.0e-05
+    Absolute Tolerance: 5.0e-05
   Regression For Response 1:
     Test Value: -8.182824963026e-05
     Absolute Tolerance: 4.5e-05
