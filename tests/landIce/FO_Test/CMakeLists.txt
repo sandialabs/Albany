@@ -97,6 +97,42 @@ if (ALBANY_OMEGAH)
   add_test(${testName} ${Albany.exe} input_fo_box_transient_omegah.yaml)
   set_tests_properties(${testName}  PROPERTIES
     LABELS "LandIce;Forward;Omega_h")
+
+  # Same box problem with 5 layers and refinement adaptation (max edge length 0.45).
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_Refine_5Layers_MaxLen0.45)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h;Adaptation")
+
+  # Same box problem with 5 layers and refinement adaptation (max edge length 0.3).
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_Refine_5Layers_MaxLen0.3)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h;Adaptation")
+
+  # Same box problem restarted from the solution stored on a 192 triangle, 5 layer Omega_h mesh.
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_192Tri_Resume)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/box22_0.3_5l_192tri.osh
+       DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_192tri_resume.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_192tri_resume.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_192tri_resume.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h")
+
+  if (ALBANY_MESHFIELDS)
+    # Same box problem with adaptation driven by a MeshFields SPR error estimate.
+    set (testName ${testNameRoot}_Box_Transient_Omega_h_Adapt)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_adapt.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_adapt.yaml)
+    add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_adapt.yaml)
+    set_tests_properties(${testName}  PROPERTIES
+      LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+  endif()
 endif()
 
 ####################################

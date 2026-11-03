@@ -285,5 +285,8 @@ ANONYMOUS:
                   'fact: iluk level-of-fill': 0
 
 
-  # TODO: add 'Regression For Response 0' with a Test Value generated from a real run
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    Test Value: -4.015548374908e+01
 ...
