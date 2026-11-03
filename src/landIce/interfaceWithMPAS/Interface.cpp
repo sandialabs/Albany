@@ -72,6 +72,8 @@ Teuchos::RCP<Teuchos::StackedTimer> stackedTimer;
 double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_sea_level(0),
     MPAS_flowParamA(1e-4), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
     MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
+// Defaults match the values Albany used before MPAS could set them
+double MPAS_meltingTemperature(273.15), MPAS_secondsPerYear(3.1536e7), MPAS_gasConstant(8.314);
 bool MPAS_useGLP(true);
 
 bool depthIntegratedModel(false);
@@ -636,7 +638,9 @@ void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
-void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
+void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level,
+                                             double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP,
+                                             double const& clausiusClapeyoronCoeff, double const& melting_temperature, double const& seconds_per_year, double const& gas_constant) {
   MPAS_gravity=gravity;
   MPAS_rho_ice = ice_density;
   MPAS_rho_seawater = ocean_density;
@@ -646,10 +650,15 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
   MPAS_dynamic_thickness = dynamic_thickness;
   MPAS_useGLP = use_GLP;
   MPAS_ClausiusClapeyoronCoeff = clausiusClapeyoronCoeff;
+  MPAS_meltingTemperature = melting_temperature;
+  MPAS_secondsPerYear = seconds_per_year;
+  MPAS_gasConstant = gas_constant;
+}
 
-  //std::cout << "\nMPAS_gravity:" <<MPAS_gravity << " MPAS_rho_ice:" <<MPAS_rho_ice << " MPAS_rho_seawater:" << MPAS_rho_seawater <<
-  //    " MPAS_sea_level:" << MPAS_sea_level << " MPAS_dynamic_thickness:" << MPAS_dynamic_thickness <<
-  //    " MPAS_ClausiusClapeyoronCoeff:" << MPAS_ClausiusClapeyoronCoeff <<std::endl;
+//DEPRECATED
+void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
+  velocity_solver_set_physical_parameters(gravity, ice_density, ocean_density, sea_level, flowParamA, flowLawExponent,
+                                          dynamic_thickness, use_GLP, clausiusClapeyoronCoeff, 273.15, 3.1536e7, 8.314);
 }
 
 void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
@@ -705,6 +714,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
   physParamList.set("Clausius-Clapeyron Coefficient", physParamList.get("Clausius-Clapeyron Coefficient", MPAS_ClausiusClapeyoronCoeff));
+  physParamList.set("Atmospheric Pressure Melting Temperature", physParamList.get("Atmospheric Pressure Melting Temperature", MPAS_meltingTemperature));
+  physParamList.set("Seconds per Year", physParamList.get("Seconds per Year", MPAS_secondsPerYear));
   physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", MPAS_useGLP)); //use GLP (Grounding line parametrization) unless actively disabled
 
   probParamList.set("Name", probParamList.get("Name", "LandIce Stokes First Order 3D"));
@@ -807,11 +818,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   viscosityList.set("Glen's Law Homotopy Parameter", viscosityList.get("Glen's Law Homotopy Parameter", homotopy_param));
   // Convert MPAS value for A from [k^-1 kPa^-n yr^-1] to [Pa^-n s^-1]
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
-  const auto spy = 3600*24*365;
+  const double spy = physParamList.get<double>("Seconds per Year");
   const auto knp1 = std::pow(1000,MPAS_flowLawExponent+1);
   const auto A = MPAS_flowParamA / knp1 / spy;
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", A));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
+  Teuchos::ParameterList& arrheniusList = viscosityList.sublist("Arrhenius Relationship");
+  arrheniusList.set("Gas Constant", arrheniusList.get("Gas Constant", MPAS_gasConstant));
   viscosityList.set("Use Stiffening Factor", viscosityList.get("Use Stiffening Factor", true));
   viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
   viscosityList.set("Use P0 Temperature", viscosityList.get("Use P0 Temperature", !depthIntegratedModel)); 

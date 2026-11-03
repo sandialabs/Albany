@@ -44,6 +44,15 @@ FlowRate (const Teuchos::ParameterList& p,
     flowRate_type = TEMPERATURE_BASED;
     temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
     this->addDependentField(temperature);
+
+    // Same parameters and defaults as LandIce::ViscosityFO
+    auto& arrhenius_list = visc_list->sublist("Arrhenius Relationship");
+    actenh     = arrhenius_list.get("Q+",1.39e5);
+    actenl     = arrhenius_list.get("Q-",6.0e4);
+    gascon     = arrhenius_list.get("Gas Constant",8.314);
+    switchingT = arrhenius_list.get("T*",263.15);
+    arrmlh     = arrhenius_list.get("A+",1.733e3);
+    arrmll     = arrhenius_list.get("A-",3.613e-13);
 #ifdef OUTPUT_TO_SCREEN
     *out << "Flow Rate computed using temperature field." << std::endl;
 #endif
@@ -81,13 +90,6 @@ void FlowRate<EvalT, Traits, TempST>::evaluateFields (typename Traits::EvalData 
       break;
 
     case TEMPERATURE_BASED: {
-      constexpr double actenh (1.39e5);       // [J mol-1]
-      constexpr double actenl (6.0e4);        // [J mol-1]
-      constexpr double gascon (8.314);        // [J mol-1 K-1]
-      constexpr double switchingT (263.15);   // [K]
-      constexpr double arrmlh (1.733e3);      // [Pa-3 s-1]
-      constexpr double arrmll (3.613e-13);    // [Pa-3 s-1]
-
       for (unsigned int cell=0; cell<workset.numCells; ++cell)
         flowRate(cell) = (temperature(cell) < switchingT) ? arrmll / std::exp (actenl / gascon / temperature(cell))
                                                    : arrmlh / std::exp (actenh / gascon / temperature(cell));

@@ -28,7 +28,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   visc_list(p.get<Teuchos::ParameterList*>("Parameter List")),
   actenh (visc_list->sublist("Arrhenius Relationship").get("Q+",1.39e5)),     // [J mol^{-1}]
   actenl (visc_list->sublist("Arrhenius Relationship").get("Q-",6.0e4)),      // [J mol^{-1}]
-  gasconst (8.314),                                                           // [J mol^{-1} K^{-1}]
+  gasconst (visc_list->sublist("Arrhenius Relationship").get("Gas Constant",8.314)), // [J mol^{-1} K^{-1}]
   switchingT (visc_list->sublist("Arrhenius Relationship").get("T*",263.15)), // [K]
   arrmlh (visc_list->sublist("Arrhenius Relationship").get("A+",1.733e3)),    // [Pa^{-n} s^{-1}]
   arrmll (visc_list->sublist("Arrhenius Relationship").get("A-", 3.613e-13)), // [Pa^{-n} s^{-1}]
