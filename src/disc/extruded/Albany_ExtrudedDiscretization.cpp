@@ -308,7 +308,8 @@ ExtrudedDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  m_basal_disc->setField(result,name,overlapped);
+  auto mfa = m_extruded_mesh->get_field_accessor();
+  mfa->saveVector(result, name, getDOFManager(name), overlapped);
 }
 
 void ExtrudedDiscretization::computeCoordinates ()

@@ -230,13 +230,54 @@ fillSolnSensitivity (Thyra_MultiVector&   /* dxdp */,
 }
 
   // Write to mesh methods
+// Inverse of fillVector: writes into the 3d elem states, never into the basal tags.
+// Basal layered/extruded fields keep the basal data they were derived from.
 void ExtrudedMeshFieldAccessor::
-saveVector (const Thyra_Vector&  /* field_vector */,
-            const std::string&   /* field_name */,
-            const dof_mgr_ptr_t& /* field_dof_mgr */,
-            const bool           /* overlapped */)
+saveVector (const Thyra_Vector&  field_vector,
+            const std::string&   field_name,
+            const dof_mgr_ptr_t& field_dof_mgr,
+            const bool           overlapped)
 {
-  throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveVector()");
+  auto data = getLocalData(field_vector);
+  const int data_size = data.size();
+  const auto elem_dof_lids_h = field_dof_mgr->elem_dof_lids().host();
+  const auto conn_mgr = field_dof_mgr->getAlbanyConnManager();
+  auto ws_elem_lids = m_workset_elements.host();
+  int ncomps = field_dof_mgr->getNumFields();
+  std::vector<std::vector<int>> offsets(ncomps);
+  for (int icmp=0; icmp<ncomps; ++icmp) {
+    offsets[icmp] = field_dof_mgr->getGIDFieldOffsets(icmp);
+  }
+  int num_scalar_dofs = offsets[0].size();
+  for (int ws=0; ws<m_ws_sizes.size(); ++ws) {
+    auto& state = elemStateArrays[ws][field_name];
+    auto state_h = state.host();
+    TEUCHOS_TEST_FOR_EXCEPTION(state_h.rank()<2 or state_h.rank()>3,std::runtime_error,
+        "Error! Unsupported state rank (" + std::to_string(state_h.rank()) + ").\n");
+
+    for (int ie=0; ie<m_ws_sizes[ws]; ++ie) {
+      int el_lid = ws_elem_lids(ws,ie);
+      auto ownership = conn_mgr->getOwnership(el_lid);
+      for (int idof=0; idof<num_scalar_dofs; ++idof) {
+        if (not overlapped and ownership[offsets[0][idof]]!=Owned)
+          continue;
+
+        if (state_h.rank()==2) {
+          auto lid = elem_dof_lids_h(el_lid,idof);
+          if (lid>=0 and lid<data_size)
+            state_h(ie,idof) = data[lid];
+        } else {
+          for (int icmp=0; icmp<ncomps; ++icmp) {
+            auto lid = elem_dof_lids_h(el_lid,offsets[icmp][idof]);
+            if (lid>=0 and lid<data_size) {
+              state_h(ie,idof,icmp) = data[lid];
+            }
+          }
+        }
+      }
+    }
+    state.sync_to_dev();
+  }
 }
 
 // --- Layered (3d) solution <-> basal tag packing ---------------------------------
