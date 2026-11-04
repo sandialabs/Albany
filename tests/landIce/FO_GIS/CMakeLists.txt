@@ -412,6 +412,16 @@ IF(NOT Kokkos_ENABLE_CUDA)
     # set_tests_properties(${testName}  PROPERTIES
     #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
 
+    if (ALBANY_MESHFIELDS)
+      # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
+      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_5t)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_5t.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_5t.yaml)
+      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_5t.yaml)
+      set_tests_properties(${testName}  PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+    endif()
+
   endif()
 
 endif()
