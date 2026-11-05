@@ -1,5 +1,6 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Macros.hpp"
 
 namespace Albany {
 
@@ -445,14 +446,18 @@ interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
       }
       const int ncomps = (not nodal and brank==3) ? dims[1] : 1;
 
-      // Value of the (piece-wise constant) basal data for component j in field layer ilf
-      auto bval = [&](int ie, int j, int ilf) {
+      // Value of the (piece-wise constant) basal data in field layer ilf.
+      // The component j must be given for vector fields, and omitted for scalar fields.
+      auto bval = [&](int ie, int ilf, int j = -1) {
+        ALBANY_EXPECT ((brank==2)==(j==-1),
+            "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
+            "  Component index (" << j << ") inconsistent with basal state rank (" << brank << ") for state '" + name + "'\n");
         return brank==2 ? bview_h(ie,ilf) : bview_h(ie,j,ilf);
       };
 
       // (Weighted) average of the (piece-wise constant) data over all field layers that
       // intersect mesh layer il (an L2 projection). Used for Elem fields.
-      auto average = [&](int ie, int il, int j) {
+      auto average = [&](int ie, int il, int j = -1) {
         auto where0 = std::upper_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il]);
         auto where1 = std::lower_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il+1]);
         int ilf0 = std::distance(field_levels_coords.begin(),where0)-1;
@@ -462,18 +467,18 @@ interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
         for (int ilf=ilf0; ilf<ilf1; ++ilf) {
           auto start = std::max(field_levels_coords[ilf],z_ref[il]);
           auto end = std::min(field_levels_coords[ilf+1],z_ref[il+1]);
-          result += bval(ie,j,ilf)*(end-start)/dz_ref[il];
+          result += bval(ie,ilf,j)*(end-start)/dz_ref[il];
         }
         return result;
       };
 
       // Value of the (piece-wise constant) data at normalized height zeta in [0,1].
       // Used for QuadPoint fields (same as ExtrudedSTKMeshStruct::interpolateBasalLayeredFields).
-      auto evaluate = [&](int ie, double zeta, int j) {
+      auto evaluate = [&](int ie, double zeta, int j = -1) {
         auto where = std::upper_bound(field_levels_coords.begin(),field_levels_coords.end(),zeta);
         int ilf = std::distance(field_levels_coords.begin(),where)-1;
         ilf = std::max(0,std::min(ilf,num_field_layers-1));
-        return bval(ie,j,ilf);
+        return bval(ie,ilf,j);
       };
 
       for (int ie=0; ie<dims[0]; ++ie) {
@@ -499,7 +504,7 @@ interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
             for (int iq=0; iq<num_qps; ++iq) {
               const double zeta = zmid + 0.5*dz_ref[il]*qp_ref_z[iq];
               if (rank==2) {
-                view_h(ie3d,iq) = evaluate(ie,zeta,0);
+                view_h(ie3d,iq) = evaluate(ie,zeta);
               } else {
                 for (int j=0; j<ncomps; ++j) {
                   view_h(ie3d,iq,j) = evaluate(ie,zeta,j);
@@ -508,7 +513,7 @@ interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
             }
           } else {
             if (rank==1) {
-              view_h(ie3d) = average(ie,il,0);
+              view_h(ie3d) = average(ie,il);
             } else {
               for (int j=0; j<ncomps; ++j) {
                 view_h(ie3d,j) = average(ie,il,j);
