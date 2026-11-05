@@ -616,6 +616,17 @@ writeVtkFile (const std::string& filename, const int cell_dim)
   removeSolutionLevelTags();
 }
 
+Teuchos::RCP<Thyra_Vector>
+OmegahDiscretization::
+getSolutionField (bool overlapped) const
+{
+  auto soln = Thyra::createMember(overlapped ? getOverlapVectorSpace()
+                                             : getVectorSpace());
+  auto accessor = m_mesh_struct->get_field_accessor();
+  accessor->fillVector(*soln,solution_dof_name(),getDOFManager(),overlapped);
+  return soln;
+}
+
 void
 OmegahDiscretization::
 getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
