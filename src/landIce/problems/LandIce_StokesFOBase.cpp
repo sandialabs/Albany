@@ -181,7 +181,7 @@ void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpec
 
   if(depthIntegratedModel) {
 
-    TEUCHOS_TEST_FOR_EXCEPTION ((discParams->get<std::string>("Method") != "STKExtruded") || (discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION ((discMethod != "STKExtruded" && discMethod != "Extruded") ||(discParams->isParameter("NumLayers") && (discParams->get<int>("NumLayers") != 1)) || (cellType->getKey() != shards::Wedge<6>::key), std::logic_error,
                                   "Error! Depth Integrated Model can be used only for 1-layer extruded meshes with Wedge cells\n");
 
     using tri_basis = Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device, RealType, RealType>;

@@ -46,6 +46,10 @@ public:
   // While 3d states are ALL elem states, the basal MFA needs to call this
   void transferNodeStatesToElemStates ();
 
+  // 3d nodal states are stored ONLY as (Cell,Node[,...]) elem states, and there is
+  // no 3d mesh database holding nodal fields, so there is nothing to transfer.
+  void transferElemStateToNodeState (const std::string& name) override;
+
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        soln,
                        const dof_mgr_ptr_t& sol_dof_mgr,
@@ -99,7 +103,10 @@ public:
   void setSolutionFieldsMetadata (const int neq) override;
 
   void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
-  void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields);
+  // qp_ref_z: vertical reference coords (in [-1,1]) of the cell cubature points,
+  // needed only if some of the fields are 3d QuadPoint states
+  void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
+                                      const std::vector<double>& qp_ref_z = {});
 
   void setWorksetElements (const DualView<int**>& workset_elements) { m_workset_elements = workset_elements; }
 protected:
