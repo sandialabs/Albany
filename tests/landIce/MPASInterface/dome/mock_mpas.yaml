@@ -1,0 +1,49 @@
+%YAML 1.1
+---
+# Input of MockMALI (see MockMALI.cpp), which calls the MPAS-Albany interface as MALI does.
+# Land-based dome on a flat bed (MALI's dome geometry), FO Stokes with temperature-based flow rate,
+# power-law sliding with the effective pressure passed by MPAS, lateral BC on the whole ice margin,
+# no Dirichlet nodes. Two solves (time steps), the second one on a thinner and warmer dome.
+#
+# The serial and parallel tests share the baseline. If the "Baseline" sublist (or a value in it) is
+# missing, the test fails and prints the baseline to paste below.
+ANONYMOUS:
+  Mock MPAS:
+    Test Case: Dome
+    Number Of Layers: 5
+    Levels: [0.0, 0.1, 0.25, 0.45, 0.7, 1.0]
+    Partition: Blocks
+    # In parallel, the first rank owns no triangles and is left out of the reduced communicator
+    Idle Ranks: 1
+    Shuffle Local Ordering: true
+    Number Of Solves: 2
+    Time Step: 1.0
+    Write Exodus Output: true
+  Physical Parameters:
+    Gravity: 9.80616
+    Ice Density: 910.0
+    Ocean Density: 1028.0
+    Flow Law Exponent: 3.0
+  Regression:
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-12
+    # Baseline from the serial run (the parallel run agrees within the tolerances)
+    Baseline:
+      Solve 0:
+        Max Speed: 9.240029489811194e+01
+        Mean Surface Speed: 3.852010414296056e+01
+        Mean Basal Speed: 3.530897341595096e+01
+        RMS Speed: 4.428888705555048e+01
+        Mean Beta: 5.561178638702785e+00
+        Mean Effective Pressure: 2.774294237195747e+03
+        Mean Dissipation Heat: 8.708257850160809e-05
+        Mean Body Force: 4.423329806945129e+02
+      Solve 1:
+        Max Speed: 9.003157235896384e+01
+        Mean Surface Speed: 3.727359885014534e+01
+        Mean Basal Speed: 3.431994806200591e+01
+        RMS Speed: 4.298985597186211e+01
+        Mean Beta: 5.394415399721425e+00
+        Mean Effective Pressure: 2.691105347895149e+03
+        Mean Dissipation Heat: 7.931168865720059e-05
+        Mean Body Force: 4.290373950240116e+02
