@@ -136,6 +136,10 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
     return dim_ncomp;
   };
 
+  // Keep track of all states, like the other field accessors do. Other accessors (e.g.,
+  // ExtrudedMeshFieldAccessor, for its basal mesh) rely on this to check if a state exists.
+  all_sis.push_back(st);
+
   // nodal/nodal_parameter states  will be warranted a dof mgr later,
   // while elem_sis are states that can be processed by LoadStateField
   // and LoadSideSetStateField evaluators
@@ -309,6 +313,76 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
       elem_offset += ws_num_elems;
     }
   }
+}
+
+void OmegahMeshFieldAccessor::
+transferElemStateToNodeState (const std::string& name)
+{
+  // Inverse of transferNodeStatesToElemStates, for a single state
+  const auto st = nodal_sis.find(name,false);
+  TEUCHOS_TEST_FOR_EXCEPTION (st.is_null(), std::runtime_error,
+      "[OmegahMeshFieldAccessor::transferElemStateToNodeState] Error! '" + name + "' is not a nodal state.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (st->entity==StateStruct::NodalData, std::logic_error,
+      "[OmegahMeshFieldAccessor::transferElemStateToNodeState] Error! State '" + name + "' has no elem state to transfer.\n");
+
+  const auto& dim = st->dim;
+  const int rank = dim.size();
+  const int num_elem_nodes = Omega_h::element_degree(m_mesh->family(), m_mesh->dim(), 0);
+  TEUCHOS_TEST_FOR_EXCEPTION (dim[1] != static_cast<size_t>(num_elem_nodes), std::runtime_error,
+      "Error! State struct dim[1] does not match actual num_elem_nodes.\n"
+      "  - state name: " + name + "\n"
+      "  - dim[1]: " << dim[1] << "\n"
+      "  - num_elem_nodes: " << num_elem_nodes << "\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (rank<2 or rank>4, std::runtime_error,
+      "Error! Unsupported rank (" << rank << ") for nodal state '" + name + "'.\n");
+  int ncomp = 1;
+  for (int i=2; i<rank; ++i) {
+    ncomp *= dim[i];
+  }
+
+  // Start from the current tag values, so that nodes not in the closure of owned elems keep their
+  // values (they are fixed by the sync below anyways).
+  const auto tag = m_mesh->get_tag<ST>(0,name);
+  TEUCHOS_TEST_FOR_EXCEPTION (tag==nullptr or tag->ncomps()!=ncomp, std::logic_error,
+      "Error! Mesh tag for nodal state '" + name + "' is missing or has the wrong number of components.\n");
+  auto old_state_h  = hostRead(tag->array());
+  auto node_state_h = hostWrite<ST>(old_state_h.size(),name);
+  for (int i=0; i<old_state_h.size(); ++i) {
+    node_state_h[i] = old_state_h[i];
+  }
+
+  auto elem_nodes_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
+  const int num_ws = elemStateArrays.size();
+  int elem_offset = 0;
+  for (int ws=0; ws<num_ws; ++ws) {
+    const auto& elem_state_h = elemStateArrays[ws].at(name).host();
+    const int ws_num_elems = elem_state_h.extent(0);
+    for (int i=0; i<ws_num_elems; ++i) {
+      const int global_elem_idx = elem_offset + i;
+      for (int j=0; j<num_elem_nodes; ++j) {
+        const auto node_lid = elem_nodes_h[global_elem_idx*num_elem_nodes+j];
+        switch (rank) {
+          case 2:
+            node_state_h[node_lid] = elem_state_h(i,j);
+            break;
+          case 3:
+            for (size_t k=0; k<dim[2]; ++k) {
+              node_state_h[node_lid*dim[2]+k] = elem_state_h(i,j,k);
+            } break;
+          case 4:
+            for (size_t k=0; k<dim[2]; ++k) {
+              for (size_t l=0; l<dim[3]; ++l) {
+                node_state_h[node_lid*dim[2]*dim[3]+k*dim[3]+l] = elem_state_h(i,j,k,l);
+              }
+            } break;
+        }
+      }
+    }
+    elem_offset += ws_num_elems;
+  }
+
+  m_mesh->set_tag(0,name,Omega_h::read(node_state_h.write()),false);
+  m_mesh->sync_tag(0,name); //update ghosts
 }
 
 void OmegahMeshFieldAccessor::

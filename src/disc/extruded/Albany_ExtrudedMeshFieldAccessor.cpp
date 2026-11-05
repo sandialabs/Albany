@@ -2,6 +2,8 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
+#include <algorithm>
+
 namespace Albany {
 
 ExtrudedMeshFieldAccessor::
@@ -39,9 +41,14 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
   // If not extruded and not interpolated, then it must be an output,
   // so we must add it to the basal mesh, with a layout that is compatible
   // with the basal mesh.
-  if (not st->extruded and not st->interpolated and st->stateType()==StateStruct::ElemState) {
-    int num_elem_layers = m_elem_numbering_lid->numLayers;
+  if (st->extruded or st->interpolated) {
+    return;
+  }
 
+  const int num_elem_layers = m_elem_numbering_lid->numLayers;
+  if (st->stateType()==StateStruct::ElemState) {
+    // The 3d state will VIEW the basal state (see createStateArrays), which requires
+    // the layer index to come right after the cell index: (Cell2d,Layer[,...]).
     auto bst = Teuchos::rcp(new StateStruct(st->name,st->entity));
     bst->entity = StateStruct::ElemData;
     bst->dim.push_back(st->dim[0] / num_elem_layers);
@@ -50,7 +57,50 @@ addStateStruct(const Teuchos::RCP<StateStruct>& st)
       bst->dim.push_back(st->dim[i]);
     }
 
+    // For elem scalars, (Cell2d,Layer) is also the layout of basal 'Elem Layered Scalar'
+    // inputs, so flag it as layered: the basal mesh will then store (and write to file)
+    // ${name}_NLC, which we set in createStateArrays, making the field readable for a restart.
+    // NOTE: this does not work for elem vectors, since basal layered inputs are (Cell2d,Dim,Layer),
+    //       nor for quad point states, which have no basal layered counterpart.
+    if (st->entity==StateStruct::ElemData and st->dim.size()==1) {
+      bst->layered = true;
+      m_basal_layered_elem_outputs.push_back(st->name);
+    }
+
     m_basal_field_accessor->addStateStruct(bst);
+  } else if (st->entity==StateStruct::NodalDataToElemNode) {
+    // We cannot view a basal state here (see createStateArrays), so we register a separate
+    // basal state, which transferElemStateToNodeState fills. We use the same layout as basal
+    // 'Node Layered Scalar/Vector' inputs, (Cell2d,Node2d[,Dim],Level), with Level the number
+    // of node layers, and flag it as layered, so that the basal mesh stores (and writes to file)
+    // ${name}_NLC. This way, the field can be read back as a basal layered input for a restart.
+    TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()<2 or st->dim.size()>3, std::runtime_error,
+        "[ExtrudedMeshFieldAccessor::addStateStruct] Error! Unsupported rank (" << st->dim.size() << ") for 3d nodal state '" + st->name + "'.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (st->dim[1] % 2 != 0, std::runtime_error,
+        "[ExtrudedMeshFieldAccessor::addStateStruct] Error! Expected an even number of nodes per 3d element for state '" + st->name + "'.\n");
+    if (not m_basal_field_accessor->getAllSIS().find(st->name,false).is_null()) {
+      // We cannot tell here whether the 3d state is an output or an input that the user
+      // forgot to extrude/interpolate, so warn rather than throw.
+      auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+      *out << "WARNING! [ExtrudedMeshFieldAccessor] The 3d nodal state '" + st->name + "' is neither extruded nor interpolated,\n"
+              "  but the basal mesh already has a state with the same name, so the 3d state will NOT be stored in\n"
+              "  the basal mesh (nor written to file). If this is an output, give it a different 'State Name'.\n"
+              "  If it is an input, list it in 'Extrude Basal Fields' or 'Interpolate Basal Layered Fields'.\n";
+      return;
+    }
+
+    auto bst = Teuchos::rcp(new StateStruct(st->name,st->entity));
+    bst->dim.push_back(st->dim[0] / num_elem_layers);
+    bst->dim.push_back(st->dim[1] / 2);
+    if (st->dim.size()==3) {
+      bst->dim.push_back(st->dim[2]);
+    }
+    bst->dim.push_back(num_elem_layers+1);
+    bst->layered = true;
+    bst->output = st->output;
+
+    m_basal_field_accessor->addStateStruct(bst);
+    m_basal_layered_nodal_outputs.push_back(st->name);
   }
 }
 
@@ -141,6 +191,26 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
       throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
     }
   }
+
+  // Set the normalized layers coords of the basal layered states that store 3d outputs.
+  // The basal mesh writes them to file, so that they can be read back for a restart.
+  // Nodal data lives at the mesh levels, while elem data lives at the layers midpoints.
+  // NOTE: the layers coords are set in ExtrudedMesh::setBulkData, so we cannot do this in addStateStruct.
+  if (m_basal_layered_nodal_outputs.empty() and m_basal_layered_elem_outputs.empty()) {
+    return;
+  }
+  const auto& z_ref = mesh_vector_states.at("layers_z_ref");
+  auto& basal_vec_states = m_basal_field_accessor->getMeshVectorStates();
+  for (const auto& name : m_basal_layered_nodal_outputs) {
+    basal_vec_states[name+"_NLC"] = z_ref;
+  }
+  for (const auto& name : m_basal_layered_elem_outputs) {
+    auto& nlc = basal_vec_states[name+"_NLC"];
+    nlc.resize(z_ref.size()-1);
+    for (size_t il=0; il<nlc.size(); ++il) {
+      nlc[il] = (z_ref[il] + z_ref[il+1])/2;
+    }
+  }
 }
 
 void ExtrudedMeshFieldAccessor::
@@ -152,13 +222,55 @@ transferNodeStatesToElemStates ()
 void ExtrudedMeshFieldAccessor::
 transferElemStateToNodeState (const std::string& name)
 {
-  // In the extruded mesh, 3d nodal states live exclusively in the (Cell,Node[,...])
-  // elem state arrays allocated in createStateArrays (they are never added to the
-  // basal mesh, and the extruded disc only writes the basal mesh to file).
-  // SaveStateField has already updated the elem state array, so there is no
-  // separate nodal storage to update: this is a no-op.
+  // In the extruded mesh, 3d nodal states live in the (Cell,Node[,Dim]) elem state arrays
+  // allocated in createStateArrays, which SaveStateField has already updated.
   TEUCHOS_TEST_FOR_EXCEPTION (nodal_sis.find(name,false).is_null(), std::runtime_error,
       "[ExtrudedMeshFieldAccessor::transferElemStateToNodeState] Error! '" + name + "' is not a nodal state.\n");
+
+  // If this state does not have a basal counterpart (e.g., it is extruded/interpolated,
+  // or its name clashes with a basal state), there is nothing else to do.
+  const auto& outs = m_basal_layered_nodal_outputs;
+  if (std::find(outs.begin(),outs.end(),name)==outs.end()) {
+    return;
+  }
+
+  // Copy (Cell3d,Node3d[,Dim]) into the basal (Cell2d,Node2d[,Dim],Level) elem state. This is the
+  // inverse of the nodal case in interpolateBasalLayeredFields. In the 3d elem, nodes [0,nb) are
+  // at the bottom (level il) and nodes [nb,2nb) at the top (level il+1). Interior levels are
+  // written twice (from the layers below and above), with the same values.
+  auto& basal_states = m_basal_field_accessor->getElemStates();
+  const int num_ws = basal_states.size();
+  const int num_elem_layers = m_elem_numbering_lid->numLayers;
+  for (int ws=0; ws<num_ws; ++ws) {
+    auto& bstate = basal_states[ws].at(name);
+    auto bview_h = bstate.host();
+    const auto view_h = elemStateArrays[ws].at(name).host();
+    const int rank = view_h.rank();
+    const int nb = view_h.extent_int(1) / 2;
+    const int num_basal_elems = bview_h.extent_int(0);
+    const int ncomps = rank==3 ? view_h.extent_int(2) : 1;
+    for (int ie=0; ie<num_basal_elems; ++ie) {
+      for (int il=0; il<num_elem_layers; ++il) {
+        const int ie3d = m_elem_numbering_lid->getId(ie,il);
+        for (int side : {0,1}) { // 0=elem-bottom, 1=elem-top
+          const int lev = il+side;
+          for (int in=0; in<nb; ++in) {
+            if (rank==2) {
+              bview_h(ie,in,lev) = view_h(ie3d,in+side*nb);
+            } else {
+              for (int j=0; j<ncomps; ++j) {
+                bview_h(ie,in,j,lev) = view_h(ie3d,in+side*nb,j);
+              }
+            }
+          }
+        }
+      }
+    }
+    bstate.sync_to_dev();
+  }
+
+  // Now the basal mesh can move its elem state into the nodal field
+  m_basal_field_accessor->transferElemStateToNodeState(name);
 }
 
 // Read from mesh methods

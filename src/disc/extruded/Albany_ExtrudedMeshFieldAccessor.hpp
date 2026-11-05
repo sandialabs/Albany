@@ -13,6 +13,9 @@
 
 #include "Teuchos_RCP.hpp"
 
+#include <string>
+#include <vector>
+
 namespace Albany {
 
 /*
@@ -46,8 +49,10 @@ public:
   // While 3d states are ALL elem states, the basal MFA needs to call this
   void transferNodeStatesToElemStates ();
 
-  // 3d nodal states are stored ONLY as (Cell,Node[,...]) elem states, and there is
-  // no 3d mesh database holding nodal fields, so there is nothing to transfer.
+  // 3d nodal states are stored ONLY as (Cell,Node[,...]) elem states, since there is
+  // no 3d mesh database. For 3d nodal states that are neither extruded nor interpolated,
+  // this copies the 3d elem state into the basal layered nodal state registered in
+  // addStateStruct, and then into the basal mesh nodal field. Otherwise, it's a no-op.
   void transferElemStateToNodeState (const std::string& name) override;
 
   // Read from mesh methods
@@ -118,6 +123,12 @@ protected:
 
   DualView<int**>     m_workset_elements;
   WorksetArray<int>   m_ws_sizes;
+
+  // 3d states (neither extruded nor interpolated) that are stored in the basal mesh as
+  // layered states, and whose normalized layers coords (${name}_NLC) we need to set,
+  // so that they can be read back (e.g., for a restart) as basal layered inputs
+  std::vector<std::string>  m_basal_layered_nodal_outputs;
+  std::vector<std::string>  m_basal_layered_elem_outputs;
 };
 
 }  // namespace Albany
