@@ -385,7 +385,8 @@ GenericSTKFieldContainer::
 add_field_to_mesh (const std::string& name,
                    const bool nodal,
                    const bool transient,
-                   const int ncmp)
+                   const int ncmp,
+                   const int ncopies)
 {
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
@@ -397,7 +398,9 @@ add_field_to_mesh (const std::string& name,
     fptr = &metaData->declare_field<T>(rank,name);
   }
   auto& universal_part = metaData->universal_part();
-  if (ncmp>0)
+  if (ncmp>0 and ncopies>1)
+    stk::mesh::put_field_on_mesh(*fptr,universal_part,ncmp,ncopies,nullptr);
+  else if (ncmp>0)
     stk::mesh::put_field_on_mesh(*fptr,universal_part,ncmp,nullptr);
   else
     stk::mesh::put_field_on_mesh(*fptr,universal_part,nullptr);
@@ -417,12 +420,14 @@ GenericSTKFieldContainer::
 add_field_to_mesh<int> (const std::string& name,
                         const bool nodal,
                         const bool transient,
+                        const int,
                         const int);
 template stk::mesh::Field<double>*
 GenericSTKFieldContainer::
 add_field_to_mesh<double> (const std::string& name,
                            const bool nodal,
                            const bool transient,
+                           const int,
                            const int);
 
 } // namespace Albany

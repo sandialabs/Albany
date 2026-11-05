@@ -18,6 +18,7 @@ public:
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
   void transferNodeStatesToElemStates () override;
+  void transferElemStateToNodeState (const std::string& name) override;
 
   // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,

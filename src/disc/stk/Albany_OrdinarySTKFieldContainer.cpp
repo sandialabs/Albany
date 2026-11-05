@@ -96,6 +96,20 @@ setSolutionFieldsMetadata (int neq)
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
+  // When this is the basal mesh of an extruded mesh, the solution has neq/levels components
+  // at each of the node levels of the extruded mesh (set by ExtrudedDiscretization). In that case,
+  // store it as a (Level,Comp) field, i.e., with the same layout of 'Node Layered Vector' fields,
+  // so that each level/component pair is a separate entry in the output file.
+  // NOTE: the solution vector must then store level lev of comp icmp at icmp*levels+lev.
+  const int levels = params->isParameter("Solution Field Levels")
+                   ? params->get<int>("Solution Field Levels") : 1;
+  TEUCHOS_TEST_FOR_EXCEPTION (levels<1 or neq % levels != 0, std::runtime_error,
+      "[OrdinarySTKFieldContainer::setSolutionFieldsMetadata] Error! Invalid 'Solution Field Levels'.\n"
+      "  - Solution Field Levels: " << levels << "\n"
+      "  - neq                  : " << neq << "\n");
+  const int ncmp    = levels>1 ? levels : neq;
+  const int ncopies = levels>1 ? neq/levels : 1;
+
   if (save_solution_field) {
     solution_field.resize(num_time_deriv + 1);
     solution_field_dtk.resize(num_time_deriv + 1);
@@ -103,11 +117,11 @@ setSolutionFieldsMetadata (int neq)
 
     for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
       const auto& name = params->get(sol_tag_name[num_vecs],sol_id_name[num_vecs]);
-      solution_field[num_vecs] = add_field_to_mesh<double>(name,true,true,neq);
+      solution_field[num_vecs] = add_field_to_mesh<double>(name,true,true,ncmp,ncopies);
 #if defined(ALBANY_DTK)
       if (output_dtk_field == true) {
         const auto& dtk_name = params->get(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]);
-        solution_field_dtk[num_vecs] = add_field_to_mesh<double>(dtk_name,true,true,neq);
+        solution_field_dtk[num_vecs] = add_field_to_mesh<double>(dtk_name,true,true,ncmp,ncopies);
       }
 #endif
     }
@@ -118,7 +132,7 @@ setSolutionFieldsMetadata (int neq)
     const int num_sens = (sens_method == "Forward") ? num_params : 1;
     for (int np = 0; np < num_sens; np++) {
       const auto sens_name = params->get(sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]);
-      solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,neq);
+      solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,ncmp,ncopies);
 
     }
   }

@@ -852,6 +852,7 @@ GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname) const
 
   validPL->set<bool>("Contiguous IDs", true, "Tells Ascii mesh reader is mesh has contiguous global IDs on 1 processor."); //for LandIce problem that require transformation of STK mesh
   validPL->set<bool>("Save Solution Field", true, "Whether the solution field should be saved in the output mesh");
+  validPL->set<int>("Solution Field Levels", 1, "Number of node levels the solution field is split into. Set internally by the Extruded discretization on its basal mesh.");
 
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
