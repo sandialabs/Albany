@@ -25,7 +25,12 @@ IF(ENABLE_CISM_INTERFACE)
     set(CismAlbanyPath  ${CISM_EXE_DIR}/cism_driver)
     add_subdirectory(CismAlbany)
   endif()
-ENDIF() 
+ENDIF()
+
+# Unit and regression tests of the MPAS-Albany interface, called as MALI does through a mock of MPAS
+IF(ENABLE_MPAS_INTERFACE)
+  add_subdirectory(MPASInterface)
+ENDIF()
 
 # Some ad-hoc problems to quickly verify certain evaluators
 add_subdirectory(unit)
