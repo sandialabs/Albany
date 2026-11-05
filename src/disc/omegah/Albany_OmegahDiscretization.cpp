@@ -1012,7 +1012,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
   //create node and side set tags
   m_mesh_struct->createNodeSets();
-  m_mesh_struct->createSideSets();
+  if (ohMesh->dim()-1 > 0) {
+    m_mesh_struct->createSideSets();
+  }
 
   //update coordinates
   m_mesh_struct->setCoordinates();
