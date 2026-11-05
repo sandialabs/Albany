@@ -287,10 +287,10 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_partCtor)
 {
   auto teuchosComm = Albany::getDefaultComm();
 
-  // The 'lateralside' side set in the exodus file is given class_id=1 and
+  // The 'lateral_side_set' class set is given class_id=1 and
   // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
-  const auto lateralSide_name = "lateralside";
+  const auto lateralSide_name = "lateral_side_set";
 
   std::vector<PartSpecs> lateralSide = {
     { lateralSide_name, Topo_type::edge, lateralSide_classId }
@@ -306,10 +306,10 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_getConnectivityMask)
 {
   auto teuchosComm = Albany::getDefaultComm();
 
-  // The 'lateralside' side set in the exodus file is given class_id=1 and
+  // The 'lateral_side_set' class set is given class_id=1 and
   // class_dim=1 on mesh edges by exo2osh.
   const int lateralSide_classId = 1;
-  const auto lateralSide_name = "lateralside";
+  const auto lateralSide_name = "lateral_side_set";
 
   std::vector<PartSpecs> lateralSide = {
     { lateralSide_name, Topo_type::edge, lateralSide_classId }
@@ -453,10 +453,10 @@ TEUCHOS_UNIT_TEST(OmegahDiscTests, ConnectivityManager_buildPartConnectivityOwne
 {
   auto teuchosComm = Albany::getDefaultComm();
 
-  const auto lateralSide_name = "lateralside";
+  const auto lateralSide_name = "lateral_side_set";
   const int lateralSide_classId = 1;
   std::vector<PartSpecs> lateralSide = {
-    { "lateralside", Topo_type::edge, lateralSide_classId }
+    { lateralSide_name, Topo_type::edge, lateralSide_classId }
   };
 
   auto mesh = createOmegahMesh("gis_unstruct_basal_populated.osh",teuchosComm,{lateralSide});
