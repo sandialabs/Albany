@@ -88,7 +88,7 @@ ENDIF()
 ###     Box mesh transient test      ###
 ########################################
 
-if (ALBANY_OMEGAH AND NOT Kokkos_ENABLE_CUDA)
+if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   # Transient FO+H test on an extruded, small, structured MxN Omega_h basal box mesh, with analytic input fields.
   # Meant as a small test case for debugging/adaptivity (see also FO_GIS Humboldt transient Omega_h test).
   set (testName ${testNameRoot}_Box_Transient_Omega_h)
