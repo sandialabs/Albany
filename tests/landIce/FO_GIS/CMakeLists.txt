@@ -130,7 +130,7 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMesh2d
                        FIXTURES_SETUP ${testName}_extruded)
 
-  if (ALBANY_OMEGAH)
+  if (ALBANY_OMEGAH AND NOT Kokkos_ENABLE_CUDA)
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
