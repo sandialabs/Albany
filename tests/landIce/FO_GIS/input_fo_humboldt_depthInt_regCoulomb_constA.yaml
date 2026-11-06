@@ -42,8 +42,8 @@ ANONYMOUS:
           Flow Rate: 4.387e-24
       BC 1:
         Type: Lateral
-        Cubature Degree: 3
-        Side Set Name: extruded_boundary_side_set_1
+        Cubature Degree: 4
+        Side Set Name: lateralside
         Melange Force: 6.0e+07 #[N/m]
         Melange Submerged Thickness Threshold: 0.1 #[km]
         #Immersed Ratio: 0.893
@@ -461,6 +461,6 @@ ANONYMOUS:
       Solver Options:
         Status Test Check Type: Minimal
   Regression For Response 0:
-    Test Value: 7.097938348564e+01
+    Test Value: 7.097985917470e+01
     Relative Tolerance: 1.0e-06
 ...

@@ -1,26 +1,29 @@
 BASE_DIR=/lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier
-DEPLOY_DIR=/ccs/proj/cli193/automated_testing/rocm
+SRC_DIR=/ccs/proj/cli193/automated_testing
+DEPLOY_DIR=/lustre/orion/cli193/proj-shared/automated_testing/rocm
 
 # Update Trilinos repo to get most recent changes
-cd ${BASE_DIR}/repos/Trilinos
+cd ${SRC_DIR}/repos/Trilinos
 git pull
 
 # Update albany repo to get most recent changes
-cd ${BASE_DIR}/repos/Albany
+cd ${SRC_DIR}/repos/Albany
 git pull
 
 # Update E3SM repo to get most recent changes
-cd ${BASE_DIR}/repos/E3SM
+cd ${SRC_DIR}/repos/E3SM
 git pull
 git submodule sync --recursive && git submodule update --init --recursive
 
 # Update ali-perf-test repo to get most recent changes
-cd ${BASE_DIR}/repos/ali-perf-tests
+cd ${SRC_DIR}/repos/ali-perf-tests
 git pull
 
 # Update ali-perf-data repo to get most recent changes
-cd ${BASE_DIR}/repos/ali-perf-data
-git pull
+# Note: remote work doesn't work on compute node so here we rebase and push commits
+cd ${SRC_DIR}/repos/ali-perf-data
+git pull --rebase
+git push
 
 # load modules
 cd ${BASE_DIR}

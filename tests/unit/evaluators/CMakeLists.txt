@@ -48,3 +48,28 @@ create_unit_test (NAME    ScatterResidual
 create_unit_test (NAME    ScatterScalarResponse
                   PREFIX  ${testNameRoot}
                   SOURCES ScatterScalarResponse.cpp)
+
+#################################################
+#      Side trace of a cell FE basis            #
+#################################################
+
+create_unit_test (NAME    SideTraceOfCellBasis
+                  PREFIX  ${testNameRoot}
+                  SOURCES SideTraceOfCellBasis.cpp
+                  SERIAL_ONLY)
+if (TARGET landIce)
+  # Enables the test of the LandIce depth-integrated basis (P1 x quartic)
+  target_link_libraries (SideTraceOfCellBasis PUBLIC landIce)
+endif()
+
+#################################################
+#   LandIce depth-integrated basis utilities    #
+#################################################
+
+if (TARGET landIce)
+  create_unit_test (NAME    DepthIntegratedBasisUtils
+                    PREFIX  ${testNameRoot}
+                    SOURCES DepthIntegratedBasisUtils.cpp
+                    LIBS    landIce
+                    SERIAL_ONLY)
+endif()

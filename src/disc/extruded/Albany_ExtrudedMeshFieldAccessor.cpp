@@ -1,5 +1,6 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_Macros.hpp"
 
 namespace Albany {
 
@@ -155,6 +156,18 @@ void ExtrudedMeshFieldAccessor::
 transferNodeStatesToElemStates ()
 {
   m_basal_field_accessor->transferNodeStatesToElemStates();
+}
+
+void ExtrudedMeshFieldAccessor::
+transferElemStateToNodeState (const std::string& name)
+{
+  // In the extruded mesh, 3d nodal states live exclusively in the (Cell,Node[,...])
+  // elem state arrays allocated in createStateArrays (they are never added to the
+  // basal mesh, and the extruded disc only writes the basal mesh to file).
+  // SaveStateField has already updated the elem state array, so there is no
+  // separate nodal storage to update: this is a no-op.
+  TEUCHOS_TEST_FOR_EXCEPTION (nodal_sis.find(name,false).is_null(), std::runtime_error,
+      "[ExtrudedMeshFieldAccessor::transferElemStateToNodeState] Error! '" + name + "' is not a nodal state.\n");
 }
 
 // Read from mesh methods
@@ -577,7 +590,9 @@ void ExtrudedMeshFieldAccessor::extrudeBasalFields (const Teuchos::Array<std::st
   }
 }
 
-void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields)
+void ExtrudedMeshFieldAccessor::
+interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
+                               const std::vector<double>& qp_ref_z)
 {
   auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "[ExtrudedMeshFieldAccessor] Interpolating basal fields...\n";
@@ -598,7 +613,10 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
 
   for (const auto& name : basal_fields) {
     bool nodal = Teuchos::nonnull(nodal_sis.find(name,false));
-    *out << " - Interpolating " << (nodal ? "nodal" : "cell") << " field '" + name + "'...";
+    // Non-nodal 3d states can be either Elem or QuadPoint states. Their rank alone cannot tell
+    // them apart (Elem Vector and QuadPoint Scalar are both rank 2), so check the entity.
+    bool qp = not nodal and elem_sis.find(name)->entity==StateStruct::QuadPoint;
+    *out << " - Interpolating " << (nodal ? "nodal" : (qp ? "quad point" : "cell")) << " field '" + name + "'...";
 
     const auto& field_layers_coords = m_basal_field_accessor->getMeshVectorStates().at(name+"_NLC");
     const int num_field_layers = field_layers_coords.size();
@@ -644,26 +662,70 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
       bstate.dimensions(dims);
       // NOTE: rank is that of the 3d state, NOT of the basal one (for layered basal
       //       states the basal rank is one higher, due to the extra layer index).
-      int rank = elemStateArrays[ws][name].host().rank();
+      auto ws_view_h = elemStateArrays[ws][name].host();
+      int rank = ws_view_h.rank();
+      int brank = dims.size();
       TEUCHOS_TEST_FOR_EXCEPTION (
-          (nodal and (rank<2 or rank>3)) or (not nodal and (rank<1 or rank>2)), std::runtime_error,
+          (nodal and (rank<2 or rank>3)) or
+          (not nodal and not qp and (rank<1 or rank>2)) or
+          (qp and (rank<2 or rank>3)), std::runtime_error,
           "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
           "  Unsupported rank (" << rank << ") for state '" + name + "'\n");
 
-      // Assumes scalar elem fields
-      auto average = [&](int ie, int il) {
+      // Basal layered cell data is (Cell,Layer) for scalars and (Cell,Dim,Layer) for vectors.
+      // 3d Elem states are (Cell[,Dim]), while 3d QuadPoint states are (Cell,QP[,Dim]).
+      const int expected_brank = qp ? rank : rank+1;
+      TEUCHOS_TEST_FOR_EXCEPTION (brank!=expected_brank, std::runtime_error,
+          "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
+          "  Basal and 3d layouts of state '" + name + "' are incompatible.\n"
+          "  - basal rank: " << brank << "\n"
+          "  - 3d rank   : " << rank << "\n");
+
+      int num_qps = 0;
+      if (qp) {
+        num_qps = ws_view_h.extent_int(1);
+        TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(qp_ref_z.size())!=num_qps, std::runtime_error,
+            "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
+            "  The number of cell cubature points does not match the QuadPoint dimension of state '" + name + "'.\n"
+            "  - num cubature points: " << qp_ref_z.size() << "\n"
+            "  - state QP dimension : " << num_qps << "\n"
+            "  Make sure the problem stores its cell cubature in the 'Cell Cubature' discretization parameter.\n");
+      }
+      const int ncomps = (not nodal and brank==3) ? dims[1] : 1;
+
+      // Value of the (piece-wise constant) basal data in field layer ilf.
+      // The component j must be given for vector fields, and omitted for scalar fields.
+      auto bval = [&](int ie, int ilf, int j = -1) {
+        ALBANY_EXPECT ((brank==2)==(j==-1),
+            "[ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields] Error!\n"
+            "  Component index (" << j << ") inconsistent with basal state rank (" << brank << ") for state '" + name + "'\n");
+        return brank==2 ? bview_h(ie,ilf) : bview_h(ie,j,ilf);
+      };
+
+      // (Weighted) average of the (piece-wise constant) data over all field layers that
+      // intersect mesh layer il (an L2 projection). Used for Elem fields.
+      auto average = [&](int ie, int il, int j = -1) {
         auto where0 = std::upper_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il]);
         auto where1 = std::lower_bound(field_levels_coords.begin(),field_levels_coords.end(),z_ref[il+1]);
-        il0 = std::distance(field_levels_coords.begin(),where0)-1;
-        il1 = std::distance(field_levels_coords.begin(),where1);
+        int ilf0 = std::distance(field_levels_coords.begin(),where0)-1;
+        int ilf1 = std::distance(field_levels_coords.begin(),where1);
 
         double result = 0;
-        for (int ilf=il0; ilf<il1; ++ilf) {
+        for (int ilf=ilf0; ilf<ilf1; ++ilf) {
           auto start = std::max(field_levels_coords[ilf],z_ref[il]);
           auto end = std::min(field_levels_coords[ilf+1],z_ref[il+1]);
-          result += bview_h(ie,ilf)*(end-start)/dz_ref[il];
+          result += bval(ie,ilf,j)*(end-start)/dz_ref[il];
         }
         return result;
+      };
+
+      // Value of the (piece-wise constant) data at normalized height zeta in [0,1].
+      // Used for QuadPoint fields (same as ExtrudedSTKMeshStruct::interpolateBasalLayeredFields).
+      auto evaluate = [&](int ie, double zeta, int j = -1) {
+        auto where = std::upper_bound(field_levels_coords.begin(),field_levels_coords.end(),zeta);
+        int ilf = std::distance(field_levels_coords.begin(),where)-1;
+        ilf = std::max(0,std::min(ilf,num_field_layers-1));
+        return bval(ie,ilf,j);
       };
 
       for (int ie=0; ie<dims[0]; ++ie) {
@@ -688,17 +750,26 @@ void ExtrudedMeshFieldAccessor::interpolateBasalLayeredFields (const Teuchos::Ar
                 }
               }
             }
+          } else if (qp) {
+            // Evaluate the (piece-wise constant) data at the height of each cubature point.
+            // The vertical reference coords of cubature points in wedges/hexas are in [-1,1]
+            const double zmid = (z_ref[il] + z_ref[il+1])/2;
+            for (int iq=0; iq<num_qps; ++iq) {
+              const double zeta = zmid + 0.5*dz_ref[il]*qp_ref_z[iq];
+              if (rank==2) {
+                view_h(ie3d,iq) = evaluate(ie,zeta);
+              } else {
+                for (int j=0; j<ncomps; ++j) {
+                  view_h(ie3d,iq,j) = evaluate(ie,zeta,j);
+                }
+              }
+            }
           } else {
             if (rank==1) {
-              // We do a (weighted) average of the values of the (piece-wise constant) data
-              // over all layers that intersect with the current layer (an L2 projeciton)
               view_h(ie3d) = average(ie,il);
-            } else if (rank==2) {
-              std::tie(il0, il1, h0) = get_interp_params(il);
-              // This is usually the case for quad-point fields (and not vector elem fields),
-              // so we simply evaluate the (piece-wise constant) data in the current layer
-              for (int j=0; j<dims[1]; ++j) {
-                view_h(ie3d,j) = h0*bview_h(ie,j,il0) + (1-h0)*bview_h(ie,j,il1);
+            } else {
+              for (int j=0; j<ncomps; ++j) {
+                view_h(ie3d,j) = average(ie,il,j);
               }
             }
           }

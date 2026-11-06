@@ -46,7 +46,7 @@ ANONYMOUS:
       BC 1:
         Type: Lateral
         Cubature Degree: 4
-        Side Set Name: extruded_boundary_side_set_1
+        Side Set Name: lateralside
 
         #fro from iceberg melange (default = 0)
         Melange Force: 6.0e+07 #[N/m]

@@ -27,6 +27,8 @@
 #include <Panzer_IntrepidFieldPattern.hpp>
 #include <Panzer_ElemFieldPattern.hpp>
 
+#include <Intrepid2_Cubature.hpp>
+
 #include <iostream>
 #include <string>
 
@@ -710,7 +712,25 @@ ExtrudedDiscretization::computeWorksetInfo()
   const auto& interpolate_names = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
   auto emfa = Teuchos::rcp_dynamic_cast<ExtrudedMeshFieldAccessor>(m_extruded_mesh->get_field_accessor());
   emfa->extrudeBasalFields(extrude_names);
-  emfa->interpolateBasalLayeredFields(interpolate_names);
+
+  // Interpolating into 3d QuadPoint states requires the vertical reference coords of the
+  // cell cubature points. The problem (if needed) stores the cubature in the disc params.
+  std::vector<double> qp_ref_z;
+  using cub_ptr_t = Teuchos::RCP<Intrepid2::Cubature<PHX::Device,RealType,RealType>>;
+  if (m_disc_params->isType<cub_ptr_t>("Cell Cubature")) {
+    const auto cub = m_disc_params->get<cub_ptr_t>("Cell Cubature");
+    const int num_qps = cub->getNumPoints();
+    const int cub_dim = cub->getDimension();
+    Kokkos::DynRankView<RealType,PHX::Device> points("points",num_qps,cub_dim);
+    Kokkos::DynRankView<RealType,PHX::Device> weights("weights",num_qps);
+    cub->getCubature(points,weights);
+    auto points_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),points);
+    qp_ref_z.resize(num_qps);
+    for (int iq=0; iq<num_qps; ++iq) {
+      qp_ref_z[iq] = points_h(iq,cub_dim-1); // The extrusion direction is the last one
+    }
+  }
+  emfa->interpolateBasalLayeredFields(interpolate_names,qp_ref_z);
 }
 
 void

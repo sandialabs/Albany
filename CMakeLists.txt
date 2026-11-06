@@ -4,7 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-cmake_minimum_required(VERSION 3.17.0)
+cmake_minimum_required(VERSION 3.25.0)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.27)
   cmake_policy (SET CMP0144 NEW)

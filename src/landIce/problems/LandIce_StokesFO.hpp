@@ -86,6 +86,11 @@ public:
     return this->cellCubature;
   }
 
+  //! FE basis of the depth-integrated model (null if the model is not depth integrated)
+  const Teuchos::RCP<IntrepidBasis> getCellDepthIntegratedBasis() const {
+    return this->cellDepthIntegratedBasis;
+  }
+
 protected:
 
   void setFieldsProperties();

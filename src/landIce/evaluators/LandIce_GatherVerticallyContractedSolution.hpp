@@ -79,6 +79,9 @@ protected:
 
   ContractionOperator op;
 
+  // Vertical MOLHO Average: weights of the bottom and top nodes (vertical averages of the bed and top basis functions)
+  double molhoWeightBot = 0.0, molhoWeightTop = 0.0;
+
   Albany::DualView<double*>   quadWeights;
   Albany::DualView<int*>      side_node_count;
 

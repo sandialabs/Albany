@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
+#include "PHAL_SideTraceOfCellBasis.hpp"
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -68,6 +69,13 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");
   intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis Side");
 
+  // Optional: FE basis of the cell, whose trace on the side gives BF/GradBF.
+  // The side geometry (tangents, metric, measure) is still computed with the side basis.
+  if (p.isParameter("Intrepid2 Cell FE Basis")) {
+    intrepidCellFEBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Cell FE Basis");
+  }
+  use_cell_fe_basis_trace = !intrepidCellFEBasis.is_null();
+
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
   *output << "Compute Basis Functions Side has: "
@@ -110,19 +118,31 @@ postRegistrationSetup(typename Traits::SetupData d,
   // Pre-Calculate reference element quantities
   cubature->getCubature(cub_points, cub_weights);
 
+  // Side basis: always used for the side geometry, and for BF/GradBF unless a cell FE basis is given
   intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
-  // BF does not depend on the current element, so we fill it now
-  Kokkos::parallel_for(this->getName(),
-                       Kokkos::RangePolicy<ExecutionSpace>(0,BF.extent(0)),
-                       KOKKOS_CLASS_LAMBDA(const int cellside) { 
-    for (unsigned int node=0; node<numSideNodes; ++node) {
-      for (unsigned int qp=0; qp<numSideQPs; ++qp) {
-        BF(cellside,node,qp) = val_at_cub_points(node,qp);
+  if (use_cell_fe_basis_trace) {
+    // BF/GradBF are the trace of the cell FE basis. They depend on which side of the cell
+    // we are on, so precompute them for each side ordinal; BF is filled in evaluateFields.
+    const auto& sideTopo = intrepidBasis->getBaseCellTopology();
+    TEUCHOS_TEST_FOR_EXCEPTION (sideTopo.getNodeCount()!=numSideNodes, std::logic_error,
+        "Error! [ComputeBasisFunctionsSide] Side set '" << sideSetName << "': the side layout has " << numSideNodes
+        << " nodes, but side topology '" << sideTopo.getName() << "' has " << sideTopo.getNodeCount() << ".\n");
+    computeSideTraceOfCellBasis(*intrepidCellFEBasis, *cellType, sideTopo, cub_points,
+                                trace_val_at_cub_points, trace_grad_at_cub_points);
+  } else {
+    // BF does not depend on the current element, so we fill it now
+    Kokkos::parallel_for(this->getName(),
+                         Kokkos::RangePolicy<ExecutionSpace>(0,BF.extent(0)),
+                         KOKKOS_CLASS_LAMBDA(const int cellside) {
+      for (unsigned int node=0; node<numSideNodes; ++node) {
+        for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+          BF(cellside,node,qp) = val_at_cub_points(node,qp);
+        }
       }
-    }
-  });
+    });
+  }
 
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
   if (d.memoizer_active()) memoizer.enable_memoizer();
@@ -191,12 +211,21 @@ operator() (const ComputeBasisFunctionsSide_Tag&, const int& sideSet_idx) const 
       // TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The dimension of the side should be 1 or 2.\n");
   }
 
+  // Basis gradients in side reference coordinates come from the side basis or, if a cell FE basis is given,
+  // from its trace on this side, which depends on the side ordinal within the cell. In the latter case
+  // BF depends on the side too, so it is filled here rather than in postRegistrationSetup.
+  const int side = use_cell_fe_basis_trace ? sideSet.side_pos.view_device()(sideSet_idx) : -1;
   for (unsigned int node=0; node<numSideNodes; ++node) {
     for (unsigned int qp=0; qp<numSideQPs; ++qp) {
+      if (use_cell_fe_basis_trace) {
+        BF(sideSet_idx,node,qp) = trace_val_at_cub_points(side,node,qp);
+      }
       for (unsigned int ider=0; ider<numSideDims; ++ider) {
         GradBF(sideSet_idx,node,qp,ider)=0;
         for (unsigned int jder=0; jder< numSideDims; ++jder) {
-          GradBF(sideSet_idx,node,qp,ider) += inv_metric(sideSet_idx,qp,ider,jder)*grad_at_cub_points(node,qp,jder);
+          const RealType ref_grad = use_cell_fe_basis_trace ? trace_grad_at_cub_points(side,node,qp,jder)
+                                                            : grad_at_cub_points(node,qp,jder);
+          GradBF(sideSet_idx,node,qp,ider) += inv_metric(sideSet_idx,qp,ider,jder)*ref_grad;
         }
       }
     }

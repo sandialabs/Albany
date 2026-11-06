@@ -1,4 +1,4 @@
-#!/bin/csh
+#!/bin/bash
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 
 source ${BASE_DIR}/repos/compass_tests/load_compass_env.sh

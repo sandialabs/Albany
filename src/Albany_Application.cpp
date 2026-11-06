@@ -17,6 +17,7 @@
 #include "Albany_StringUtils.hpp"
 
 #include "PHAL_Utilities.hpp"
+#include "Phalanx_DAG_Manager.hpp"
 #include "Albany_KokkosUtils.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Hessian.hpp"
@@ -157,6 +158,14 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
   // Pull the number of solution vectors out of the problem and send them to the
   // discretization list, if the user specifies this in the problem
   Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::sublist(params, "Discretization", true);
+
+  // Phalanx appends a unique index to each evaluator timer name. If field
+  // managers are rebuilt during a run, every rebuild creates a new set of
+  // timers. Dropping the index makes rebuilds reuse the same timers.
+  // NOTE: this is a static setting shared by all DAG managers with AlbanyTraits,
+  //       and it must be set before any evaluator is registered.
+  PHX::DagManager<PHAL::AlbanyTraits>::setAddIndexToTimerNames(
+      problemParams->get<bool>("Add Index To Phalanx Timer Names", false));
 
   // Initialize Phalanx postRegistration setup
   phxSetup = Teuchos::rcp(new PHAL::Setup());

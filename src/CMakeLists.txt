@@ -486,6 +486,7 @@ list (APPEND HEADERS
   evaluators/utility/PHAL_ComputeBasisFunctions_Def.hpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide.hpp
   evaluators/utility/PHAL_ComputeBasisFunctionsSide_Def.hpp
+  evaluators/utility/PHAL_SideTraceOfCellBasis.hpp
   evaluators/utility/PHAL_ConvertFieldType.hpp
   evaluators/utility/PHAL_ConvertFieldType_Def.hpp
   evaluators/utility/PHAL_DummyResidual.hpp

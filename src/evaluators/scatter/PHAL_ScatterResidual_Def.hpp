@@ -357,68 +357,70 @@ evaluateFields(typename Traits::EvalData workset)
 
   this->gather_fields_offsets (workset.disc->getDOFManager());
 
+  // NOTE: the residual MDFields and workset.local_Vp live in PHX::MemorySpace,
+  //       which is not host-accessible on GPU builds without shared space,
+  //       so this must run as a device kernel.
   const auto fpV = workset.fpV;
-  const auto fpV_data = Albany::getNonconstLocalData(fpV);
+  const auto fpV_data = Albany::getNonconstDeviceData(fpV);
 
   constexpr auto ALL = Kokkos::ALL();
   const bool trans = workset.transpose_dist_param_deriv;
   const int num_cols = workset.Vp->domain()->dim();
   const int ws = workset.wsIndex;
 
-  const auto& dof_mgr   = workset.disc->getDOFManager();
-  const auto& elem_lids = workset.disc->getElementLIDs_host(ws);
-  const auto& fields_offsets = m_fields_offsets.host();
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-  const auto eq_offset = this->offset;
+  const auto dof_mgr       = workset.disc->getDOFManager();
+  const auto ws_elem_lids  = workset.disc->getWsElementLIDs().dev();
+  const auto elem_lids     = Kokkos::subview(ws_elem_lids,ws,ALL);
+  const auto fields_offsets = m_fields_offsets.dev();
+  const auto elem_dof_lids = dof_mgr->elem_dof_lids().dev();
+  const int  eq_offset     = this->offset;
 
-  const auto& local_Vp = workset.local_Vp;
+  const auto local_Vp = workset.local_Vp;
 
   if (trans) {
-    const auto& pname        = workset.dist_param_deriv_name;
-    const auto& p_dof_mgr    = workset.disc->getDOFManager(pname);
-    const auto& p_elem_dof_lids = p_dof_mgr->elem_dof_lids().host();
+    const auto& pname          = workset.dist_param_deriv_name;
+    const auto p_dof_mgr       = workset.disc->getDOFManager(pname);
+    const auto p_elem_dof_lids = p_dof_mgr->elem_dof_lids().dev();
 
-    const int num_deriv = numNodes;//local_Vp.size()/numFields;
-    for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const auto  elem_LID = elem_lids(cell);
-      const auto  dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-
+    const int num_deriv = numNodes;
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
       for (int i=0; i<num_deriv; ++i) {
+        const LO row = p_elem_dof_lids(elem_LID,i);
+        if (row<0) continue;
         for (int col=0; col<num_cols; ++col) {
-          const LO row = p_elem_dof_lids(elem_LID,i);
-          if(row >=0) {
-            double val = 0.0;
-            for (int node=0; node<numNodes; ++node) {
-              for (int eq=0; eq<numFields; ++eq) {
-                auto res = get_resid(cell,node,eq);
-                val += res.dx(i)*local_Vp(cell,fields_offsets(node,eq+eq_offset),col);
-              }
+          double val = 0.0;
+          for (int node=0; node<numNodes; ++node) {
+            for (int eq=0; eq<numFields; ++eq) {
+              const auto res = this->device_resid.get(cell,node,eq);
+              val += res.dx(i)*local_Vp(cell,fields_offsets(node,eq+eq_offset),col);
             }
-            fpV_data[col][row] += val;
           }
+          KU::atomic_add<ExecutionSpace>(&(fpV_data(row,col)), val);
         }
       }
-    }
+    });
   } else {
-    for (size_t cell=0; cell<workset.numCells; ++cell) {
-      const int   num_deriv = local_Vp.extent(1);
-      const auto  elem_LID  = elem_lids(cell);
-      const auto  dof_lids  = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
-
+    const int num_deriv = local_Vp.extent(1);
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_CLASS_LAMBDA(const int& cell) {
+      const auto elem_LID = elem_lids(cell);
+      const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
       for (int node=0; node<numNodes; ++node) {
         for (int eq=0; eq<numFields; ++eq) {
-          auto res = get_resid(cell,node,eq);
+          const auto res = this->device_resid.get(cell,node,eq);
           const int row = dof_lids(fields_offsets(node,eq+eq_offset));
           for (int col=0; col<num_cols; ++col) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
               val += res.dx(i)*local_Vp(cell,i,col);
             }
-            fpV_data[col][row] += val;
+            KU::atomic_add<ExecutionSpace>(&(fpV_data(row,col)), val);
           }
         }
       }
-    }
+    });
   }
 }
 

@@ -48,7 +48,7 @@ ANONYMOUS:
       BC 1:
         Type: Lateral
         Cubature Degree: 4
-        Side Set Name: extruded_boundary_side_set_1
+        Side Set Name: lateralside
 
     Parameters:
       Number Of Parameters: 3
@@ -868,5 +868,5 @@ ANONYMOUS:
     Absolute Tolerance: 1.0e-06
     Relative Tolerance: 1.0e-06
     Piro Analysis Test Two Norm: true
-    Piro Analysis Test Values: [92.5589187046]
+    Piro Analysis Test Values: [92.5701089664]
 ...

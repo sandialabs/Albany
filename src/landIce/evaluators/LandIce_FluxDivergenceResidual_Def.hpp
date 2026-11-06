@@ -33,6 +33,21 @@ LayeredFluxDivergenceResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   
   depthIntegrated = p.get<bool>("Is Depth Integrated");
 
+  // Weights of the bottom and top nodes in the vertical average of the velocity over a layer.
+  // Layered model (linear in z): trapezoidal rule. Depth-integrated model: vertical averages of the
+  // bed and top basis functions, provided by the problem.
+  if (depthIntegrated) {
+    TEUCHOS_TEST_FOR_EXCEPTION (!p.isParameter("Vertical Average Weights"), std::runtime_error,
+        "Error! The depth-integrated model requires parameter \"Vertical Average Weights\".\n");
+    const auto& w = p.get<Teuchos::Array<double>>("Vertical Average Weights");
+    TEUCHOS_TEST_FOR_EXCEPTION (w.size()!=2, std::runtime_error,
+        "Error! \"Vertical Average Weights\" must have two entries (bottom and top).\n");
+    c_bot = w[0];
+    c_top = w[1];
+  } else {
+    c_bot = c_top = 0.5;
+  }
+
   flux_div       = decltype(flux_div)(flux_div_name,  dl->node_scalar);
   H              = decltype(H)(thickness_name,  dl->node_scalar);
   vel            = decltype(vel)(vel_name,  dl->node_vector);
@@ -165,10 +180,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     //computing thickness of the layer at the triangle nodes
     ThicknessScalarT H0 = H(cell,node0)*dz, H1 = H(cell,node1)*dz, H2 = H(cell,node2)*dz;
 
-    double c0(0.5), c1(0.5);
-    if(depthIntegrated) {
-      c0 = 0.2; c1 = 0.8; //for n=3
-    }
+    const double c0 = c_bot, c1 = c_top;
 
     //computing the vertically averaged velocity at the triangles nodes
     ScalarT vel0[2] = {c0*vel(cell, node0, 0)+c1*vel(cell, node0p1, 0), c0*vel(cell, node0, 1)+c1*vel(cell, node0p1, 1)},
