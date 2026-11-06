@@ -246,15 +246,18 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
     }
   }
 
-  // Global states
+  // Global states. They have rank 1: they are scalars if dim[0]==1, and vectors of length
+  // dim[0] otherwise (see GenericSTKFieldContainer::addStateStruct).
   for (const auto& st : global_sis) {
+    TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()!=1, std::runtime_error,
+        "Error! Unsupported rank (" << st->dim.size() << ") for global state '" + st->name + "'.\n");
     auto& state = globalStates[st->name];
-    if (st->dim.size()==1) {
+    if (st->dim[0]==1) {
       state.reset_from_host_ptr(&mesh_scalar_states[st->name],1);
-    } else if (st->dim.size()==1) {
-      state.reset_from_host_ptr(mesh_vector_states[st->name].data(),st->dim[0]);
     } else {
-      throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
+      auto& values = mesh_vector_states[st->name];
+      values.resize(st->dim[0],0);
+      state.reset_from_host_ptr(values.data(),st->dim[0]);
     }
   }
 }
