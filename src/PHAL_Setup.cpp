@@ -84,6 +84,10 @@ bool Setup::contain_eval(const std::string& eval) const {
   return _setupEvals->count(eval) > 0;
 }
 
+void Setup::clear_evals() {
+  _setupEvals->clear();
+}
+
 void Setup::fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,
     const std::vector<Teuchos::RCP<PHX::FieldTag>>& evalFields, const bool saved) {
   if (_enableMemoization) {

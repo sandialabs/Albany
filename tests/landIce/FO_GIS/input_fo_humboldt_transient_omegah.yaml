@@ -1,16 +1,13 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Debug Output:
-    #Write Solution to MatrixMarket: -3
-    #Write Jacobian to MatrixMarket: -1
-    #Write Residual to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Transient
     Name: LandIce Coupled FO H 3D
     Compute Sensitivities: false
     Allow Loss Of Derivative Terms: true
+    Time Step: 2.0e-01
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true
@@ -65,7 +62,7 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography]
+    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
     Interpolate Basal Layered Fields: [temperature,velocity]
     Required Fields Info:
       Number Of Fields: 6
@@ -237,9 +234,12 @@ ANONYMOUS:
                           'fact: iluk level-of-fill': 0
                 Rescue Bad Newton Solve: true
             Line Search:
-              Full Step:
-                Full Step: 1.0
-              Method: Full Step
+              Method: Backtrack
+              Backtrack:
+                Max Iters: 20
+                Default Step: 1.0
+                Minimum Step: 1.0e-6
+                Reduction Factor: 0.5
             Nonlinear Solver: Line Search Based
             Printing:
               Output Precision: 3

@@ -13,6 +13,9 @@
 
 #include "Albany_NullSpaceUtils.hpp"
 
+#include <string>
+#include <vector>
+
 namespace Albany {
 
 class OmegahDiscretization : public AbstractDiscretization
@@ -81,11 +84,18 @@ public:
 
   void setNumEq (int neq) override;
 
+  // Called by ExtrudedDiscretization: the 'solution' tag on this (basal) mesh holds
+  // a whole column per vertex, as nlev groups of neq_per_level components. Enables
+  // unpacking into per level tags for vtk output.
+  void setSolutionLevels (const int neq_per_level, const int nlev);
+
+  void setSolutionComponents (const std::vector<std::pair<std::string,int>>& comps) override {
+    m_solution_components = comps;
+  }
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   Teuchos::RCP<Thyra_Vector>
-  getSolutionField(bool /* overlapped */ = false) const override {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,NotYetImplemented,"OmegahDiscretization::getSolutionField");
-  }
+  getSolutionField(bool overlapped = false) const override;
 
   void getSolutionMV (Thyra_MultiVector& solution, bool overlapped) const override;
   void getSolutionDxDp (Thyra_MultiVector& /* result */, bool /* overlapped */) const override
@@ -148,9 +158,27 @@ protected:
   void computeNodeSets ();
   void computeGraphs ();
 
+  // Write the mesh to vtk. If setSolutionLevels was called, the 'solution' tag is
+  // unpacked into per level tags by component (e.g., Velocity, ice_thickness_change),
+  // named <field>_level<ilev>, and the vtk file omits the packed 'solution' tag. The
+  // mesh tags are unchanged on return.
+  void writeVtkFile (const std::string& filename, const int cell_dim);
+
+  // Component grouping within one level of the 'solution' tag, in component order.
+  // Taken from setSolutionComponents if they cover a level, else one cmp<k> per component.
+  std::vector<std::pair<std::string,int>> solutionLevelFields () const;
+
+  // Return true if the per level tags were added.
+  bool addSolutionLevelTags ();
+  void removeSolutionLevelTags ();
+
   // ======================= Members ======================= //
 
   Teuchos::RCP<OmegahGenericMesh> m_mesh_struct;
+
+  std::vector<std::pair<std::string,int>> m_solution_components;
+  int m_neq_per_level = -1;
+  int m_num_levels    = -1;
 
   // TODO: move stuff below in base class?
   Teuchos::RCP<const Teuchos_Comm> m_comm;

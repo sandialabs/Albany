@@ -63,6 +63,10 @@ public:
 
   void setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm) override;
 
+  // Recompute the layered numbering horizontal entity counts from the basal mesh.
+  // Must be called whenever the basal mesh changes (e.g. after adaptation).
+  void updateHorizEntityCounts ();
+
   std::string get_basal_part_name (const std::string& part_name) const {
     return m_part_to_basal_part.at(part_name);
   }

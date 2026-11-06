@@ -50,7 +50,7 @@ public:
   Teuchos::RCP<AbstractMeshStruct> getMeshStruct() const override { return m_extruded_mesh; }
 
   //! Flag if solution has a restart values -- used in Init Cond
-  bool hasRestartSolution() const override { return false; }
+  bool hasRestartSolution() const override { return m_basal_disc->hasRestartSolution(); }
 
   //! If restarting, convenience function to return restart data time
   double restartDataTime() const override { return -1.0; }
@@ -66,6 +66,10 @@ public:
   int getNumDim() const override { return m_extruded_mesh->meshSpecs[0]->numDim; }
 
   void setNumEq (int neq) override;
+
+  void setSolutionComponents (const std::vector<std::pair<std::string,int>>& comps) override {
+    m_basal_disc->setSolutionComponents(comps);
+  }
 
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
@@ -115,6 +119,8 @@ public:
   Teuchos::RCP<ConnManager> create_conn_mgr (const std::string& part_name) override;
 
 protected:
+
+  Teuchos::ParameterList& getAdaptParams () override;
 
   void computeCoordinates();
   void createDOFManagers();

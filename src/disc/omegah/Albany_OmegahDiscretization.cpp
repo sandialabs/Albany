@@ -22,6 +22,10 @@
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 
+#include <algorithm>
+#include <map>
+#include <utility>
+
 using ExecutionSpace = PHX::ExecutionSpace;
 using MemorySpace = PHX::MemorySpace;
 
@@ -39,9 +43,22 @@ namespace {
     TEUCHOS_TEST_FOR_EXCEPTION (not mesh.has_tag(mesh.dim(), name), std::runtime_error,
       "Error! Adaptation indicator field '" + name + "' not found in the mesh.\n"
       "  - Make sure the problem registers it as an Elem Scalar state.\n");
-    auto array = mesh.get_array<Omega_h::Real>(mesh.dim(), name);
-    TEUCHOS_TEST_FOR_EXCEPTION (array.size() != mesh.nelems(), std::runtime_error,
-      "Error! " + name + " array should have one component per element.\n");
+    auto raw = mesh.get_array<Omega_h::Real>(mesh.dim(), name);
+    const int ncomps = mesh.get_tag<Omega_h::Real>(mesh.dim(), name)->ncomps();
+    TEUCHOS_TEST_FOR_EXCEPTION (raw.size() != mesh.nelems()*ncomps, std::runtime_error,
+      "Error! " + name + " array should have " + std::to_string(ncomps) + " component(s) per element.\n");
+    //A field computed on an extruded mesh is stored on the basal mesh with
+    //one component per layer; use the max over the layers.
+    Omega_h::Reals array = raw;
+    if (ncomps > 1) {
+      auto layerMax = Omega_h::Write<Omega_h::Real>(mesh.nelems());
+      Omega_h::parallel_for(mesh.nelems(), OMEGA_H_LAMBDA(const LO &e) {
+        Omega_h::Real m = raw[e*ncomps];
+        for (int c = 1; c < ncomps; ++c) m = Omega_h::max2(m, raw[e*ncomps+c]);
+        layerMax[e] = m;
+      });
+      array = layerMax;
+    }
     //Phalanx fills this memory with values for the indicator field for
     //**owned elements only**; indices corresponding to ghosted/unowned
     //elements are not included in the array.
@@ -55,8 +72,9 @@ namespace {
     return mesh.sync_array<Omega_h::Real>(mesh.dim(), reordered, 1);
   }
 
-  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh, Omega_h::Reals effectiveStrainRate) {
-    const auto tagName = std::string("effectiveStrainRate");
+  void addEffectiveStrainRateTag(Omega_h::Mesh &mesh,
+                                 Omega_h::Reals effectiveStrainRate,
+                                 const std::string& tagName) {
     auto synced = mesh.sync_array<Omega_h::Real>(mesh.dim(), effectiveStrainRate, 1);
     if( mesh.has_tag(mesh.dim(), tagName) ) {
       mesh.set_tag<Omega_h::Real>(mesh.dim(), tagName, synced);
@@ -162,6 +180,8 @@ updateMesh ()
 {
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
+  m_dof_managers.clear();
+  m_node_dof_managers.clear();
 
   // Create DOF managers
   auto sol_dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
@@ -505,6 +525,108 @@ void OmegahDiscretization::setNumEq (int neq)
   m_neq = neq;
 }
 
+void OmegahDiscretization::
+setSolutionLevels (const int neq_per_level, const int nlev)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (neq_per_level*nlev != m_neq, std::logic_error,
+      "Error! The per level component count must add up to neq.\n"
+      "  - neq_per_level: " << neq_per_level << "\n"
+      "  - nlev: " << nlev << "\n"
+      "  - neq: " << m_neq << "\n");
+  m_neq_per_level = neq_per_level;
+  m_num_levels    = nlev;
+}
+
+std::vector<std::pair<std::string,int>>
+OmegahDiscretization::solutionLevelFields () const
+{
+  if (m_neq_per_level<1) { return {}; }
+
+  bool use_components = not m_solution_components.empty();
+  int ncomps = 0;
+  for (const auto& [name,n] : m_solution_components) {
+    use_components &= n>0;
+    ncomps += n;
+  }
+  if (use_components and ncomps==m_neq_per_level) {
+    auto fields = m_solution_components;
+    for (auto& f : fields) {
+      std::replace(f.first.begin(),f.first.end(),' ','_');
+    }
+    return fields;
+  }
+
+  std::vector<std::pair<std::string,int>> fields;
+  for (int k=0; k<m_neq_per_level; ++k) {
+    fields.emplace_back("cmp" + std::to_string(k),1);
+  }
+  return fields;
+}
+
+bool OmegahDiscretization::addSolutionLevelTags ()
+{
+  const auto fields = solutionLevelFields();
+  if (fields.empty()) { return false; }
+
+  auto mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_solution_mfa);
+  if (mfa.is_null()) { return false; }
+  if (not m_mesh_struct->getOmegahMesh()->has_tag(Omega_h::VERT,solution_dof_name())) {
+    return false;
+  }
+
+  for (int ilev=0; ilev<m_num_levels; ++ilev) {
+    int cmp = ilev*m_neq_per_level;
+    for (const auto& [name,n] : fields) {
+      mfa->addVertexTagSlice(solution_dof_name(),
+                             name + "_level" + std::to_string(ilev),
+                             cmp, n);
+      cmp += n;
+    }
+  }
+  return true;
+}
+
+void OmegahDiscretization::removeSolutionLevelTags ()
+{
+  auto mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_solution_mfa);
+  if (mfa.is_null()) { return; }
+
+  for (int ilev=0; ilev<m_num_levels; ++ilev) {
+    for (const auto& [name,n] : solutionLevelFields()) {
+      mfa->removeVertexTag(name + "_level" + std::to_string(ilev));
+    }
+  }
+}
+
+void OmegahDiscretization::
+writeVtkFile (const std::string& filename, const int cell_dim)
+{
+  auto& mesh = *m_mesh_struct->getOmegahMesh();
+  const bool unpacked = addSolutionLevelTags();
+  auto tags = Omega_h::vtk::get_all_vtk_tags(&mesh, cell_dim);
+  if (unpacked) {
+    tags[Omega_h::VERT].erase(solution_dof_name());
+  }
+  try {
+    Omega_h::vtk::write_parallel(filename, &mesh, cell_dim, tags);
+  } catch (...) {
+    removeSolutionLevelTags();
+    throw;
+  }
+  removeSolutionLevelTags();
+}
+
+Teuchos::RCP<Thyra_Vector>
+OmegahDiscretization::
+getSolutionField (bool overlapped) const
+{
+  auto soln = Thyra::createMember(overlapped ? getOverlapVectorSpace()
+                                             : getVectorSpace());
+  auto accessor = m_mesh_struct->get_field_accessor();
+  accessor->fillVector(*soln,solution_dof_name(),getDOFManager(),overlapped);
+  return soln;
+}
+
 void
 OmegahDiscretization::
 getSolutionMV (Thyra_MultiVector& solution, bool /* overlapped */) const
@@ -599,7 +721,7 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
   checkAdaptCount++;
   auto adapt_data = Teuchos::rcp(new AdaptationData());
   auto mesh = m_mesh_struct->getOmegahMesh();
-  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_params = getAdaptParams();
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   if (adapt_type=="None") {
     return adapt_data;
@@ -653,7 +775,21 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
     }
     return adapt_data;
   } else if (mesh->dim() == 2) {
-    if (!isMeshfieldsEnabled()) {
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR" and adapt_type!="Test", std::runtime_error,
+        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+        " - valid choices for 2D: None, SPR, Test\n");
+
+    const bool isTest = adapt_type=="Test";
+    const bool isNullAdapt = adapt_params.get<bool>("Null Adapt",false);
+    const bool isRefineOnly = adapt_params.get<bool>("Refine Only",false);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (isTest and not (isNullAdapt or isRefineOnly), std::runtime_error,
+        "Error! Adaptation type 'Test' requires one of the debug knobs to be set.\n"
+        " - set 'Null Adapt' to leave the mesh unchanged and exercise only the rebuild\n"
+        " - set 'Refine Only' to refine by edge length ('Refine Only Max Length')\n"
+        " - use 'Type: SPR' to drive the adaptation from the error estimator instead\n");
+
+    if (not isTest and not isMeshfieldsEnabled()) {
       if (!mesh->comm()->rank()) {
         std::cout << "Warning: 2D Omega_h mesh adaptation requires Meshfields. "
           << "Configure Albany with ENABLE_MESHFIELDS=ON to enable it. "
@@ -661,75 +797,76 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
       }
       return adapt_data;
     }
-    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR", std::runtime_error,
-        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
-        " - valid choices for 2D: None, SPR\n");
 
     TEUCHOS_TEST_FOR_EXCEPTION (mesh->nents(2)==0, std::runtime_error,
         "Error! At least one process has no mesh elements.\n");
 
+    if( isNullAdapt || isRefineOnly ) {
+      adapt_data->type = AdaptationType::Topology;
+    } else {
 #ifdef ALBANY_MESHFIELDS
-    TEUCHOS_TEST_FOR_EXCEPTION (not adapt_params.isParameter("Indicator Field Name"), std::runtime_error,
-        "Error! SPR adaptation requires 'Indicator Field Name' in the 'Mesh Adaptivity' sublist.\n"
-        "  - This is the name of the Elem Scalar field driving the adaptation.\n");
-    const auto& indicator_name = adapt_params.get<std::string>("Indicator Field Name");
-    auto effectiveStrain = getIndicatorField(*mesh, indicator_name);
-    auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
-    mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
-        false, Omega_h::ArrayType::VectorND);
+      TEUCHOS_TEST_FOR_EXCEPTION (not adapt_params.isParameter("Indicator Field Name"), std::runtime_error,
+          "Error! SPR adaptation requires 'Indicator Field Name' in the 'Mesh Adaptivity' sublist.\n"
+          "  - This is the name of the Elem Scalar field driving the adaptation.\n");
+      const auto& indicator_name = adapt_params.get<std::string>("Indicator Field Name");
+      auto effectiveStrain = getIndicatorField(*mesh, indicator_name);
+      auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
+      mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
+          false, Omega_h::ArrayType::VectorND);
+      addEffectiveStrainRateTag(*mesh, effectiveStrain, indicator_name);
+
+      const auto MeshDim = 2;
+      const auto ShapeOrder = 1;
+      MeshField::OmegahMeshField<ExecutionSpace,
+        MeshDim,
+        MeshField::KokkosController> omf(*mesh);
+      auto fieldAndController = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
+      auto recoveredStrainField = fieldAndController.field;
+      setFieldAtVertices(*mesh, recoveredStrain, recoveredStrainField);
+
+      auto coordFieldAndController = omf.getCoordField();
+      auto coordField = coordFieldAndController.field;
+      const auto [shp, map] =
+        MeshField::Omegah::getTriangleElement<ShapeOrder>(*mesh);
+      MeshField::FieldElement coordFe(mesh->nelems(), coordField, shp, map);
+
+      const auto adaptRatio = adapt_params.get<double>("Adapt Ratio",0.1);
+      auto estimation =
+        MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
+
+      const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
+      const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
+      const auto verbose = adapt_params.get<bool>("Verbose",false);
+
+      if(verbose) {
+        //FIXME - should this be a per-rank output?
+        //      - does getSprSizeField have a reduction?
+        std::cout << "SPR Computed Error: " << error
+          << " Error Threshold: " << errorThreshold << '\n';
+      }
+      if( error > errorThreshold ) {
+        Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
+        mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
+            Omega_h::ArrayType::VectorND);
+
+        if(verbose) printTriCount(*mesh, "beforeAdapt");
+        adapt_data->type = AdaptationType::Topology;
+      }
+#endif //ALBANY_MESHFIELDS
+    }
 
     const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
     if( writeVtk ) {
-      addEffectiveStrainRateTag(*mesh, effectiveStrain);
       const auto outname = std::string("checkForAdaptation") + std::to_string(checkAdaptCount);
       const std::string vtkFileName = outname + ".vtk";
-      Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+      writeVtkFile(vtkFileName, mesh->dim());
       if (mesh->dim() == 2) {
         const std::string vtkFileName_edges = outname + "_edges.vtk";
-        Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+        writeVtkFile(vtkFileName_edges, Omega_h::EDGE);
       }
     }
 
-    const auto MeshDim = 2;
-    const auto ShapeOrder = 1;
-    MeshField::OmegahMeshField<ExecutionSpace,
-                               MeshDim,
-                               MeshField::KokkosController> omf(*mesh);
-    auto fieldAndController = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
-    auto recoveredStrainField = fieldAndController.field;
-    setFieldAtVertices(*mesh, recoveredStrain, recoveredStrainField);
-
-    auto coordFieldAndController = omf.getCoordField();
-    auto coordField = coordFieldAndController.field;
-    const auto [shp, map] =
-      MeshField::Omegah::getTriangleElement<ShapeOrder>(*mesh);
-    MeshField::FieldElement coordFe(mesh->nelems(), coordField, shp, map);
-
-    const auto adaptRatio = adapt_params.get<double>("Adapt Ratio",0.1);
-    auto estimation =
-      MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
-
-    const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
-    const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
-    const auto verbose = adapt_params.get<bool>("Verbose",false);
-
-    if(verbose) {
-      //FIXME - should this be a per-rank output?
-      //      - does getSprSizeField have a reduction?
-      std::cout << "SPR Computed Error: " << error
-                << " Error Threshold: " << errorThreshold << '\n';
-    }
-    if( error > errorThreshold ) { //trigger adaptation
-      Omega_h::Write<Omega_h::Real> tgtLength_oh(tgtLength);
-      mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "tgtLength", 1, tgtLength_oh, false,
-          Omega_h::ArrayType::VectorND);
-
-
-      if(verbose) printTriCount(*mesh, "beforeAdapt");
-      adapt_data->type = AdaptationType::Topology;
-    }
     return adapt_data;
-#endif //ALBANY_MESHFIELDS
   } else { //meshdim != 1 && meshdim != 2
     if (!mesh->comm()->rank()) {
       std::cout << "Only 1D and 2D (with Meshfields enabled) Omega_h mesh "
@@ -757,7 +894,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->nghost_layers()<1, std::runtime_error,
       "Error! Adaptation requires a ghosted omegah mesh with at least one layer\n");
 
-  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_params = getAdaptParams();
   const auto verbose = adapt_params.get<bool>("Verbose",false);
   const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
@@ -770,10 +907,10 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
     }
     const auto outname = std::string("before_adapt") + std::to_string(adaptCount);
     const std::string vtkFileName = outname + ".vtk";
-    Omega_h::vtk::write_parallel(vtkFileName, &(*ohMesh), ohMesh->dim());
+    writeVtkFile(vtkFileName, ohMesh->dim());
     if (ohMesh->dim() == 2) {
       const std::string vtkFileName_edges = outname + "_edges.vtk";
-      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*ohMesh), Omega_h::EDGE);
+      writeVtkFile(vtkFileName_edges, Omega_h::EDGE);
     }
   }
 
@@ -810,37 +947,96 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
         std::cout << "mesh now has " << nelems << " total elements\n";
       }
     }
-  } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
+  } else if (ohMesh->dim() == 2 && (isMeshfieldsEnabled() || adapt_params.get<std::string>("Type","None")=="Test")) {
 
     Omega_h::AdaptOpts opts(&(*ohMesh));
     opts.verbosity = (verbose ? Omega_h::EACH_ADAPT : Omega_h::SILENT);
+
+    // Omega_h only carries over the tags listed in xfer_opts; any other tag is simply
+    // dropped from the adapted mesh, and would later be re-allocated zero-filled.
+    // Register every nodal field for linear interpolation, so that fields read from
+    // file at startup (ice_thickness, surface_height, ...) survive the adaptation.
+    // This covers the solution and its time derivatives too, since they are nodal.
+    auto omegah_mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
+    for (const auto& fname : omegah_mfa->get_nodal_field_names()) {
+      opts.xfer_opts.type_map[fname] = OMEGA_H_LINEAR_INTERP;
+    }
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
 
-    const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
-    const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
-    const auto min_size = adapt_params.get<double>("Minimum Edge Length",0.08);
-    const auto max_size = adapt_params.get<double>("Maximum Edge Length",1.0);
-    auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
-    Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
+    if (adapt_params.get<bool>("Null Adapt",false)) {
+      // Debug knob: do not touch the mesh at all, but still run everything that follows
+      // an adaptation (gid invalidation, workset/dof mgr rebuild, node/side set rebuild,
+      // field transfer read-back, refreshFieldManagers). The adapted mesh is identical
+      // to the old one, element for element, so a correct rebuild must reproduce the
+      // pre-adapt residual exactly. If ||F|| still blows up, the defect is in the
+      // rebuild path, not in anything the adaptation does to the mesh.
+      if (!ohMesh->comm()->rank()) {
+        std::cout << "WARNING! 'Null Adapt' is on: the mesh is left unchanged and only "
+                     "the post-adaptation rebuild is exercised.\n";
+      }
+    } else if (adapt_params.get<bool>("Refine Only",false)) {
+      if (!ohMesh->comm()->rank()) {
+        std::cout << "WARNING! 'Refine Only' is on: refining by edge length rather than "
+                     "by a computed size field.\n";
+      }
+      if (!ohMesh->has_tag(Omega_h::VERT,"metric")) {
+        Omega_h::add_implied_metric_tag(ohMesh.get());
+      }
+      opts.max_length_desired = adapt_params.get<double>("Refine Only Max Length",0.8);
+      opts.should_coarsen         = false;
+      opts.should_swap            = false;
+      opts.should_coarsen_slivers = false;
+      opts.min_length_desired  = 0.0;
+      opts.min_quality_desired = 0.0;
+      opts.min_quality_allowed = 0.0;
+      Omega_h::adapt(ohMesh.get(), opts);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (!ohMesh->has_tag(Omega_h::VERT,"tgtLength"), std::runtime_error,
+          "Error! Adaptation was requested, but no 'tgtLength' size field was computed.\n"
+          " - this is the SPR size field, written by checkForAdaptation for 'Type: SPR'\n");
+      const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
+      const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
+      const auto min_size = adapt_params.get<double>("Minimum Edge Length",0.08);
+      const auto max_size = adapt_params.get<double>("Maximum Edge Length",1.0);
+      auto metric = Omega_h::clamp_metrics(ohMesh->nverts(), isos, min_size, max_size);
+      Omega_h::grade_fix_adapt(&(*ohMesh), opts, metric, verbose);
+    }
 
     if(verbose) printTriCount(*ohMesh, "afterAdapt");
   }
 
   if( writeVtk ) {
     std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
-    Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
+    writeVtkFile(afterAdaptName, ohMesh->dim());
+    std::string afterAdaptNameOsh = "after_adapt" + std::to_string(adaptCount) + ".osh";
+    Omega_h::binary::write(afterAdaptNameOsh, ohMesh.get());
   }
 
   //adaptation requires ghosting and calls to adapt() don't preserve it
   ohMesh->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
 
+  //the entity counts and gids changed, so drop the cached max node/elem gids
+  //and recompute the workset size from the new element count
+  m_mesh_struct->invalidateCachedMaxGids();
+  m_mesh_struct->updateWorksetSize();
+
   //create node and side set tags
   m_mesh_struct->createNodeSets();
-  m_mesh_struct->createSideSets();
+  if (ohMesh->dim()-1 > 0) {
+    m_mesh_struct->createSideSets();
+  }
 
   //update coordinates
   m_mesh_struct->setCoordinates();
+
+  if( writeVtk ) {
+    // Write again now that the node/side set tags have been regenerated: the
+    // 'after_adapt' file above is written before createNodeSets/createSideSets run,
+    // so those tags are necessarily missing from it.
+    std::string name = "after_adapt_sets" + std::to_string(adaptCount) + ".vtk";
+    writeVtkFile(name, ohMesh->dim());
+  }
 
   auto omegah_mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
   omegah_mfa->reset_mesh_tags();
@@ -938,10 +1134,10 @@ writeMeshDatabaseToFile (const double time,
       *out << " to file " << vtkFileName << std::endl;
     }
     const auto mesh = m_mesh_struct->getOmegahMesh();
-    Omega_h::vtk::write_parallel(vtkFileName, &(*mesh), mesh->dim());
+    writeVtkFile(vtkFileName, mesh->dim());
     if (mesh->dim() == 2) {
       const std::string vtkFileName_edges = outname + "_edges.vtk";
-      Omega_h::vtk::write_parallel(vtkFileName_edges, &(*mesh), Omega_h::EDGE);
+      writeVtkFile(vtkFileName_edges, Omega_h::EDGE);
     }
   }
   outputInterval++;

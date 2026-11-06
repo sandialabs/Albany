@@ -102,6 +102,8 @@ public:
   void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
                      Albany::StateManager& stateMgr);
 
+  std::vector<std::pair<std::string,int>> getSolutionComponents() const override;
+
 protected:
   StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const Teuchos::RCP<Teuchos::ParameterList>& discParams_,

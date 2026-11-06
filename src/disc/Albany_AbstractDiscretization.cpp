@@ -68,7 +68,7 @@ checkForAdaptation (const Teuchos::RCP<const Thyra_Vector>& solution,
                     const Teuchos::RCP<const Thyra_MultiVector>& dxdp,
                     const bool is_first_time_step)
 {
-  auto& adapt_pl = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_pl = getAdaptParams();
   if (is_first_time_step and adapt_pl.get<bool>("Skip First Time Step",true))
     return Teuchos::rcp(new AdaptationData());
 
