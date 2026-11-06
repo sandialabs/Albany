@@ -318,7 +318,15 @@ void OmegahMeshFieldAccessor::transferNodeStatesToElemStates ()
 void OmegahMeshFieldAccessor::
 transferElemStateToNodeState (const std::string& name)
 {
-  // Inverse of transferNodeStatesToElemStates, for a single state
+  // Inverse of transferNodeStatesToElemStates, for a single state.
+  // The (Cell,Node[,...]) elem state holds, for each element, the values at its nodes. The elements
+  // containing a node can hold different values (e.g., if they are computed with element quantities,
+  // like the flow rate used in the nodal basal friction coefficient). Each nodal value is set to the
+  // average over all the elements containing the node, including the elements owned by other ranks,
+  // so that the nodal field depends neither on the order in which elements are visited nor on the
+  // partition, and all the copies of a node agree. Where the elements agree, the nodal value is
+  // unchanged (up to round-off). Same as GenericSTKFieldContainer::transferElemStateToNodeState.
+  // NOTE: this communicates with the other ranks, so all ranks must call it.
   const auto st = nodal_sis.find(name,false);
   TEUCHOS_TEST_FOR_EXCEPTION (st.is_null(), std::runtime_error,
       "[OmegahMeshFieldAccessor::transferElemStateToNodeState] Error! '" + name + "' is not a nodal state.\n");
@@ -340,15 +348,18 @@ transferElemStateToNodeState (const std::string& name)
     ncomp *= dim[i];
   }
 
-  // Start from the current tag values, so that nodes not in the closure of owned elems keep their
-  // values (they are fixed by the sync below anyways).
   const auto tag = m_mesh->get_tag<ST>(0,name);
   TEUCHOS_TEST_FOR_EXCEPTION (tag==nullptr or tag->ncomps()!=ncomp, std::logic_error,
       "Error! Mesh tag for nodal state '" + name + "' is missing or has the wrong number of components.\n");
-  auto old_state_h  = hostRead(tag->array());
-  auto node_state_h = hostWrite<ST>(old_state_h.size(),name);
-  for (int i=0; i<old_state_h.size(); ++i) {
-    node_state_h[i] = old_state_h[i];
+
+  // 1. For each node, accumulate the sum of the values of the owned elements containing it (first
+  //    ncomp entries) and their number (last entry). Elements are visited only by their owner, so
+  //    each element is counted once over all ranks.
+  const int nverts = m_mesh->nverts();
+  const int width  = ncomp+1;
+  auto sums_h = hostWrite<ST>(nverts*width,name+"_sums");
+  for (int i=0; i<sums_h.size(); ++i) {
+    sums_h[i] = 0;
   }
 
   auto elem_nodes_h = hostRead(OmegahGhost::getDownAdjacentEntsInClosureOfOwnedElms(*m_mesh, Omega_h::VERT));
@@ -361,28 +372,45 @@ transferElemStateToNodeState (const std::string& name)
       const int global_elem_idx = elem_offset + i;
       for (int j=0; j<num_elem_nodes; ++j) {
         const auto node_lid = elem_nodes_h[global_elem_idx*num_elem_nodes+j];
+        ST* node_sums = &sums_h[node_lid*width];
         switch (rank) {
           case 2:
-            node_state_h[node_lid] = elem_state_h(i,j);
+            node_sums[0] += elem_state_h(i,j);
             break;
           case 3:
             for (size_t k=0; k<dim[2]; ++k) {
-              node_state_h[node_lid*dim[2]+k] = elem_state_h(i,j,k);
+              node_sums[k] += elem_state_h(i,j,k);
             } break;
           case 4:
             for (size_t k=0; k<dim[2]; ++k) {
               for (size_t l=0; l<dim[3]; ++l) {
-                node_state_h[node_lid*dim[2]*dim[3]+k*dim[3]+l] = elem_state_h(i,j,k,l);
+                node_sums[k*dim[3]+l] += elem_state_h(i,j,k,l);
               }
             } break;
         }
+        node_sums[ncomp] += 1;
       }
     }
     elem_offset += ws_num_elems;
   }
 
+  // 2. Sum the partial sums of all the copies of each node into its owner, then copy the result
+  //    back to all the copies (including ghosts)
+  auto sums = m_mesh->reduce_array(0,Omega_h::read(sums_h.write()),width,OMEGA_H_SUM);
+  sums = m_mesh->sync_array(0,sums,width);
+  auto tot_h = hostRead(sums);
+
+  // 3. Average. Nodes not contained in any element (if any) keep their current value
+  auto old_state_h  = hostRead(tag->array());
+  auto node_state_h = hostWrite<ST>(nverts*ncomp,name);
+  for (int n=0; n<nverts; ++n) {
+    const ST count = tot_h[n*width+ncomp];
+    for (int c=0; c<ncomp; ++c) {
+      node_state_h[n*ncomp+c] = count>0 ? tot_h[n*width+c]/count : old_state_h[n*ncomp+c];
+    }
+  }
+
   m_mesh->set_tag(0,name,Omega_h::read(node_state_h.write()),false);
-  m_mesh->sync_tag(0,name); //update ghosts
 }
 
 void OmegahMeshFieldAccessor::
