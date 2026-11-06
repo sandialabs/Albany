@@ -21,10 +21,18 @@
 // orderings, non-contiguous global ids and ranks with no triangles.
 //
 // The tests write albany_input.yaml (the file the interface reads) in the working directory.
+//
+// The interface can use two meshes, selected by the Discretization Method in albany_input.yaml: the
+// logically extruded mesh ("Extruded", the default) and the 3D STK mesh ("STKExtruded"). The option
+// --disc-method sets the Method the tests write (by default, none: the interface default). The tests
+// that compare the two meshes, or check what only one of them does, set the Method themselves, and
+// run only in the run with the default Method.
 
 #include "MockMPAS.hpp"
 
 #include <Teuchos_UnitTestHarness.hpp>
+#include <Teuchos_UnitTestRepository.hpp>
+#include <Teuchos_CommandLineProcessor.hpp>
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
@@ -46,6 +54,22 @@ namespace {
 using namespace mock_mpas;
 
 const MPI_Comm comm = MPI_COMM_WORLD;
+
+// Discretization Method written in albany_input.yaml (empty: none, i.e., the interface default)
+std::string discMethod;
+
+TEUCHOS_STATIC_SETUP()
+{
+  Teuchos::UnitTestRepository::getCLP().setOption("disc-method", &discMethod,
+      "Discretization Method written in albany_input.yaml: Extruded or STKExtruded (default: none, i.e., the "
+      "interface default, Extruded)");
+}
+
+// Whether the tests use the logically extruded mesh
+bool usingExtrudedMesh () { return discMethod.empty() || discMethod=="Extruded"; }
+
+// Whether this is the run with the default Discretization Method (see the comment at the top)
+bool isDefaultMethodRun () { return discMethod.empty(); }
 
 // ============================================ Helpers ============================================ //
 
@@ -126,8 +150,8 @@ const std::string piroInput = R"(  Piro:
 )";
 
 // Writes albany_input.yaml in the working directory. problemBody holds the entries of the "Problem"
-// sublist, indented by 4 spaces. Collective.
-void writeAlbanyInput (const std::string& problemBody)
+// sublist, indented by 4 spaces. method is the Discretization Method (if empty, none is written). Collective.
+void writeAlbanyInput (const std::string& problemBody, const std::string& method = discMethod)
 {
   int rank;
   MPI_Comm_rank(comm, &rank);
@@ -136,9 +160,14 @@ void writeAlbanyInput (const std::string& problemBody)
     ofs << "%YAML 1.1\n---\nANONYMOUS:\n"
         << "  Problem:\n"
         << "    Solution Method: Steady\n"
-        << problemBody
-        << "  Discretization: {}\n"
-        << piroInput;
+        << problemBody;
+    if (method.empty()) {
+      ofs << "  Discretization: {}\n";
+    } else {
+      ofs << "  Discretization:\n"
+          << "    Method: " << method << "\n";
+    }
+    ofs << piroInput;
   }
   MPI_Barrier(comm);
 }
@@ -556,6 +585,10 @@ TEUCHOS_UNIT_TEST(MPASInterface, DepthIntegratedSetup)
   const auto& rfi = paramList->sublist("Discretization").sublist("Required Fields Info");
   const auto temperature = findRequiredField(rfi,"temperature");
   TEST_ASSERT(temperature!=nullptr && temperature->get<std::string>("Field Type")=="QuadPoint Scalar");
+  if (usingExtrudedMesh()) {
+    // Albany's mesh has one layer (and the MPAS temperature is evaluated at the cubature points)
+    TEST_EQUALITY(paramList->sublist("Discretization").get<int>("NumLayers"), 1);
+  }
 
   writeAlbanyInput(
     "    Depth Integrated Model: true\n"
@@ -567,11 +600,15 @@ TEUCHOS_UNIT_TEST(MPASInterface, DepthIntegratedSetup)
 
 // FO slab, n=1, uniform flow rate from MPAS: u(sigma) = A*rho*g*slope*H^2*(1-(1-sigma)^2)/(phi*kappa),
 // where A is the flow rate factor in MPAS units ([k^-1 kPa^-n yr^-1], which are Albany's) and phi the
-// stiffening factor. Checks velocity, dissipation, body force, beta and effective pressure, with a
-// scattered partition.
-TEUCHOS_UNIT_TEST(MPASInterface, SlabFOUniformFlowRate)
+// stiffening factor. Checks velocity, dissipation, body force, beta and effective pressure.
+// The Dirichlet nodes are those of options (the exact solution is prescribed there). problemInput is added
+// to the Problem sublist of albany_input.yaml, and method is the Discretization Method. If given,
+// checkParameters is called after the solve, while the interface still holds its parameter list.
+void checkSlabFOUniformFlowRate (const MeshOptions& options, const std::string& problemInput,
+                                 const std::string& method, Teuchos::FancyOStream& out, bool& success,
+                                 const std::function<void()>& checkParameters = {})
 {
-  MockMPAS mpas(comm, slabMesh(PartitionType::Scattered, 0, true));
+  MockMPAS mpas(comm, options);
   InterfaceSession session;
   PhysicalParameters p;
   p.gravity = 9.81;
@@ -583,7 +620,7 @@ TEUCHOS_UNIT_TEST(MPASInterface, SlabFOUniformFlowRate)
   writeAlbanyInput(
     "    LandIce Viscosity:\n"
     "      Flow Rate Type: Uniform\n"
-    "      \"Glen's Law Homotopy Parameter\": 1.0\n");
+    "      \"Glen's Law Homotopy Parameter\": 1.0\n" + problemInput, method);
 
   const SlabGeometry g;
   const double phi = 1.25;
@@ -623,6 +660,155 @@ TEUCHOS_UNIT_TEST(MPASInterface, SlabFOUniformFlowRate)
   TEST_COMPARE(e.bodyForce, <, 1e-10);
   TEST_COMPARE(e.beta, <, 1e-12);
   TEST_COMPARE(e.effectivePressure, <, 1e-14);
+
+  if (checkParameters && mpas.isActive()) {
+    checkParameters();
+  }
+}
+
+// FO slab with uniform flow rate, with a scattered partition
+TEUCHOS_UNIT_TEST(MPASInterface, SlabFOUniformFlowRate)
+{
+  checkSlabFOUniformFlowRate(slabMesh(PartitionType::Scattered, 0, true), "", discMethod, out, success);
+}
+
+// FO slab with uniform flow rate, with the column-wise ordering of the 3D entities passed by MPAS (MALI only
+// uses the layer-wise one), a block partition and (in parallel) a rank without triangles
+TEUCHOS_UNIT_TEST(MPASInterface, SlabFOColumnwiseOrdering)
+{
+  auto options = slabMesh(PartitionType::Blocks, 1, true);
+  options.ordering = 1;
+  checkSlabFOUniformFlowRate(options, "", discMethod, out, success);
+}
+
+// Input files written for the 3D STK mesh refer to its node set "dirichlet" (in the Dirichlet BCs) and side
+// set "ice_margin_side" (in the LandIce BCs). With the logically extruded mesh, the interface applies them on
+// the corresponding node sets and side set of that mesh: the FO slab (whose Dirichlet nodes are the lateral
+// columns and the bed) is still solved exactly.
+TEUCHOS_UNIT_TEST(MPASInterface, BackwardCompatibleInput)
+{
+  const std::string problemInput =
+    "    Dirichlet BCs:\n"
+    "      SDBC on NS dirichlet for DOF U0 prescribe Field: dirichlet_field\n"
+    "      SDBC on NS dirichlet for DOF U1 prescribe Field: dirichlet_field\n"
+    "    LandIce BCs:\n"
+    "      BC 1:\n"
+    "        Side Set Name: ice_margin_side\n";
+  auto checkParameters = [&]() {
+    TEST_ASSERT(Teuchos::nonnull(paramList));
+    if (Teuchos::is_null(paramList)) return;
+    const auto& problem = paramList->sublist("Problem");
+    const auto& dbcs = problem.sublist("Dirichlet BCs");
+    const auto& lateralSideSet = problem.sublist("LandIce BCs").sublist("BC 1").get<std::string>("Side Set Name");
+    for (const std::string dof : {"U0", "U1"}) {
+      const std::string oldName = "SDBC on NS dirichlet for DOF " + dof + " prescribe Field";
+      if (usingExtrudedMesh()) {
+        TEST_ASSERT(!dbcs.isParameter(oldName));
+        for (const std::string ns : {"extruded_dirichlet", "basal_dirichlet_bed"}) {
+          const std::string newName = "SDBC on NS " + ns + " for DOF " + dof + " prescribe Field";
+          TEST_ASSERT(dbcs.isParameter(newName) && dbcs.get<std::string>(newName)=="dirichlet_field");
+        }
+      } else {
+        TEST_ASSERT(dbcs.isParameter(oldName));
+      }
+    }
+    TEST_EQUALITY(lateralSideSet, std::string(usingExtrudedMesh() ? "extruded_ice_margin_side" : "ice_margin_side"));
+  };
+  checkSlabFOUniformFlowRate(slabMesh(PartitionType::Strips, 0, true), problemInput, discMethod, out, success,
+                             checkParameters);
+}
+
+// The logically extruded mesh supports, at each MPAS vertex, Dirichlet nodes on the whole column or at the
+// bed only. Other patterns (here: the bed and the surface of the interior vertices) are rejected (on all
+// ranks), while the 3D STK mesh supports them: with it, the FO slab is still solved exactly.
+TEUCHOS_UNIT_TEST(MPASInterface, UnsupportedDirichletPattern)
+{
+  if (!isDefaultMethodRun()) {
+    out << "  Skipped: this test sets the Discretization Method itself.\n";
+    return;
+  }
+  auto options = slabMesh(PartitionType::Strips, 0, false);
+  const int numLayers = options.numLayers;
+  options.isDirichletNode = [numLayers](const Point&, int il, bool isBoundaryVertex) {
+    return isBoundaryVertex || il==0 || il==numLayers;
+  };
+  {
+    MockMPAS mpas(comm, options);
+    InterfaceSession session;
+    setPhysicalParameters(PhysicalParameters());
+    writeAlbanyInput("", "Extruded");
+    mpas.computeGrid();
+    TEST_THROW(mpas.extrudeGrid(), std::runtime_error);
+  }
+  checkSlabFOUniformFlowRate(options, "", "STKExtruded", out, success);
+}
+
+// The settings that depend on the mesh. With the logically extruded mesh, the 3D fields set by MPAS have
+// basal counterparts (extruded or interpolated), and the default BCs use the node sets and side sets of
+// that mesh. An unknown Method is rejected.
+TEUCHOS_UNIT_TEST(MPASInterface, MeshParameters)
+{
+  MockMPAS mpas(comm, slabMesh(PartitionType::Strips, 0, true));
+  InterfaceSession session;
+  setPhysicalParameters(PhysicalParameters());
+
+  writeAlbanyInput("");
+  mpas.computeGrid();
+  mpas.extrudeGrid();
+  TEST_ASSERT(Teuchos::nonnull(paramList));
+  {
+    const auto& problem = paramList->sublist("Problem");
+    const auto& disc = paramList->sublist("Discretization");
+    const auto& dbcs = problem.sublist("Dirichlet BCs");
+    const auto& basal = disc.sublist("Side Set Discretizations").sublist("basalside");
+    const auto& basalRFI = basal.sublist("Required Fields Info");
+    const auto& lateralSideSet = problem.sublist("LandIce BCs").sublist("BC 1").get<std::string>("Side Set Name");
+    if (usingExtrudedMesh()) {
+      TEST_EQUALITY(disc.get<std::string>("Method"), std::string("Extruded"));
+      TEST_EQUALITY(disc.get<int>("NumLayers"), mpas.numLayers());
+      TEST_EQUALITY(disc.get<bool>("Columnwise Ordering"), true);
+      TEST_ASSERT(!basal.isParameter("Method"));  // the interface builds the basal mesh
+
+      using Names = Teuchos::Array<std::string>;
+      auto contains = [](const Names& names, const std::string& name) {
+        return std::find(names.begin(), names.end(), name)!=names.end();
+      };
+      const auto& extruded = disc.get<Names>("Extrude Basal Fields");
+      const auto& interpolated = disc.get<Names>("Interpolate Basal Layered Fields");
+      for (const std::string name : {"ice_thickness", "surface_height", "stiffening_factor_log"}) {
+        const auto field = findRequiredField(basalRFI, name);
+        TEST_ASSERT(field!=nullptr && field->get<std::string>("Field Type")=="Node Scalar");
+        TEST_ASSERT(contains(extruded, name));
+      }
+      // The temperature is given on the MPAS layers, the Dirichlet velocity on the MPAS levels
+      const auto temperature = findRequiredField(basalRFI, "temperature");
+      TEST_ASSERT(temperature!=nullptr && temperature->get<std::string>("Field Type")=="Elem Layered Scalar" &&
+                  temperature->get<int>("Number Of Layers")==mpas.numLayers());
+      TEST_ASSERT(contains(interpolated, "temperature"));
+      const auto dirichlet = findRequiredField(basalRFI, "dirichlet_field");
+      TEST_ASSERT(dirichlet!=nullptr && dirichlet->get<std::string>("Field Type")=="Node Layered Vector" &&
+                  dirichlet->get<int>("Number Of Layers")==mpas.numLayers()+1 && dirichlet->get<int>("Vector Dim")==2);
+      TEST_ASSERT(contains(interpolated, "dirichlet_field"));
+
+      for (const std::string ns : {"extruded_dirichlet", "basal_dirichlet_bed"}) {
+        for (const std::string dof : {"U0", "U1"}) {
+          TEST_ASSERT(dbcs.isParameter("SDBC on NS " + ns + " for DOF " + dof + " prescribe Field"));
+        }
+      }
+      TEST_EQUALITY(lateralSideSet, std::string("extruded_ice_margin_side"));
+    } else {
+      TEST_EQUALITY(disc.get<std::string>("Method"), std::string("STKExtruded"));
+      TEST_EQUALITY(basal.get<std::string>("Method"), std::string("SideSetSTK"));
+      TEST_ASSERT(findRequiredField(basalRFI, "temperature")==nullptr);
+      TEST_ASSERT(dbcs.isParameter("SDBC on NS dirichlet for DOF U0 prescribe Field"));
+      TEST_ASSERT(dbcs.isParameter("SDBC on NS dirichlet for DOF U1 prescribe Field"));
+      TEST_EQUALITY(lateralSideSet, std::string("ice_margin_side"));
+    }
+  }
+
+  writeAlbanyInput("", "Ioss");
+  mpas.computeGrid();
+  TEST_THROW(mpas.extrudeGrid(), std::runtime_error);
 }
 
 // FO slab, n=1, temperature-based flow rate with a temperature that changes with the layer, and the gas
@@ -929,6 +1115,48 @@ TEUCHOS_UNIT_TEST(MPASInterface, DeprecatedAPI)
   TEST_COMPARE(betaDiff, <, 1e-12);
   TEST_COMPARE(dissDiff, <, 1e-8);
   TEST_COMPARE(bfDiff, <, 1e-12);
+}
+
+// The logically extruded mesh and the 3D STK mesh discretize the problem in the same way, so they give the
+// same results (up to the solver tolerances, since the dofs are numbered differently), with the FO and the
+// depth-integrated models.
+TEUCHOS_UNIT_TEST(MPASInterface, MeshMethodsAgree)
+{
+  if (!isDefaultMethodRun()) {
+    out << "  Skipped: this test sets the Discretization Method itself.\n";
+    return;
+  }
+  for (bool depthIntegrated : {false, true}) {
+    out << "  " << (depthIntegrated ? "Depth-integrated" : "FO") << " model:\n";
+    FieldData fSTK, fExtruded;
+    int error = 0;
+    for (const std::string method : {"STKExtruded", "Extruded"}) {
+      MockMPAS mpas(comm, slabMesh(PartitionType::Scattered, 0, false));
+      InterfaceSession session;
+      setPhysicalParameters(slidingSlabParameters());
+      writeAlbanyInput(slidingSlabInput + (depthIntegrated ? "    Depth Integrated Model: true\n" : ""), method);
+      auto& f = (method=="Extruded") ? fExtruded : fSTK;
+      if (mpas.isActive()) {
+        mpas.computeGrid();
+        mpas.extrudeGrid();
+        setSlidingSlabFields(mpas, slidingSlabState(1), 1, f);
+        error = std::max(error, mpas.solve(f, true, 1.0));
+      }
+    }
+    TEST_EQUALITY(globalMax(error), 0);
+
+    // The grids of the two runs are the same (same options and seed), and so are the layouts of the fields
+    const double velDiff  = globalRelDiff(fExtruded.velocityOnVertices, fSTK.velocityOnVertices);
+    const double betaDiff = globalRelDiff(fExtruded.beta, fSTK.beta);
+    const double bfDiff   = globalRelDiff(fExtruded.bodyForceOnBasalCell, fSTK.bodyForceOnBasalCell);
+    const double dissDiff = globalRelDiff(fExtruded.dissipationHeatOnPrisms, fSTK.dissipationHeatOnPrisms);
+    out << "    relative differences: velocity " << velDiff << ", beta " << betaDiff
+        << ", body force " << bfDiff << ", dissipation " << dissDiff << "\n";
+    TEST_COMPARE(velDiff, <, 1e-7);
+    TEST_COMPARE(betaDiff, <, 1e-10);
+    TEST_COMPARE(bfDiff, <, 1e-10);
+    TEST_COMPARE(dissDiff, <, 1e-6);
+  }
 }
 
 // Values of a vertex field at the owned vertices of all ranks, by global vertex id. Collective.
