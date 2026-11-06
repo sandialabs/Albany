@@ -52,7 +52,8 @@ public:
   // 3d nodal states are stored ONLY as (Cell,Node[,...]) elem states, since there is
   // no 3d mesh database. For 3d nodal states that are neither extruded nor interpolated,
   // this copies the 3d elem state into the basal layered nodal state registered in
-  // addStateStruct, and then into the basal mesh nodal field. Otherwise, it's a no-op.
+  // addStateStruct (averaging the two layers sharing each interior level), and then into
+  // the basal mesh nodal field (averaging over the basal elems). Otherwise, it's a no-op.
   void transferElemStateToNodeState (const std::string& name) override;
 
   // Read from mesh methods

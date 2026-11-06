@@ -236,8 +236,12 @@ transferElemStateToNodeState (const std::string& name)
 
   // Copy (Cell3d,Node3d[,Dim]) into the basal (Cell2d,Node2d[,Dim],Level) elem state. This is the
   // inverse of the nodal case in interpolateBasalLayeredFields. In the 3d elem, nodes [0,nb) are
-  // at the bottom (level il) and nodes [nb,2nb) at the top (level il+1). Interior levels are
-  // written twice (from the layers below and above), with the same values.
+  // at the bottom (level il) and nodes [nb,2nb) at the top (level il+1). Interior levels belong to
+  // the 3d elems of the layers below and above, which can hold different values (e.g., if they are
+  // computed with elem quantities), so we store their average. The basal mesh then averages over
+  // the basal elems containing each node, and over the ranks. Since, at a given level, each basal
+  // elem contributes the same number of 3d elems (one or two), each nodal value is the average
+  // over all the 3d elems containing the node, like in the STK and Omega_h meshes.
   auto& basal_states = m_basal_field_accessor->getElemStates();
   const int num_ws = basal_states.size();
   const int num_elem_layers = m_elem_numbering_lid->numLayers;
@@ -249,17 +253,19 @@ transferElemStateToNodeState (const std::string& name)
     const int nb = view_h.extent_int(1) / 2;
     const int num_basal_elems = bview_h.extent_int(0);
     const int ncomps = rank==3 ? view_h.extent_int(2) : 1;
+    Kokkos::deep_copy(bview_h,0.0);
     for (int ie=0; ie<num_basal_elems; ++ie) {
       for (int il=0; il<num_elem_layers; ++il) {
         const int ie3d = m_elem_numbering_lid->getId(ie,il);
         for (int side : {0,1}) { // 0=elem-bottom, 1=elem-top
           const int lev = il+side;
+          const double w = (lev==0 or lev==num_elem_layers) ? 1.0 : 0.5;
           for (int in=0; in<nb; ++in) {
             if (rank==2) {
-              bview_h(ie,in,lev) = view_h(ie3d,in+side*nb);
+              bview_h(ie,in,lev) += w*view_h(ie3d,in+side*nb);
             } else {
               for (int j=0; j<ncomps; ++j) {
-                bview_h(ie,in,j,lev) = view_h(ie3d,in+side*nb,j);
+                bview_h(ie,in,j,lev) += w*view_h(ie3d,in+side*nb,j);
               }
             }
           }
@@ -269,7 +275,8 @@ transferElemStateToNodeState (const std::string& name)
     bstate.sync_to_dev();
   }
 
-  // Now the basal mesh can move its elem state into the nodal field
+  // Now the basal mesh can move its elem state into the nodal field.
+  // NOTE: this communicates with the other ranks, so all ranks must get here.
   m_basal_field_accessor->transferElemStateToNodeState(name);
 }
 
