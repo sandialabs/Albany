@@ -964,6 +964,12 @@ ExtrudedDiscretization::computeNodeSets()
     auto& ns_elem_pos = m_nodeSets[ns];
     auto& ns_coords   = m_nodeSetCoords[ns];
 
+    // updateMesh may be called more than once (e.g., by a driver that updates the geometry
+    // before each solve, like the MPAS interface), so discard what previous calls stored
+    ns_gids.clear();
+    ns_elem_pos.clear();
+    ns_coords.clear();
+
     // Get the mask for this nodeset from the conn mgr, and count how many nodes are in it
     auto mask = node_conn_mgr->getConnectivityMask(ns);
 
