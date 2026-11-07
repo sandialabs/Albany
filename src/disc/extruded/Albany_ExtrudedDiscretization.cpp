@@ -21,6 +21,7 @@
 #include <Panzer_ElemFieldPattern.hpp>
 
 #include <Intrepid2_Cubature.hpp>
+#include <Teuchos_CommHelpers.hpp>
 
 #include <iostream>
 #include <string>
@@ -785,6 +786,9 @@ ExtrudedDiscretization::computeSideSets()
   // - basal side
   // - upper side
   // - lateral side
+  // The basal and upper sides GIDs span the range of the basal elems GIDs, which are not necessarily
+  // contiguous, so the upper and lateral sides GIDs are shifted by the max basal elem GID+1 (rather
+  // than by the number of basal elems), so that the GIDs of different kinds of sides do not overlap.
 
   // Clean up existing sideset structure (in case we are remeshing)
   m_sideSets.clear();
@@ -797,9 +801,28 @@ ExtrudedDiscretization::computeSideSets()
   const auto& basal_cell_indexer = m_basal_disc->getDOFManager()->cell_indexer();
   const auto& node_dof_mgr = getNodeDOFManager();
   const auto& cell_indexer = node_dof_mgr->cell_indexer();
-  const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
   const auto& layers_data = m_extruded_mesh->layers_data;
+  const GO basal_elems_gid_range = layers_data.cell.gid->numHorizEntities; // max basal elem GID+1
   const auto& extr_conn_mgr = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(getNodeDOFManager()->getAlbanyConnManager(),true);
+
+  // The lateral sides are numbered from the GIDs of the basal sides they are extruded from, with a
+  // LayeredMeshNumbering. To give a lateral side the same GID in all the side sets it belongs to, and on
+  // all ranks, use the same numbering for all side sets, sized with the global max GID of all basal sides.
+  // NOTE: the number of horizontal entities must be max GID+1: with max GID, with the layer-wise ordering
+  //       the side with the max GID in layer il and the side with GID 0 in layer il+1 got the same GID,
+  //       and one of them was dropped below (as a duplicate)
+  GO my_max_basal_side_GID = -1;
+  for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
+    for (const auto& basal_ss : m_basal_disc->getSideSets(ws)) {
+      for (const auto& side : basal_ss.second) {
+        my_max_basal_side_GID = std::max(my_max_basal_side_GID,side.side_GID);
+      }
+    }
+  }
+  GO max_basal_side_GID;
+  Teuchos::reduceAll(*m_comm,Teuchos::REDUCE_MAX,my_max_basal_side_GID,Teuchos::outArg(max_basal_side_GID));
+  LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID+1,layers_data.cell.gid->numLayers,layers_data.cell.gid->ordering);
+
   for (const auto& ss : m_extruded_mesh->meshSpecs[0]->ssNames) {
     // Make sure the sideset exist even if no sides are owned on this process
     for (int i=0; i<num_ws; ++i) {
@@ -817,7 +840,7 @@ ExtrudedDiscretization::computeSideSets()
         const int ilayer = ss=="basalside" ? 0 : layers_data.cell.gid->numLayers-1;
 
         sStruct.elem_GID = layers_data.cell.gid->getId(basal_gid,ilayer);
-        sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
+        sStruct.side_GID = basal_gid + (ss=="upperside" ? basal_elems_gid_range : 0);
         side_GIDs.push_back(sStruct.side_GID);
 
         auto elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
@@ -849,18 +872,6 @@ ExtrudedDiscretization::computeSideSets()
         basal_ss_names.push_back(m_extruded_mesh->get_basal_part_name(ss));
       }
 
-      // First, figure out the largest basal side GID (so we can build a proper LayeredMeshNumbering)
-      GO max_basal_side_GID = -1;
-      for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
-        for (const auto& basal_ssn : basal_ss_names) {
-          auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
-          for (const auto& side : basal_ss) {
-            max_basal_side_GID = std::max(max_basal_side_GID,side.side_GID);
-          }
-        }
-      }
-
-      LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,layers_data.cell.gid->numLayers,layers_data.cell.gid->ordering);
       auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
         std::vector<GO> nodes;
         const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
@@ -914,7 +925,7 @@ ExtrudedDiscretization::computeSideSets()
             for (int ilev=0; ilev<layers_data.cell.gid->numLayers; ++ilev) {
               SideStruct sStruct;
               sStruct.elem_GID = layers_data.cell.gid->getId(basal_elem_gid,ilev);
-              sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
+              sStruct.side_GID = 2*basal_elems_gid_range + side_layers_gid.getId(basal_side.side_GID,ilev);
 
               // Skip if this side was already added (can happen when basal side sets overlap)
               if (!added_side_GIDs.insert(sStruct.side_GID).second) continue;
