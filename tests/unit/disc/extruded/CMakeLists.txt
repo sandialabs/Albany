@@ -30,6 +30,10 @@ create_unit_test (NAME    ExtrudedMeshFieldAccessor
                   PREFIX  ${testNameRoot}
                   SOURCES ExtrudedMeshFieldAccessor.cpp)
 
+create_unit_test (NAME    ExtrudedSideSets
+                  PREFIX  ${testNameRoot}
+                  SOURCES ExtrudedSideSets.cpp)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/v.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/v.ascii)
 
