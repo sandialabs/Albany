@@ -132,25 +132,20 @@ public:
                                const Teuchos::RCP<const DOFManager>& sol_dof_mgr,
                                const int neq);
 
-  // Pack a 3d solution vector into the basal per-column tag, and read it back.
-  // These apply basal_cmp and its inverse; they are NOT interchangeable with the
-  // basal accessor's saveVector/fillVector, which know nothing about columns.
-  void saveLayeredSolution (const Thyra_Vector& soln,
-                            const std::string&  field_name,
-                            const bool          overlapped);
-  void fillLayeredSolution (Thyra_Vector&       soln,
-                            const std::string&  field_name,
-                            const bool          overlapped);
-
   // Project a 3d solution vector into the layout of the BASAL solution dof manager.
-  // This is the same permutation saveLayeredSolution applies, stopping short of
-  // writing a tag: the result is a vector over m_basal_sol_dof_mgr->ov_vs(), which
-  // is what the basal discretization's own routines (e.g. checkForAdaptation)
-  // expect. Handing them the 3d vector instead silently mis-associates dofs with
-  // basal nodes -- see the note on basal_cmp above.
+  // The result is a vector over m_basal_sol_dof_mgr->ov_vs(), which is what the
+  // basal discretization's own routines (writeSolutionToMeshDatabase,
+  // checkForAdaptation, ...) expect. Handing them the 3d vector instead silently
+  // mis-associates dofs with basal nodes -- see the note on basal_cmp above.
   Teuchos::RCP<Thyra_Vector>
   projectSolutionToBasal (const Thyra_Vector& soln,
                           const bool          overlapped) const;
+
+  // Inverse of projectSolutionToBasal. basal_soln may be over either the owned or
+  // the overlapped basal solution space; its entries are located by GID.
+  void projectBasalToSolution (const Thyra_Vector& basal_soln,
+                               Thyra_Vector&       soln,
+                               const bool          overlapped) const;
 
   // Maps a (3d) element LID to the workset that owns it, and its index within that
   // workset. Needed to scatter values computed from the layered numbering (which is
@@ -174,14 +169,14 @@ protected:
   WorksetArray<int>   m_ws_sizes;
   std::vector<WsIdx>  m_elem_ws_idx;
 
-  // Set by setLayeredSolutionInfo; needed by save/fillLayeredSolution.
+  // Set by setLayeredSolutionInfo; needed by the basal <-> 3d solution projections.
   Teuchos::RCP<const LayeredMeshNumbering<LO>> m_node_numbering_lid;
   Teuchos::RCP<const DOFManager>               m_basal_node_dof_mgr;
   Teuchos::RCP<const DOFManager>               m_basal_sol_dof_mgr;
   Teuchos::RCP<const DOFManager>               m_sol_dof_mgr;
   int                                          m_neq = -1;
 
-  // Shared body of save/fillLayeredSolution: walks (basal elem, layer, eq, elem node)
+  // Shared body of the basal <-> 3d solution projections: walks (basal elem, layer, eq, elem node)
   // and calls f(dof_lid, basal_node_lid, ilev, eq, ibelem, n) for every 3d dof of the
   // column. Both directions use this one walk, so they can only disagree via
   // basal_cmp -- which is a single expression.

@@ -1,5 +1,6 @@
 #include "Albany_ExtrudedMeshFieldAccessor.hpp"
 #include "Albany_ThyraUtils.hpp"
+#include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_Macros.hpp"
 
 namespace Albany {
@@ -396,39 +397,25 @@ projectSolutionToBasal (const Thyra_Vector& soln,
 }
 
 void ExtrudedMeshFieldAccessor::
-saveLayeredSolution (const Thyra_Vector& soln,
-                     const std::string&  field_name,
-                     const bool          overlapped)
+projectBasalToSolution (const Thyra_Vector& basal_soln,
+                        Thyra_Vector&       soln,
+                        const bool          overlapped) const
 {
-  // Project into the basal dof mgr's layout; the basal accessor's own saveVector
-  // then does the rest, correctly and unchanged.
-  auto basal_soln = projectSolutionToBasal(soln,overlapped);
-
-  m_basal_field_accessor->saveVector(*basal_soln,field_name,m_basal_sol_dof_mgr,true);
-}
-
-void ExtrudedMeshFieldAccessor::
-fillLayeredSolution (Thyra_Vector&      soln,
-                     const std::string& field_name,
-                     const bool         overlapped)
-{
-  // Read the tag into the basal dof mgr's layout, then apply the inverse permutation.
-  auto basal_soln = Thyra::createMember(m_basal_sol_dof_mgr->ov_vs());
-  basal_soln->assign(0.0);
-  m_basal_field_accessor->fillVector(*basal_soln,field_name,m_basal_sol_dof_mgr,true);
-  auto basal_data = getLocalData(basal_soln.getConst());
+  // The basal disc may hand back an owned vector even when the overlapped one was
+  // requested (e.g., STK), so look up basal dofs by GID in basal_soln's own space.
+  auto basal_data = getLocalData(Teuchos::rcpFromRef(basal_soln));
+  auto basal_indexer = createGlobalLocalIndexer(basal_soln.space());
 
   auto soln_data = getNonconstLocalData(Teuchos::rcpFromRef(soln));
 
-  const auto& basal_elem_dof_lids = m_basal_sol_dof_mgr->elem_dof_lids().host();
-
-  // Exact inverse of saveLayeredSolution: same walk, same basal_cmp.
+  // Exact inverse of projectSolutionToBasal: same walk, same basal_cmp.
   forEachColumnDof(overlapped,
     [&](const LO dof_lid, const LO /*basal_nlid*/, const int ilev, const int eq,
         const int ibelem, const int n) {
       const int c = basal_cmp(ilev,eq);
       const auto& boffs = m_basal_sol_dof_mgr->getGIDFieldOffsets(c);
-      const LO blid = basal_elem_dof_lids(ibelem,boffs[n]);
+      const GO bgid = m_basal_sol_dof_mgr->getElementGIDs(ibelem)[boffs[n]];
+      const LO blid = basal_indexer->getLocalElement(bgid);
       if (blid>=0) { soln_data[dof_lid] = basal_data[blid]; }
     });
 }

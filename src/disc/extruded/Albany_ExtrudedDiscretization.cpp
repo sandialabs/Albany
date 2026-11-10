@@ -116,20 +116,44 @@ ExtrudedDiscretization::setupMLCoords()
       getOverlapVectorSpace());
 }
 
+namespace {
+
+Teuchos::RCP<const Thyra_MultiVector>
+projectMVToBasal (const ExtrudedMeshFieldAccessor& mfa,
+                  const Teuchos::RCP<const Thyra_MultiVector>& mv,
+                  const Teuchos::RCP<const Thyra_VectorSpace>& basal_ov_vs,
+                  const bool overlapped)
+{
+  if (mv.is_null()) {
+    return Teuchos::null;
+  }
+  const int ncols = mv->domain()->dim();
+  auto basal_mv = Thyra::createMembers(basal_ov_vs,ncols);
+  for (int icol=0; icol<ncols; ++icol) {
+    basal_mv->col(icol)->assign(*mfa.projectSolutionToBasal(*mv->col(icol),overlapped));
+  }
+  return basal_mv;
+}
+
+} // anonymous namespace
+
 // NOTE: the 3d solution must be PERMUTED into the basal per-column layout before it
 // can be stored on the basal mesh -- see the note on basal_cmp in
 // ExtrudedMeshFieldAccessor. Forwarding the 3d vector straight to the basal disc
 // packs dofs from the other nodes of a basal element into a vertex's column.
+// The projected vectors are over the basal OVERLAPPED space, hence overlapped=true.
 void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  m_extruded_mesh->get_extruded_field_accessor()
-      ->saveLayeredSolution(soln,solution_dof_name(),overlapped);
+  const auto& mfa = *m_extruded_mesh->get_extruded_field_accessor();
+  const auto basal_ov_vs = m_basal_disc->getOverlapVectorSpace();
+  m_basal_disc->writeSolutionToMeshDatabase(
+      *mfa.projectSolutionToBasal(soln,overlapped),
+      projectMVToBasal(mfa,soln_dxdp,basal_ov_vs,overlapped),
+      true);
 }
 
 void
@@ -139,11 +163,13 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dot,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  mfa->saveLayeredSolution(soln,    solution_dof_name(),          overlapped);
-  mfa->saveLayeredSolution(soln_dot,solution_dof_name()+"_dot",   overlapped);
+  const auto& mfa = *m_extruded_mesh->get_extruded_field_accessor();
+  const auto basal_ov_vs = m_basal_disc->getOverlapVectorSpace();
+  m_basal_disc->writeSolutionToMeshDatabase(
+      *mfa.projectSolutionToBasal(soln,overlapped),
+      projectMVToBasal(mfa,soln_dxdp,basal_ov_vs,overlapped),
+      *mfa.projectSolutionToBasal(soln_dot,overlapped),
+      true);
 }
 
 void
@@ -154,12 +180,14 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dotdot,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  mfa->saveLayeredSolution(soln,       solution_dof_name(),           overlapped);
-  mfa->saveLayeredSolution(soln_dot,   solution_dof_name()+"_dot",    overlapped);
-  mfa->saveLayeredSolution(soln_dotdot,solution_dof_name()+"_dotdot", overlapped);
+  const auto& mfa = *m_extruded_mesh->get_extruded_field_accessor();
+  const auto basal_ov_vs = m_basal_disc->getOverlapVectorSpace();
+  m_basal_disc->writeSolutionToMeshDatabase(
+      *mfa.projectSolutionToBasal(soln,overlapped),
+      projectMVToBasal(mfa,soln_dxdp,basal_ov_vs,overlapped),
+      *mfa.projectSolutionToBasal(soln_dot,overlapped),
+      *mfa.projectSolutionToBasal(soln_dotdot,overlapped),
+      true);
 }
 
 void
@@ -168,7 +196,12 @@ ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool overlapped)
 {
-  m_basal_disc->writeSolutionMVToMeshDatabase(soln,soln_dxdp,overlapped);
+  const auto& mfa = *m_extruded_mesh->get_extruded_field_accessor();
+  const auto basal_ov_vs = m_basal_disc->getOverlapVectorSpace();
+  m_basal_disc->writeSolutionMVToMeshDatabase(
+      *projectMVToBasal(mfa,Teuchos::rcpFromRef(soln),basal_ov_vs,overlapped),
+      projectMVToBasal(mfa,soln_dxdp,basal_ov_vs,overlapped),
+      true);
 }
 
 void
@@ -261,7 +294,7 @@ ExtrudedDiscretization::getSolutionField(bool overlapped) const
                                              : getVectorSpace());
   soln->assign(0.0);
   m_extruded_mesh->get_extruded_field_accessor()
-      ->fillLayeredSolution(*soln,solution_dof_name(),overlapped);
+      ->projectBasalToSolution(*m_basal_disc->getSolutionField(overlapped),*soln,overlapped);
   return soln;
 }
 
@@ -281,14 +314,14 @@ ExtrudedDiscretization::getSolutionMV(
     Thyra_MultiVector& result,
     const bool         overlapped) const
 {
-  const std::string names[3] = {
-    solution_dof_name(),
-    solution_dof_name()+"_dot",
-    solution_dof_name()+"_dotdot"
-  };
+  const int ncols = result.domain()->dim();
+  auto basal_soln = Thyra::createMembers(overlapped ? m_basal_disc->getOverlapVectorSpace()
+                                                    : m_basal_disc->getVectorSpace(), ncols);
+  basal_soln->assign(0.0);
+  m_basal_disc->getSolutionMV(*basal_soln,overlapped);
   auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  for (int icol=0; icol<result.domain()->dim(); ++icol) {
-    mfa->fillLayeredSolution(*result.col(icol),names[icol],overlapped);
+  for (int icol=0; icol<ncols; ++icol) {
+    mfa->projectBasalToSolution(*basal_soln->col(icol),*result.col(icol),overlapped);
   }
 }
 
