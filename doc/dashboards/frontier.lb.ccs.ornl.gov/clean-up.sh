@@ -1,5 +1,6 @@
 #!/bin/bash
 rm -rf /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/build 
+rm -rf /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/build-perf
 rm -rf /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/cdash-frag.txt
 rm -rf /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/cdash-albany-frag.txt
 rm -rf /lustre/orion/cli193/scratch/jwatkins/nightlyCDashFrontier/ctest_nightly_trilinos.cmake 

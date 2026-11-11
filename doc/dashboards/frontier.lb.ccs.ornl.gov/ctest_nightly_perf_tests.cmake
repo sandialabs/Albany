@@ -25,7 +25,9 @@ set (MPICH_DIR $ENV{MPICH_DIR})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BINARY_NAME build)
+# Keep the perf tests out of "build": CLEAN_BUILD empties CTEST_BINARY_DIRECTORY,
+# which would delete the Trilinos/Albany build dirs used by the regression tests.
+set (CTEST_BINARY_NAME build-perf)
 
 set (CTEST_SOURCE_DIRECTORY "/ccs/proj/cli193/automated_testing/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
