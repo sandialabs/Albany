@@ -1405,7 +1405,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int globalTrianglesStride,
   basalFrictionParams.set("Mu Field Name",basalFrictionParams.get("Mu Field Name","mu"));
   basalFrictionParams.set("Effective Pressure Type",basalFrictionParams.get("Effective Pressure Type","Field"));
   std::string effectivePressureType = util::upper_case(basalFrictionParams.get<std::string>("Effective Pressure Type"));
-  bool isEPressureOutput = effectivePressureType.find("HYDROSTATIC")!=std::string::npos;
+  // Effective pressure types computed by Albany (Hydrostatic*, Transition*): N is an output, not a mesh input
+  bool isEPressureOutput = (effectivePressureType.find("HYDROSTATIC")!=std::string::npos) ||
+                           (effectivePressureType.find("TRANSITION")!=std::string::npos);
 
   bool requireBedRoughness(false), requireBulkFriction(false), requireBasalDebris(false);
   if((betaType == "REGULARIZED COULOMB") || (betaType == "DEBRIS FRICTION")) {
