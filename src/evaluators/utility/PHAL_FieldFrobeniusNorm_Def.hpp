@@ -225,10 +225,16 @@ operator() (const Dim3_Tag&, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  if (regularization_type==GIVEN_PARAMETER)
-    regularization = Albany::convertScalar<const ScalarT>(regularizationParam(0));
-  else if (regularization_type==PARAMETER_EXPONENTIAL)
-    regularization = pow(10.0, -10.0*Albany::convertScalar<const ScalarT>(regularizationParam(0)));
+  if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL) {
+    // The parameter field lives in device memory: copy it to host before reading it
+    auto regularizationParam_h = Kokkos::create_mirror_view(regularizationParam.get_view());
+    Kokkos::deep_copy(regularizationParam_h, regularizationParam.get_view());
+    const ScalarT param = Albany::convertScalar<const ScalarT>(regularizationParam_h(0));
+    if (regularization_type==GIVEN_PARAMETER)
+      regularization = param;
+    else
+      regularization = pow(10.0, -10.0*param);
+  }
 
 #ifdef OUTPUT_TO_SCREEN
   if (regularization_type!=NONE)
@@ -274,35 +280,17 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFieldsSide (typenam
 template<typename EvalT, typename Traits, typename ScalarT>
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFieldsCell (typename Traits::EvalData workset)
 {
-  ScalarT norm;
+  // The Kokkos functors only use the first index of the field, so they
+  // work for both <Cell,...> and <Side,...> layouts
   switch (numDims)
   {
     case 2:
       // <Cell,Vector/Gradient>
-      for (unsigned int cell(0); cell<workset.numCells; ++cell)
-      {
-        norm = 0;
-        for (unsigned int dim(0); dim<dims[1]; ++dim)
-        {
-          norm += std::pow(field(cell,dim),2);
-        }
-        field_norm(cell) = std::sqrt(norm + regularization);
-      }
+      Kokkos::parallel_for(Dim2_Policy(0,workset.numCells),*this);
       break;
     case 3:
       // <Cell,Node/QuadPoint,Vector/Gradient>
-      for (unsigned int cell(0); cell<workset.numCells; ++cell)
-      {
-        for (unsigned int i(0); i<dims[1]; ++i)
-        {
-          norm = 0;
-          for (unsigned int dim(0); dim<dims[2]; ++dim)
-          {
-            norm += std::pow(field(cell,i,dim),2);
-          }
-          field_norm(cell,i) = std::sqrt(norm + regularization);
-        }
-      }
+      Kokkos::parallel_for(Dim3_Policy(0,workset.numCells),*this);
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error! Invalid field layout.\n");

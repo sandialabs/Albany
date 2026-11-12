@@ -36,7 +36,10 @@ namespace PHAL
             virtual ~Spatial_Base() {}
             typedef typename EvalT::MeshScalarT MeshScalarT;
             typedef typename EvalT::ScalarT ScalarT;
-            virtual ScalarT evaluateFields(const std::vector<MeshScalarT> &coords) = 0;
+            // Add scaling*f(x) to source(cell,qp), where x=coords(cell,qp,:)
+            virtual void addToSource(const PHX::MDField<const MeshScalarT, Cell, Point, Dim> &coords,
+                                     const PHX::MDField<ScalarT, Cell, Point> &source,
+                                     const int numCells, const RealType scaling) = 0;
         };
 
         template <typename EvalT, typename Traits>
@@ -50,7 +53,9 @@ namespace PHAL
             typedef typename EvalT::ScalarT ScalarT;
             Gaussian(Teuchos::ParameterList &source_list, Teuchos::ParameterList &scalarParam_list, std::size_t num, PHX::FieldManager<Traits> &fm, const Teuchos::RCP<Albany::Layouts> &dl);
             virtual ~Gaussian() {}
-            virtual ScalarT evaluateFields(const std::vector<MeshScalarT> &coords);
+            virtual void addToSource(const PHX::MDField<const MeshScalarT, Cell, Point, Dim> &coords,
+                                     const PHX::MDField<ScalarT, Cell, Point> &source,
+                                     const int numCells, const RealType scaling);
 
             void evaluateFields(typename Traits::EvalData /* d */){};
 

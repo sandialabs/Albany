@@ -120,6 +120,48 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 template<typename EvalT, typename Traits>
 void GatherSolutionSide<EvalT, Traits>::
+gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr,
+                       const Teuchos::RCP<const Albany::DOFManager>& node_dof_mgr)
+{
+  // Do this only once
+  if (m_num_side_nodes.size()>0) {
+    return;
+  }
+
+  const int numSides = dof_mgr->get_topology().getSideCount();
+
+  int maxSideNodes = 0;
+  for (int side=0; side<numSides; ++side) {
+    maxSideNodes = std::max(maxSideNodes,static_cast<int>(dof_mgr->getGIDFieldOffsetsSide(offset,side).size()));
+  }
+
+  m_num_side_nodes.resize("",numSides);
+  m_side_dof_offsets.resize("",numSides,maxSideNodes,numFields);
+  m_side_node_offsets.resize("",numSides,maxSideNodes);
+  for (int side=0; side<numSides; ++side) {
+    const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side);
+    const int numSideNodes = node_offsets.size();
+    m_num_side_nodes.host()(side) = numSideNodes;
+    for (int node=0; node<numSideNodes; ++node) {
+      m_side_node_offsets.host()(side,node) = node_offsets[node];
+    }
+    for (int eq=0; eq<numFields; ++eq) {
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side);
+      ALBANY_ASSERT (static_cast<int>(offsets.size())==numSideNodes,
+          "Error! Field " << offset+eq << " has " << offsets.size() << " dofs on side " << side
+          << ", but the side has " << numSideNodes << " nodes.\n");
+      for (int node=0; node<numSideNodes; ++node) {
+        m_side_dof_offsets.host()(side,node,eq) = offsets[node];
+      }
+    }
+  }
+  m_num_side_nodes.sync_to_dev();
+  m_side_dof_offsets.sync_to_dev();
+  m_side_node_offsets.sync_to_dev();
+}
+
+template<typename EvalT, typename Traits>
+void GatherSolutionSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Check for early return
@@ -138,38 +180,45 @@ evaluateFields(typename Traits::EvalData workset)
 
   const auto& disc     = workset.disc;
   const auto& dof_mgr  = disc->getDOFManager();
-  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-
-  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  if (gather_x)
-    x_data = Albany::getLocalData(x);
-  if (gather_xdot)
-    xdot_data = Albany::getLocalData(xdot);
-  if (gather_xdotdot)
-    xdotdot_data = Albany::getLocalData(xdotdot);
+  gather_fields_offsets(dof_mgr,disc->getNodeDOFManager());
 
   constexpr auto ALL = Kokkos::ALL();
-  for (int iside=0; iside<sideSet.size; ++iside) {
-    const int ws_elem_idx = sideSet.ws_elem_idx.view_host()(iside);
-    const int elem_LID = elem_lids(ws_elem_idx);
-    const int side_pos = sideSet.side_pos.view_host()(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+  const auto elem_lids      = Kokkos::subview(disc->getWsElementLIDs().dev(),workset.wsIndex,ALL);
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().dev();
+  const auto ws_elem_idx    = sideSet.ws_elem_idx.view_device();
+  const auto side_pos       = sideSet.side_pos.view_device();
+  const auto num_side_nodes = m_num_side_nodes.dev();
+  const auto side_offsets   = m_side_dof_offsets.dev();
+
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
+  if (gather_x)
+    x_data = Albany::getDeviceData(x);
+  if (gather_xdot)
+    xdot_data = Albany::getDeviceData(xdot);
+  if (gather_xdotdot)
+    xdotdot_data = Albany::getDeviceData(xdotdot);
+
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+    const int elem_LID = elem_lids(ws_elem_idx(iside));
+    const int pos = side_pos(iside);
+    const int numNodes = num_side_nodes(pos);
 
     for (int eq=0; eq<numFields; ++eq) {
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side_pos);
-      for (unsigned node=0; node<offsets.size(); ++node) {
-        const auto lid = dof_lids(offsets[node]);
-        get_ref(iside,node,eq) = x_data[lid];
+      for (int node=0; node<numNodes; ++node) {
+        const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
+        if (gather_x) {
+          get_ref(iside,node,eq) = x_data(lid);
+        }
         if (gather_xdot) {
-          get_ref_dot(iside,node,eq) = xdot_data[lid];
+          get_ref_dot(iside,node,eq) = xdot_data(lid);
         }
         if (gather_xdotdot) {
-          get_ref_dotdot(iside,node,eq) = xdotdot_data[lid];
+          get_ref_dotdot(iside,node,eq) = xdotdot_data(lid);
         }
       }
     }
-  }
+  });
 }
 
 // **********************************************************************
@@ -195,54 +244,60 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const bool gather_xdotdot = enableSolutionDotDot && !xdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
   const auto& dof_mgr  = disc->getDOFManager();
-  const auto& node_dof_mgr = disc->getNodeDOFManager();
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
+  gather_fields_offsets(dof_mgr,disc->getNodeDOFManager());
 
-  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
+  constexpr auto ALL = Kokkos::ALL();
+  const auto elem_lids      = Kokkos::subview(disc->getWsElementLIDs().dev(),workset.wsIndex,ALL);
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().dev();
+  const auto ws_elem_idx    = sideSet.ws_elem_idx.view_device();
+  const auto side_pos       = sideSet.side_pos.view_device();
+  const auto num_side_nodes = m_num_side_nodes.dev();
+  const auto side_offsets   = m_side_dof_offsets.dev();
+  const auto node_offsets   = m_side_node_offsets.dev();
+
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
   if (gather_x)
-    x_data = Albany::getLocalData(x);
+    x_data = Albany::getDeviceData(x);
   if (gather_xdot)
-    xdot_data = Albany::getLocalData(xdot);
+    xdot_data = Albany::getDeviceData(xdot);
   if (gather_xdotdot)
-    xdotdot_data = Albany::getLocalData(xdotdot);
+    xdotdot_data = Albany::getDeviceData(xdotdot);
 
   const int neq = dof_mgr->getNumFields();
-  constexpr auto ALL = Kokkos::ALL();
+  const auto j_coeff = workset.j_coeff;
+  const auto m_coeff = workset.m_coeff;
+  const auto n_coeff = workset.n_coeff;
 
-  for (int iside=0; iside<sideSet.size; ++iside) {
-    const int icell = sideSet.ws_elem_idx.view_host()(iside);
-    const int elem_LID = elem_lids(icell);
-    const int side_pos = sideSet.side_pos.view_host()(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+    const int elem_LID = elem_lids(ws_elem_idx(iside));
+    const int pos = side_pos(iside);
+    const int numNodes = num_side_nodes(pos);
 
     for (int eq=0; eq<numFields; ++eq) {
-      // NOTE: node_offsets is to compute the idx of the side node within the cell.
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
-      const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
-      const int numNodes = offsets.size();
       for (int node=0; node<numNodes; ++node) {
-        const int start = neq*node_offsets[node] + offset;
-        const auto lid = dof_lids(offsets[node]);
+        // NOTE: node_offsets is to compute the idx of the side node within the cell.
+        const int start = neq*node_offsets(pos,node) + offset;
+        const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
         if (gather_x) {
           ref_t val_ref = get_ref(iside,node,eq);
-          val_ref = FadType(val_ref.size(),x_data[lid]);
-          val_ref.fastAccessDx(start + eq) = workset.j_coeff;
+          val_ref = FadType(val_ref.size(),x_data(lid));
+          val_ref.fastAccessDx(start + eq) = j_coeff;
         }
         if (gather_xdot) {
           ref_t val_ref = get_ref_dot(iside,node,eq);
-          val_ref = FadType(val_ref.size(),xdot_data[lid]);
-          val_ref.fastAccessDx(start + eq) = workset.m_coeff;
+          val_ref = FadType(val_ref.size(),xdot_data(lid));
+          val_ref.fastAccessDx(start + eq) = m_coeff;
         }
         if (gather_xdotdot) {
           ref_t val_ref = get_ref_dotdot(iside,node,eq);
-          val_ref = FadType(val_ref.size(),xdotdot_data[lid]);
-          val_ref.fastAccessDx(start + eq) = workset.n_coeff;
+          val_ref = FadType(val_ref.size(),xdotdot_data(lid));
+          val_ref.fastAccessDx(start + eq) = n_coeff;
         }
       }
     }
-  }
+  });
 }
 
 // **********************************************************************
@@ -275,77 +330,85 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const bool gather_Vxdotdot = workset.n_coeff!=0 && !Vxdotdot.is_null();
 
   const auto& disc     = workset.disc;
-  const auto& elem_lids = disc->getElementLIDs_host(workset.wsIndex);
   const auto& dof_mgr  = disc->getDOFManager();
-  const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
-
-  Teuchos::ArrayRCP<const ST> x_data, xdot_data, xdotdot_data;
-  if (gather_x)
-    x_data = Albany::getLocalData(x);
-  if (gather_xdot)
-    xdot_data = Albany::getLocalData(xdot);
-  if (gather_xdotdot)
-    xdotdot_data = Albany::getLocalData(xdotdot);
-
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<const ST>> Vx_data, Vxdot_data, Vxdotdot_data;
-
-  if (gather_Vx)
-    Vx_data = Albany::getLocalData(workset.Vx);
-  if (gather_Vxdot)
-    Vxdot_data = Albany::getLocalData(workset.Vxdot);
-  if (gather_Vxdotdot)
-    Vxdotdot_data = Albany::getLocalData(workset.Vxdotdot);
+  gather_fields_offsets(dof_mgr,disc->getNodeDOFManager());
 
   constexpr auto ALL = Kokkos::ALL();
-  for (int iside=0; iside<sideSet.size; ++iside) {
-    const int icell = sideSet.ws_elem_idx.view_host()(iside);
-    const int elem_LID = elem_lids(icell);
-    const int side_pos = sideSet.side_pos.view_host()(iside);
-    const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
+  const auto elem_lids      = Kokkos::subview(disc->getWsElementLIDs().dev(),workset.wsIndex,ALL);
+  const auto elem_dof_lids  = dof_mgr->elem_dof_lids().dev();
+  const auto ws_elem_idx    = sideSet.ws_elem_idx.view_device();
+  const auto side_pos       = sideSet.side_pos.view_device();
+  const auto num_side_nodes = m_num_side_nodes.dev();
+  const auto side_offsets   = m_side_dof_offsets.dev();
+
+  Albany::ThyraVDeviceView<const ST> x_data, xdot_data, xdotdot_data;
+  if (gather_x)
+    x_data = Albany::getDeviceData(x);
+  if (gather_xdot)
+    xdot_data = Albany::getDeviceData(xdot);
+  if (gather_xdotdot)
+    xdotdot_data = Albany::getDeviceData(xdotdot);
+
+  Albany::ThyraMVDeviceView<const ST> Vx_data, Vxdot_data, Vxdotdot_data;
+  if (gather_Vx)
+    Vx_data = Albany::getDeviceData(Vx);
+  if (gather_Vxdot)
+    Vxdot_data = Albany::getDeviceData(Vxdot);
+  if (gather_Vxdotdot)
+    Vxdotdot_data = Albany::getDeviceData(Vxdotdot);
+
+  const int ncolsx  = workset.num_cols_x;
+  const auto j_coeff = workset.j_coeff;
+  const auto m_coeff = workset.m_coeff;
+  const auto n_coeff = workset.n_coeff;
+
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+    const int elem_LID = elem_lids(ws_elem_idx(iside));
+    const int pos = side_pos(iside);
+    const int numNodes = num_side_nodes(pos);
 
     for (int eq=0; eq<numFields; ++eq) {
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
-      const int numNodes = offsets.size();
       for (int node=0; node<numNodes; ++node) {
-        const auto lid = dof_lids(offsets[node]);
+        const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
         if (gather_x) {
           ref_t ref = get_ref(iside,node,eq);
           if (gather_Vx) {
-            ref = TanFadType(ref.size(),x_data[lid]);
-            for (int k=0; k<workset.num_cols_x; k++){
-              ref.fastAccessDx(k) = workset.j_coeff*Vx_data[k][lid];
+            ref = TanFadType(ref.size(),x_data(lid));
+            for (int k=0; k<ncolsx; k++){
+              ref.fastAccessDx(k) = j_coeff*Vx_data(lid,k);
             }
           } else {
-            ref = TanFadType(x_data[lid]);
+            ref = TanFadType(x_data(lid));
           }
         }
 
         if (gather_xdot) {
           ref_t ref = get_ref_dot(iside,node,eq);
           if (gather_Vxdot) {
-            ref = TanFadType(ref.size(),xdot_data[lid]);
-            for (int k=0; k<workset.num_cols_x; k++){
-              ref.fastAccessDx(k) = workset.m_coeff*Vxdot_data[k][lid];
+            ref = TanFadType(ref.size(),xdot_data(lid));
+            for (int k=0; k<ncolsx; k++){
+              ref.fastAccessDx(k) = m_coeff*Vxdot_data(lid,k);
             }
           } else {
-            ref = TanFadType(xdot_data[lid]);
+            ref = TanFadType(xdot_data(lid));
           }
         }
 
         if (gather_xdotdot) {
           ref_t ref = get_ref_dotdot(iside,node,eq);
           if (gather_Vxdotdot) {
-            ref = TanFadType(ref.size(),xdotdot_data[lid]);
-            for (int k=0; k<workset.num_cols_x; k++) {
-              ref.fastAccessDx(k) = workset.n_coeff*Vxdotdot_data[k][lid];
+            ref = TanFadType(ref.size(),xdotdot_data(lid));
+            for (int k=0; k<ncolsx; k++) {
+              ref.fastAccessDx(k) = n_coeff*Vxdotdot_data(lid,k);
             }
           } else {
-            ref = TanFadType(xdotdot_data[lid]);
+            ref = TanFadType(xdotdot_data(lid));
           }
         }
       }
     }
-  }
+  });
 }
 
 } // namespace PHAL
