@@ -18,6 +18,7 @@ public:
 
   void createStateArrays (const WorksetArray<int>& worksets_sizes) override;
   void transferNodeStatesToElemStates () override;
+  void transferElemStateToNodeState (const std::string& name) override;
 
   // TODO: move this in the base class?
   void addFieldOnMesh (const std::string& name,
@@ -113,13 +114,14 @@ public:
   // before adapting, or they would come back zero-filled on the new mesh.
   std::vector<std::string> get_nodal_field_names () const;
 
-  // Copy ncomps components, starting at first_cmp, of an existing vertex tag into a
-  // new vertex tag. Supports unpacking the 'solution' tag into per level tags by
-  // component (e.g., velocity, thickness, etc.).
+  // Copy ncomps components of an existing vertex tag into a new vertex tag. Component c
+  // of the new tag is component first_cmp+c*stride of the source tag. Supports unpacking
+  // the 'solution' tag into per level tags by component (e.g., velocity, thickness, etc.).
   void addVertexTagSlice (const std::string& src_name,
                           const std::string& dst_name,
                           const int          first_cmp,
-                          const int          ncomps);
+                          const int          ncomps,
+                          const int          stride = 1);
 
   // Remove a tag added by addVertexTagSlice. No-op if the tag is not present.
   void removeVertexTag (const std::string& name);

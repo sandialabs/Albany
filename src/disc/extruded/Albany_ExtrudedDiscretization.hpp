@@ -50,10 +50,14 @@ public:
   Teuchos::RCP<AbstractMeshStruct> getMeshStruct() const override { return m_extruded_mesh; }
 
   //! Flag if solution has a restart values -- used in Init Cond
-  bool hasRestartSolution() const override { return m_basal_disc->hasRestartSolution(); }
+  //! NOTE: the basal mesh often sets 'Restart Index'/'Restart Time' only to load fields, so the
+  //!       solution is restarted (from the basal mesh) only if 'Restart Solution' is true.
+  bool hasRestartSolution() const override { return m_restart_solution; }
 
   //! If restarting, convenience function to return restart data time
-  double restartDataTime() const override { return -1.0; }
+  double restartDataTime() const override {
+    return m_restart_solution ? m_basal_disc->restartDataTime() : -1.0;
+  }
 
   //! After mesh modification, need to update the element connectivity and nodal
   //! coordinates
@@ -145,6 +149,24 @@ protected:
   // Create projectors to restrict solution to sidesets
   void buildSideSetProjectors();
 
+  // Copy nodal data between a 3d vector (with dof_mgr_3d, having ncmp fields) and a basal vector
+  // (with dof_mgr_2d). The 3d and basal DOF managers LIDs are NOT related by a simple formula,
+  // so we must go through the elements connectivity.
+  //  - layered=true: the basal dof mgr has ncmp*numLevels fields, and basal field c*numLevels+lev
+  //    holds component c at node level lev (same layout as basal 'Node Layered' fields).
+  //  - layered=false (only to_basal): the basal dof mgr has ncmp fields, and each basal node gets
+  //    the values of the lowest level where the 3d field has dofs (e.g., the top level, for a field
+  //    defined only on the top part). Meant for extruded fields.
+  void copyNodalData (const Thyra_Vector& src, Thyra_Vector& tgt, const bool to_basal,
+                      const DOFManager& dof_mgr_3d, const DOFManager& dof_mgr_2d,
+                      const bool layered) const;
+
+  // The 3d solution is stored in the basal mesh as a vector with neq*numLevels components per
+  // basal node: basal component eq*numLevels+lev holds equation eq at node level lev.
+  void copySolutionData (const Thyra_Vector& src, Thyra_Vector& tgt, const bool to_basal) const;
+  Teuchos::RCP<Thyra_Vector>      solutionToBasal (const Thyra_Vector& v, const bool overlapped) const;
+  Teuchos::RCP<Thyra_MultiVector> solutionToBasal (const Thyra_MultiVector& mv, const bool overlapped) const;
+
   Teuchos::RCP<DOFManager>
   create_dof_mgr (const std::string& part_name,
                   const std::string& field_name,
@@ -158,6 +180,9 @@ protected:
   Teuchos::RCP<const Teuchos_Comm> m_comm;
 
   Teuchos::RCP<AbstractDiscretization> m_basal_disc;
+
+  //! Whether the solution is read from the basal mesh restart data (set in setFieldData)
+  bool m_restart_solution = false;
 
   //! Equations that are defined only on some side sets of the mesh
   std::map<int, std::vector<std::string>> m_sideSetEquations;

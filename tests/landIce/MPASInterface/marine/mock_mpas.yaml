@@ -1,0 +1,50 @@
+%YAML 1.1
+---
+# Input of MockMALI (see MockMALI.cpp), which calls the MPAS-Albany interface as MALI does.
+# Marine ice sheet in a channel: the bed deepens along the flow and the ice goes afloat before the
+# calving front (ice margin, lateral BC with ocean pressure). No slip at the ice divide and on the
+# channel walls. Regularized Coulomb sliding with the effective pressure computed by Albany (hydrostatic)
+# and returned to MPAS, bed roughness from MPAS, grounding-line parameterization. Two solves (time
+# steps), the second one with thinner ice, so the grounding line moves.
+#
+# The serial and parallel tests share the baseline. If the "Baseline" sublist (or a value in it) is
+# missing, the test fails and prints the baseline to paste below.
+ANONYMOUS:
+  Mock MPAS:
+    Test Case: Marine
+    Number Of Layers: 5
+    Levels: [0.0, 0.1, 0.25, 0.45, 0.7, 1.0]
+    Partition: Strips
+    Idle Ranks: 0
+    Shuffle Local Ordering: true
+    Number Of Solves: 2
+    Time Step: 1.0
+  Physical Parameters:
+    Gravity: 9.80616
+    Ice Density: 910.0
+    Ocean Density: 1028.0
+    Flow Law Exponent: 3.0
+    Use GLP: true
+  Regression:
+    Relative Tolerance: 1.0e-05
+    Absolute Tolerance: 1.0e-12
+    # Baseline from the serial run (the parallel run agrees within the tolerances)
+    Baseline:
+      Solve 0:
+        Max Speed: 2.180728167030500e+02
+        Mean Surface Speed: 7.335674674066405e+01
+        Mean Basal Speed: 4.617731502625940e+01
+        RMS Speed: 8.552150928803682e+01
+        Mean Beta: 3.447211172450067e+02
+        Mean Effective Pressure: 4.446066248000002e+03
+        Mean Dissipation Heat: 4.620254385681590e-04
+        Mean Body Force: 2.797741327704271e+02
+      Solve 1:
+        Max Speed: 2.167050459681891e+02
+        Mean Surface Speed: 7.024818422146159e+01
+        Mean Basal Speed: 4.557444106422246e+01
+        RMS Speed: 8.363144656540378e+01
+        Mean Beta: 3.450556920252281e+02
+        Mean Effective Pressure: 4.336263405759999e+03
+        Mean Dissipation Heat: 4.218782972706993e-04
+        Mean Body Force: 2.755171909550187e+02

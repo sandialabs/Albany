@@ -85,8 +85,8 @@ public:
   void setNumEq (int neq) override;
 
   // Called by ExtrudedDiscretization: the 'solution' tag on this (basal) mesh holds
-  // a whole column per vertex, as nlev groups of neq_per_level components. Enables
-  // unpacking into per level tags for vtk output.
+  // a whole column per vertex: component eq*nlev+ilev holds equation eq at level ilev.
+  // Enables unpacking into per level tags for vtk output.
   void setSolutionLevels (const int neq_per_level, const int nlev);
 
   void setSolutionComponents (const std::vector<std::pair<std::string,int>>& comps) override {

@@ -263,13 +263,23 @@ if (TEST_ALBANY)
   set(CTEST_CUSTOM_MAXIMUM_PASSED_TEST_OUTPUT_SIZE 5000000)
   set(CTEST_CUSTOM_MAXIMUM_FAILED_TEST_OUTPUT_SIZE 5000000)
 
-  set (CTEST_TEST_TIMEOUT 300)
+  # Each srun is launched with "--time=5" (ALBANY_MPI_EXEC_LEADING_OPTIONS in
+  # do-cmake-frontier-albany-*), so Slurm itself ends a hung job step after 5 min.
+  # Keep the CTest timeout larger than that: if CTest kills srun first, the job
+  # step keeps running and holds the node, and every later srun waits with
+  # "Requested nodes are busy" until the batch job hits its time limit.
+  set (CTEST_TEST_TIMEOUT 420)
 
-  # attempt to terminate srun after timeout (Error: Requested nodes are busy)
-  set (CTEST_KILL_AFTER_TIMEOUT ON)
+  # Stop launching tests before the sbatch time limit so results still get
+  # submitted to CDash (STOP_TIME is a time of day, set in test_albany_sbatch.sh).
+  set (CTEST_TEST_STOP_TIME_ARGS)
+  if (NOT "$ENV{CTEST_STOP_TIME}" STREQUAL "")
+    set (CTEST_TEST_STOP_TIME_ARGS STOP_TIME "$ENV{CTEST_STOP_TIME}")
+  endif ()
 
   CTEST_TEST(
     BUILD "${ALBANY_BUILD_DIR}"
+    ${CTEST_TEST_STOP_TIME_ARGS}
     RETURN_VALUE  HAD_ERROR
     )
 

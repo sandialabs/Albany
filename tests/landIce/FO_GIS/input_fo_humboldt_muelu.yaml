@@ -154,7 +154,7 @@ ANONYMOUS:
         Restart Index: 1
         Use Serial Mesh: ${USE_SERIAL_MESH}
         Exodus Input File Name: ../AsciiMeshes/Humboldt/humboldt_2d.exo
-        Exodus Output File Name: output/humboldt_basal.exo
+        Exodus Output File Name: output/humboldt_muelu_basal.exo
         Required Fields Info:
           Number Of Fields: 11
           Field 0:

@@ -71,7 +71,18 @@ public:
     return m_part_to_basal_part.at(part_name);
   }
 
+  // Sets the normalized coordinates of the mesh levels (NumLayers+1 values, strictly increasing,
+  // from 0 at the bottom to 1 at the top, up to 1e-6: the first and last values are set to exactly
+  // 0 and 1), overriding the uniform/Glimmer spacing. It can be called
+  // before or after setBulkData. The new levels are used by the discretization at the next call to
+  // updateMesh (node coordinates, interpolation of basal layered fields), and by the evaluators that
+  // use layers_data.dz_ref. This is used, e.g., by drivers that provide the vertical discretization.
+  void setLevelsNormalizedCoords (const std::vector<double>& z_ref);
+
 protected:
+
+  // Sets layers_data.dz_ref from layers_data.z_ref, and stores both in the field accessor
+  void setLayersRefData ();
 
   Teuchos::RCP<const Teuchos_Comm>          m_comm;
   Teuchos::RCP<Teuchos::ParameterList>      m_params;
@@ -81,6 +92,9 @@ protected:
   Teuchos::RCP<ExtrudedMeshFieldAccessor>   m_field_accessor;
 
   strmap_t<std::string>                     m_part_to_basal_part;
+
+  // Levels set with setLevelsNormalizedCoords (empty if not set)
+  std::vector<double>                       m_levels_normalized_coords;
 };
 
 } // namespace Albany

@@ -575,12 +575,12 @@ bool OmegahDiscretization::addSolutionLevelTags ()
   }
 
   for (int ilev=0; ilev<m_num_levels; ++ilev) {
-    int cmp = ilev*m_neq_per_level;
+    int eq = 0;
     for (const auto& [name,n] : fields) {
       mfa->addVertexTagSlice(solution_dof_name(),
                              name + "_level" + std::to_string(ilev),
-                             cmp, n);
-      cmp += n;
+                             eq*m_num_levels+ilev, n, m_num_levels);
+      eq += n;
     }
   }
   return true;
