@@ -148,30 +148,55 @@ namespace PHAL
         }
 
         template <typename EvalT, typename Traits>
-        typename EvalT::ScalarT Gaussian<EvalT, Traits>::
-            evaluateFields(const std::vector<typename EvalT::MeshScalarT> &coords)
+        void Gaussian<EvalT, Traits>::
+            addToSource(const PHX::MDField<const MeshScalarT, Cell, Point, Dim> &coords,
+                        const PHX::MDField<ScalarT, Cell, Point> &source,
+                        const int numCells, const RealType scaling)
         {
-            ScalarT exponent = 0;
             const double pi = 3.1415926535897932385;
 
-            m_amplitude = mdf_amplitude(0);
-            m_radius = mdf_radius(0);
+            // The parameters are stored in device memory: copy them to host
+            auto amplitude_h = Kokkos::create_mirror_view(mdf_amplitude.get_view());
+            auto radius_h = Kokkos::create_mirror_view(mdf_radius.get_view());
+            Kokkos::deep_copy(amplitude_h, mdf_amplitude.get_view());
+            Kokkos::deep_copy(radius_h, mdf_radius.get_view());
+            m_amplitude = amplitude_h(0);
+            m_radius = radius_h(0);
 
-            ScalarT sigma_pi = 1.0 / (m_radius * std::sqrt(2 * pi));
-            const std::size_t nsd = coords.size();
-            for (std::size_t i = 0; i < nsd; ++i)
-            {
-                exponent += std::pow(m_centroid[i] - coords[i], 2);
-            }
-            exponent /= (2.0 * std::pow(m_radius, 2));
-            ScalarT x(0.0);
+            const int nsd = coords.extent_int(2);
+            TEUCHOS_TEST_FOR_EXCEPTION(nsd < 1 || nsd > 3, std::logic_error,
+                                       "Error! Gaussian source only supports 1, 2 or 3 spatial dimensions.\n");
+            TEUCHOS_TEST_FOR_EXCEPTION(static_cast<int>(m_centroid.size()) < nsd, std::logic_error,
+                                       "Error! Gaussian source center has fewer than " << nsd << " components.\n");
+
+            const ScalarT sigma_pi = 1.0 / (m_radius * std::sqrt(2 * pi));
+            const ScalarT denom = 2.0 * std::pow(m_radius, 2);
+            ScalarT factor(0.0);
             if (nsd == 1)
-                x = m_amplitude * sigma_pi * std::exp(-exponent);
+                factor = scaling * m_amplitude * sigma_pi;
             else if (nsd == 2)
-                x = m_amplitude * std::pow(sigma_pi, 2) * std::exp(-exponent);
-            else if (nsd == 3)
-                x = m_amplitude * std::pow(sigma_pi, 3) * std::exp(-exponent);
-            return x;
+                factor = scaling * m_amplitude * std::pow(sigma_pi, 2);
+            else
+                factor = scaling * m_amplitude * std::pow(sigma_pi, 3);
+
+            double c[3] = {0.0, 0.0, 0.0};
+            for (int i = 0; i < nsd; ++i)
+                c[i] = m_centroid[i];
+            const double c0 = c[0], c1 = c[1], c2 = c[2];
+
+            const auto x = coords.get_static_view();
+            const auto f = source.get_static_view();
+            const int numQPs = x.extent_int(1);
+            Kokkos::parallel_for("Gaussian Source",
+                                 Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>({0, 0}, {numCells, numQPs}),
+                                 KOKKOS_LAMBDA(const int cell, const int qp) {
+                const double cc[3] = {c0, c1, c2};
+                ScalarT exponent = 0;
+                for (int i = 0; i < nsd; ++i)
+                    exponent += (cc[i] - x(cell, qp, i)) * (cc[i] - x(cell, qp, i));
+                exponent /= denom;
+                f(cell, qp) += factor * std::exp(-exponent);
+            });
         }
 
     } // namespace Source_Functions

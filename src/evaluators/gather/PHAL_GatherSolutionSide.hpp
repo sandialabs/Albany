@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_DualView.hpp"
 
 #include "Albany_Layouts.hpp"
 #include "Albany_DiscretizationUtils.hpp"
@@ -103,7 +104,21 @@ protected:
     Kokkos::abort("Unsupported tensor rank");
   }
 
-  void gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr);
+  using ExecutionSpace = PHX::Device::execution_space;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+
+  // Build (once) the device views with the side offsets used in evaluateFields
+  void gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr,
+                              const Teuchos::RCP<const Albany::DOFManager>& node_dof_mgr);
+
+  // m_side_dof_offsets(side_pos,node,eq): offset (within the element dofs) of the
+  // dof of field offset+eq on the node-th node of side side_pos
+  Albany::DualView<int***> m_side_dof_offsets;
+  // m_side_node_offsets(side_pos,node): position (within the element nodes) of
+  // the node-th node of side side_pos
+  Albany::DualView<int**>  m_side_node_offsets;
+  // m_num_side_nodes(side_pos): number of nodes on side side_pos
+  Albany::DualView<int*>   m_num_side_nodes;
 
   PHX::MDField<ScalarT,Side,Node> val;
   PHX::MDField<ScalarT,Side,Node> val_dot;

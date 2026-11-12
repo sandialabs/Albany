@@ -108,70 +108,73 @@ template<typename EvalT, typename Traits>
 void AdvDiffResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (useAugForm == false) { //standard form of advection-diffusion equation
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t i=0; i<vecDim; i++)
-          Residual(cell,node,i) = 0.0;
-        // std::cout << "--------------------\n";
-        // std::cout << "after init, res(" << cell << "," << node << "): " << Residual(cell,node,0) << "\n";
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          //du/dt + beta*grad(u) - mu*delta(u) = 0
-          Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp);
-          // std::cout << "udot(" << cell << "," << qp << "): " << UDot(cell,qp,0) << "\n";
-          // std::cout << "wBF(" << cell << "," << node << "," << qp << "): " << wBF(cell,node,qp) << "\n";
-          for (std::size_t idim=0; idim<numDims; ++idim) {
-            // std::cout << "ugrad(" << cell << "," << qp << "," << idim << "): " << UGrad(cell,qp,0,idim) << "\n";
-            // std::cout << "wGradBF(" << cell << "," << node << "," << qp << "," << idim << "): " << wGradBF(cell,node,qp,idim) << "\n";
-            Residual(cell,node,0) += beta[idim]*UGrad(cell,qp,0,idim)*wBF(cell,node,qp) +
-                                     mu*UGrad(cell,qp,0,idim)*wGradBF(cell,node,qp,idim);
-          }
-        }
-        // std::cout << "mu=" << mu << ", beta="<<beta[0] << "\n";
-        // std::cout << "res(" << cell << "," << node << "): " << Residual(cell,node,0) << "\n";
-      }
-    }
-  }
-  else { //augmented form of advection diffusion equation
-    if (formType == 1) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t i=0; i<vecDim; i++)
-            Residual(cell,node,i) = 0.0;
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //du/dt + beta*q - mu*div(q) = 0
-            Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp);
-            for (std::size_t idim=0; idim<numDims; ++idim) {
-              Residual(cell,node,0) += beta[idim]*U(cell,qp,idim+1)*wBF(cell,node,qp) +
-                                       mu*U(cell,qp,idim+1)*wGradBF(cell,node,qp,idim);
-            }
-            //q - grad(u) = 0
-            Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - UGrad(cell,qp,0,0)*wBF(cell,node,qp);
-            Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - UGrad(cell,qp,0,1)*wBF(cell,node,qp);
-          }
-          }
-       }
-    }
-    else if (formType == 2) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t i=0; i<vecDim; i++)
-            Residual(cell,node,i) = 0.0;
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //du/dt + q = 0
-            Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) +
-                                     U(cell,qp,1)*wBF(cell,node,qp) +
-                                     U(cell,qp,2)*wBF(cell,node,qp);
-            //q - beta*grad(u) + mu*delta(u) = 0
-            for (std::size_t idim=0; idim<numDims; ++idim) {
-              Residual(cell,node,idim+1) += U(cell,qp,idim+1)*wBF(cell,node,qp) - beta[idim]*UGrad(cell,qp,0,idim)*wBF(cell,node,qp)
-                                         - mu*UGrad(cell,qp,0,idim)*wGradBF(cell,node,qp,idim);
-            }
-          }
+  using ExecutionSpace = PHX::Device::execution_space;
+  using Policy = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<2>>;
+
+  // Copy all the data needed in the kernel to local variables, so it can be captured by value
+  TEUCHOS_TEST_FOR_EXCEPTION (numDims>3, std::logic_error,
+      "Error! AdvDiffResid only supports up to 3 spatial dimensions.\n");
+  double b[3] = {0.0, 0.0, 0.0};
+  for (std::size_t idim=0; idim<numDims; ++idim)
+    b[idim] = beta[idim];
+  const double b0 = b[0], b1 = b[1], b2 = b[2];
+  const double visc = mu;
+  const int nqp   = numQPs;
+  const int ndims = numDims;
+  const int vdim  = vecDim;
+  // 0: standard form; 1,2: augmented form type 1,2
+  const int form = useAugForm ? formType : 0;
+
+  const auto res      = Residual.get_static_view();
+  const auto u        = U.get_static_view();
+  const auto ugrad    = UGrad.get_static_view();
+  const auto udot     = UDot.get_static_view();
+  const auto w_bf     = wBF.get_static_view();
+  const auto w_gradbf = wGradBF.get_static_view();
+
+  const int numCells = workset.numCells;
+  const int nnodes = numNodes;
+  Kokkos::parallel_for(this->getName(), Policy({0,0},{numCells,nnodes}),
+                       KOKKOS_LAMBDA(const int cell, const int node) {
+    const double bt[3] = {b0, b1, b2};
+    for (int i=0; i<vdim; i++)
+      res(cell,node,i) = 0.0;
+
+    if (form==0) { //standard form of advection-diffusion equation
+      for (int qp=0; qp < nqp; ++qp) {
+        //du/dt + beta*grad(u) - mu*delta(u) = 0
+        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp);
+        for (int idim=0; idim<ndims; ++idim) {
+          res(cell,node,0) += bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
+                              visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
         }
       }
+    } else if (form==1) { //augmented form of advection diffusion equation, type 1
+      for (int qp=0; qp < nqp; ++qp) {
+        //du/dt + beta*q - mu*div(q) = 0
+        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp);
+        for (int idim=0; idim<ndims; ++idim) {
+          res(cell,node,0) += bt[idim]*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
+                              visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
+        }
+        //q - grad(u) = 0
+        res(cell,node,1) += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
+        res(cell,node,2) += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
+      }
+    } else { //augmented form of advection diffusion equation, type 2
+      for (int qp=0; qp < nqp; ++qp) {
+        //du/dt + q = 0
+        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp) +
+                            u(cell,qp,1)*w_bf(cell,node,qp) +
+                            u(cell,qp,2)*w_bf(cell,node,qp);
+        //q - beta*grad(u) + mu*delta(u) = 0
+        for (int idim=0; idim<ndims; ++idim) {
+          res(cell,node,idim+1) += u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
+                                 - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+        }
+      }
     }
-  }
+  });
 }
 
 //**********************************************************************

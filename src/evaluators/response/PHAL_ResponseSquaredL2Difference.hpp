@@ -8,6 +8,7 @@
 #define PHAL_RESPONSE_SQUARED_L2_DIFFERENCE_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 namespace PHAL {
 /**
@@ -39,6 +40,8 @@ private:
   int numQPs;
   int fieldDim;
   std::vector<PHX::ExecutionSpace::size_type> dims;
+  int dims_2;
+  int dims_3;
 
   bool target_value;
   TargetScalarT target_value_val;
@@ -49,6 +52,9 @@ private:
 
   PHX::MDField<const MeshScalarT,Cell,QuadPoint>   w_measure;
 
+public:
+  using ExecutionSpace = typename PHX::ExecutionSpace;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 // Some shortcut names

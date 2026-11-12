@@ -124,10 +124,18 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
+  using ExecutionSpace = PHX::Device::execution_space;
+  using Policy = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<2>>;
+  const int numCells = workset.numCells;
+  const int nqp = numQPs;
+
   if (haveSource) {
-    for (size_t i =0; i< Source.extent(0); i++)
-     for (size_t j =0; j< Source.extent(1); j++)
-       neg_source(i,j) = Source(i,j) * -1.0;
+    const auto src = Source.get_static_view();
+    const auto negSrc = neg_source;
+    Kokkos::parallel_for("HeatEqResid: neg source", Policy({0,0},{src.extent_int(0),src.extent_int(1)}),
+                         KOKKOS_LAMBDA(const int i, const int j) {
+      negSrc(i,j) = src(i,j) * -1.0;
+    });
     FST::integrate(TResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
   }
 
@@ -139,17 +147,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (haveConvection)  {
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        convection(cell,qp) = 0.0;
-        for (std::size_t i=0; i < numDims; ++i) {
-          if (haverhoCp)
-            convection(cell,qp) += rhoCp(cell,qp) * convectionVels[i] * TGrad(cell,qp,i);
-          else
-            convection(cell,qp) += convectionVels[i] * TGrad(cell,qp,i);
-        }
+    // Copy the velocity to plain scalars, so that it can be captured in the kernel
+    double vel[3] = {0.0, 0.0, 0.0};
+    TEUCHOS_TEST_FOR_EXCEPTION (numDims>3, std::logic_error,
+        "Error! HeatEqResid convection only supports up to 3 spatial dimensions.\n");
+    for (unsigned int i=0; i < numDims; ++i)
+      vel[i] = convectionVels[i];
+    const double v0 = vel[0], v1 = vel[1], v2 = vel[2];
+    const int ndims = numDims;
+    const bool useRhoCp = haverhoCp;
+    const auto conv = convection;
+    const auto gradT = TGrad.get_static_view();
+    // Note: rhoCp is bound to field data only if haverhoCp==true (otherwise it's an empty view)
+    const auto rho_cp = rhoCp.get_static_view();
+
+    Kokkos::parallel_for("HeatEqResid: convection", Policy({0,0},{numCells,nqp}),
+                         KOKKOS_LAMBDA(const int cell, const int qp) {
+      const double v[3] = {v0, v1, v2};
+      conv(cell,qp) = 0.0;
+      for (int i=0; i < ndims; ++i) {
+        if (useRhoCp)
+          conv(cell,qp) += rho_cp(cell,qp) * v[i] * gradT(cell,qp,i);
+        else
+          conv(cell,qp) += v[i] * gradT(cell,qp,i);
       }
-    }
+    });
 
     FST::integrate(TResidual.get_view(), convection, wBF.get_view(), true); // "true" sums into
   }
