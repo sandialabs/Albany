@@ -71,6 +71,10 @@ protected:
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
+public:
+  // NOTE: the following methods are public, since they contain device lambdas
+  //       (nvcc does not allow extended lambdas inside non-public methods)
+
   // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
   // dudn scaled
@@ -111,6 +115,7 @@ protected:
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
 
+protected:
   void gather_fields_offsets (const Albany::DOFManager& dof_mgr);
 
   // Input:
