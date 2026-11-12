@@ -385,11 +385,17 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     numCellsOnSidesOnBlocks[ordinalEbIndex[ebIndex]][elem_side]++;
   }
+  // The cells lists are filled on host, then copied to device
+  using cells_host_t = typename Kokkos::DynRankView<int, PHX::Device>::HostMirror;
+  std::vector<std::vector<cells_host_t> > cellsOnSidesOnBlocks_h;
   cellsOnSidesOnBlocks.resize(ordinalEbIndex.size());
+  cellsOnSidesOnBlocks_h.resize(ordinalEbIndex.size());
   for (size_t ib=0; ib<ordinalEbIndex.size(); ib++) {
     cellsOnSidesOnBlocks[ib].resize(numSidesOnElem);
+    cellsOnSidesOnBlocks_h[ib].resize(numSidesOnElem);
     for (int is=0; is<numSidesOnElem; is++) {
       cellsOnSidesOnBlocks[ib][is] = Kokkos::DynRankView<int, PHX::Device>("cellOnSide_i", numCellsOnSidesOnBlocks[ib][is]);
+      cellsOnSidesOnBlocks_h[ib][is] = Kokkos::create_mirror_view(cellsOnSidesOnBlocks[ib][is]);
       numCellsOnSidesOnBlocks[ib][is]=0;
     }
   }
@@ -399,7 +405,31 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     const int ws_elem_idx = it_side.ws_elem_idx;
     const int elem_side = it_side.side_pos;
 
-    cellsOnSidesOnBlocks[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = ws_elem_idx;
+    cellsOnSidesOnBlocks_h[iBlock][elem_side](numCellsOnSidesOnBlocks[iBlock][elem_side]++) = ws_elem_idx;
+  }
+  for (size_t ib=0; ib<ordinalEbIndex.size(); ib++) {
+    for (int is=0; is<numSidesOnElem; is++) {
+      Kokkos::deep_copy(cellsOnSidesOnBlocks[ib][is],cellsOnSidesOnBlocks_h[ib][is]);
+    }
+  }
+
+  using ExecSpace = PHX::Device::execution_space;
+  using Policy3 = Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3>>;
+  const int nNodes = numNodes;
+  const int nDims  = cellDims;
+  const int nDOFs  = numDOFsSet;
+  const bool isVectorDOF = vectorDOF;
+  const auto coords = coordVec.get_view();
+  const auto nm = neumann;
+
+  // Offsets of the dofs, on device
+  Kokkos::View<int*, PHX::Device> dof_offsets("dof_offsets",numDOFsSet);
+  {
+    auto dof_offsets_h = Kokkos::create_mirror_view(dof_offsets);
+    for (int i=0; i<numDOFsSet; ++i) {
+      dof_offsets_h(i) = (i<static_cast<int>(this->offset.size())) ? this->offset[i] : 0;
+    }
+    Kokkos::deep_copy(dof_offsets,dof_offsets_h);
   }
 
   // Loop over the sides that form the boundary condition
@@ -434,11 +464,13 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
 
     // Copy the coordinate data over to a temp container
-    for (int iCell=0; iCell < numCells_; ++iCell) {
-      for (int node=0; node < numNodes; ++node) {
-        for (int dim=0; dim < cellDims; ++dim) {
-          physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
-    }}}
+    {
+      const auto ppc = physPointsCell;
+      Kokkos::parallel_for("Neumann: copy coords", Policy3({0,0,0},{numCells_,nNodes,nDims}),
+                           KOKKOS_LAMBDA(const int iCell, const int node, const int dim) {
+        ppc(iCell, node, dim) = coords(cellVec(iCell),node,dim);
+      });
+    }
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
     ICT::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, side, *cellType);
@@ -473,15 +505,18 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       dofSide = Sacado::createViewWithType<DynRankViewScalarT>(dofSide_buffer, dofSide_buffer.data(), numCells_, numQPsSide, numDOFsSet);
 
       Kokkos::deep_copy(dofCell, 0.0);
-      for (int iCell=0; iCell < numCells_; ++iCell) {
-        for (int node=0; node < numNodes; ++node) {
-          for (int icomp=0; icomp < numDOFsSet; ++icomp) {
-            if (vectorDOF) {
-              dofCell(iCell, node, icomp) = dof(cellVec(iCell), node, this->offset[icomp]);
-            } else {
-              dofCell(iCell, node, icomp) = dof(cellVec(iCell), node);
-            }
-      }}}
+      {
+        const auto dc = dofCell;
+        const auto dof_v = dof.get_view();
+        Kokkos::parallel_for("Neumann: copy dofs", Policy3({0,0,0},{numCells_,nNodes,nDOFs}),
+                             KOKKOS_LAMBDA(const int iCell, const int node, const int icomp) {
+          if (isVectorDOF) {
+            dc(iCell, node, icomp) = dof_v(cellVec(iCell), node, dof_offsets(icomp));
+          } else {
+            dc(iCell, node, icomp) = dof_v(cellVec(iCell), node);
+          }
+        });
+      }
 
       // This is needed, since evaluate currently sums into
       Kokkos::deep_copy(dofSide, 0.0);
@@ -539,14 +574,16 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     // Put this side's contribution into the vector
-    for (int iCell=0; iCell < numCells_; ++iCell)
+    // NOTE: within a (block,side) pair, each cell appears only once, so there are no races
     {
-      int cell = cellVec(iCell);
-      for (int node=0; node < numNodes; ++node)
+      const auto d = data;
+      const auto wtb = weighted_trans_basis_refPointsSide;
+      Kokkos::parallel_for("Neumann: accumulate", Policy3({0,0,0},{numCells_,nNodes,nDOFs}),
+                           KOKKOS_LAMBDA(const int iCell, const int node, const int dim) {
+        const int cell = cellVec(iCell);
         for (int qp=0; qp < numQPsSide; ++qp)
-          for (int dim=0; dim < numDOFsSet; ++dim)
-            neumann(cell, node, dim) +=
-                  data(iCell, qp, dim) * weighted_trans_basis_refPointsSide(iCell, node, qp);
+          nm(cell, node, dim) += d(iCell, qp, dim) * wtb(iCell, node, qp);
+      });
     }
   }
 }
@@ -588,10 +625,19 @@ calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_ret
   int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
   int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
-  for(int cell = 0; cell < numCells_; cell++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = -dudx[dim];
+  TEUCHOS_TEST_FOR_EXCEPTION (numDOFsSet>3 || static_cast<int>(dudx.size())<numDOFsSet, std::logic_error,
+      "Error! Neumann traction BC supports at most 3 components, and needs one value per component.\n");
+  const ScalarT t0 = numDOFsSet>0 ? dudx[0] : ScalarT(0.0);
+  const ScalarT t1 = numDOFsSet>1 ? dudx[1] : ScalarT(0.0);
+  const ScalarT t2 = numDOFsSet>2 ? dudx[2] : ScalarT(0.0);
+  const auto qp_data = qp_data_returned;
+  using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+  Kokkos::parallel_for("Neumann: traction", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                       KOKKOS_LAMBDA(const int cell, const int pt, const int dim) {
+    if (dim==0)      qp_data(cell, pt, dim) = -t0;
+    else if (dim==1) qp_data(cell, pt, dim) = -t1;
+    else             qp_data(cell, pt, dim) = -t2;
+  });
 
 }
 
@@ -617,11 +663,22 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   kdTdx[2] = 0.0; // Neumann component in the z direction
 */
 
-  for(int side = 0; side < numCells_; side++) {
-    for(int pt = 0; pt < numPoints; pt++) {
-      for(int dim = 0; dim < cellDims; dim++) {
-        grad_T(side, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
-  }}}
+  // k grad T in the x direction goes in the x spot, and so on
+  TEUCHOS_TEST_FOR_EXCEPTION (cellDims>3 || static_cast<int>(dudx.size())<cellDims, std::logic_error,
+      "Error! Neumann (dudx,dudy,dudz) BC needs one value per spatial dimension (at most 3).\n");
+  {
+    const ScalarT g0 = cellDims>0 ? dudx[0] : ScalarT(0.0);
+    const ScalarT g1 = cellDims>1 ? dudx[1] : ScalarT(0.0);
+    const ScalarT g2 = cellDims>2 ? dudx[2] : ScalarT(0.0);
+    const auto gT = grad_T;
+    using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+    Kokkos::parallel_for("Neumann: grad_T", Policy3({0,0,0},{numCells_,numPoints,cellDims}),
+                         KOKKOS_LAMBDA(const int side, const int pt, const int dim) {
+      if (dim==0)      gT(side, pt, dim) = g0;
+      else if (dim==1) gT(side, pt, dim) = g1;
+      else             gT(side, pt, dim) = g2;
+    });
+  }
 
   // for this side in the reference cell, get the components of the normal direction vector
   ICT::getPhysicalSideNormals(side_normals, jacobian_side_refcell,local_side_id, celltopo);
@@ -650,11 +707,14 @@ calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
-  for(int side = 0; side < numCells_; side++) {
-    for(int pt = 0; pt < numPoints; pt++) {
-      for(int dim = 0; dim < numDOFsSet; dim++) {
-        qp_data_returned(side, pt, dim) = -const_val * scale; // User directly specified dTdn, just use it
-  }}}
+  // User directly specified dTdn, just use it
+  const ScalarT value = -const_val * scale;
+  const auto qp_data = qp_data_returned;
+  using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+  Kokkos::parallel_for("Neumann: dudn const", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                       KOKKOS_LAMBDA(const int side, const int pt, const int dim) {
+    qp_data(side, pt, dim) = value;
+  });
 }
 
 template<typename EvalT, typename Traits>
@@ -665,14 +725,16 @@ calc_dudn_robin(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
 
-  const ScalarT& dof_value = robin_vals[0];
-  const ScalarT& coeff = robin_vals[1];
+  const ScalarT dof_value = robin_vals[0];
+  const ScalarT coeff = robin_vals[1];
 
-  for(int side = 0; side < numCells_; side++) {
-    for(int pt = 0; pt < numPoints; pt++) {
-      for(int dim = 0; dim < numDOFsSet; dim++) {
-        qp_data_returned(side, pt, dim) = coeff*(dof_side(side,pt,dim) - dof_value);
-  }}}
+  const auto qp_data = qp_data_returned;
+  const auto dofs = dof_side;
+  using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+  Kokkos::parallel_for("Neumann: robin", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                       KOKKOS_LAMBDA(const int side, const int pt, const int dim) {
+    qp_data(side, pt, dim) = coeff*(dofs(side,pt,dim) - dof_value);
+  });
 }
 
 template<typename EvalT, typename Traits>
@@ -683,17 +745,17 @@ calc_dudn_radiate(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   int numPoints = qp_data_returned.extent(1); // How many QPs per cell?
   int numCells_ = qp_data_returned.extent(0); // How many cell's worth of data is being computed?
 
-  const ScalarT& dof_value = robin_vals[0];
+  const ScalarT dof_value = robin_vals[0];
   const ScalarT dof_value4 = dof_value*dof_value*dof_value*dof_value; 
-  const ScalarT& coeff = robin_vals[1];
+  const ScalarT coeff = robin_vals[1];
 
-   for (int cell = 0; cell < numCells_; cell++) {
-    for (int pt = 0; pt < numPoints; pt++) {
-      for (int dim = 0; dim < numDOFsSet; dim++) {
-        qp_data_returned(cell, pt, dim) = coeff*(dof_side(cell,pt,dim)*dof_side(cell,pt,dim)*dof_side(cell,pt,dim)*dof_side(cell,pt,dim) - dof_value4);
-      }
-    }
-  }
+  const auto qp_data = qp_data_returned;
+  const auto dofs = dof_side;
+  using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+  Kokkos::parallel_for("Neumann: radiate", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                       KOKKOS_LAMBDA(const int cell, const int pt, const int dim) {
+    qp_data(cell, pt, dim) = coeff*(dofs(cell,pt,dim)*dofs(cell,pt,dim)*dofs(cell,pt,dim)*dofs(cell,pt,dim) - dof_value4);
+  });
 }
 
 template<typename EvalT, typename Traits>
@@ -717,10 +779,14 @@ calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
   IFST::scalarMultiplyDataData(side_normals, normal_lengths, side_normals, true);
 
-  for(int cell = 0; cell < numCells_; cell++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = const_val * side_normals(cell, pt, dim);
+  const ScalarT value = const_val;
+  const auto qp_data = qp_data_returned;
+  const auto normals = side_normals;
+  using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+  Kokkos::parallel_for("Neumann: press", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                       KOKKOS_LAMBDA(const int cell, const int pt, const int dim) {
+    qp_data(cell, pt, dim) = value * normals(cell, pt, dim);
+  });
 
 }
 
@@ -749,22 +815,24 @@ calc_closed_form(       Kokkos::DynRankView<ScalarT, PHX::Device>    & qp_data_r
   IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
   IFST::scalarMultiplyDataData(side_normals, normal_lengths,side_normals, true);
 
-  for(int cell = 0; cell < numCells_; cell++)
-  {
-    for(int pt = 0; pt < numPoints; pt++)
+  const double t = workset.current_time;
+  const int nDOFs = numDOFsSet;
+  const int pDims = physPointsSide.extent_int(2);
+  const auto qp_data = qp_data_returned;
+  const auto pps = physPointsSide;
+  using Policy2 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>;
+  Kokkos::parallel_for("Neumann: closed form", Policy2({0,0},{numCells_,numPoints}),
+                       KOKKOS_LAMBDA(const int cell, const int pt) {
+    MeshScalarT x = pDims>0 ? MeshScalarT(pps( cell, pt, 0)) : MeshScalarT(0.0);
+    MeshScalarT y = pDims>1 ? MeshScalarT(pps( cell, pt, 1)) : MeshScalarT(0.0);
+    MeshScalarT z = pDims>2 ? MeshScalarT(pps( cell, pt, 2)) : MeshScalarT(0.0);
+    for(int dim = 0; dim < nDOFs; dim++)
     {
-      MeshScalarT x = physPointsSide( cell, pt, 0);
-      MeshScalarT y = physPointsSide( cell, pt, 1);
-      MeshScalarT z = physPointsSide( cell, pt, 2);
-      double      t = workset.current_time;
-      for(int dim = 0; dim < numDOFsSet; dim++)
-      {
-        // Your closed form equation here!
-        ScalarT value = 0.0*t + 0.0*x + 0.0*y + 0.0*z;
-        qp_data_returned(cell, pt, dim) =  value;
-      }
+      // Your closed form equation here!
+      ScalarT value = 0.0*t + 0.0*x + 0.0*y + 0.0*z;
+      qp_data(cell, pt, dim) =  value;
     }
-  }
+  });
 }
 
 // **********************************************************************
@@ -794,6 +862,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
+  // The neumann array lives on device: copy it to host for the scatter
+  auto neumann_h = Kokkos::create_mirror_view(this->neumann);
+  Kokkos::deep_copy(neumann_h, this->neumann);
 
   // Place it at the appropriate offset into F
   const auto& offsets = this->fields_offsets;
@@ -803,7 +874,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node<this->numNodes; ++node) {
       for (int dim=0; dim<this->numDOFsSet; ++dim) {
         const int eq = this->offset[dim];
-        f_nonconstView[dof_lids(offsets[node][eq])] += this->neumann(cell,node,dim);
+        f_nonconstView[dof_lids(offsets[node][eq])] += neumann_h(cell,node,dim);
       }
     }
   }
@@ -843,6 +914,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
+  // The neumann array lives on device: copy it to host for the scatter
+  auto neumann_h = Kokkos::create_mirror_view(this->neumann);
+  Kokkos::deep_copy(neumann_h, this->neumann);
+
   int lcol;
   LO row, col;
   ST value;
@@ -860,11 +935,11 @@ evaluateFields(typename Traits::EvalData workset)
         row = dof_lids(offsets[node][row_eq]);
 
         if (f != Teuchos::null) {
-          f_nonconstView[row] += this->neumann(cell, node, dim).val();
+          f_nonconstView[row] += neumann_h(cell, node, dim).val();
         }
 
         // Check derivative array is nonzero
-        if (this->neumann(cell, node, dim).hasFastAccess()) {
+        if (neumann_h(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (int node_col=0; node_col<this->numNodes; node_col++){
@@ -875,7 +950,7 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Global column
               col = dof_lids(offsets[node_col][eq_col]);
-              value = this->neumann(cell, node, dim).fastAccessDx(lcol);
+              value = neumann_h(cell, node, dim).fastAccessDx(lcol);
               // Sum Jacobian
               Albany::addToLocalRowValue(jac,row,col,value);
             } // column equations
@@ -931,6 +1006,9 @@ evaluateFields(typename Traits::EvalData workset)
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
+  // The neumann array lives on device: copy it to host for the scatter
+  auto neumann_h = Kokkos::create_mirror_view(this->neumann);
+  Kokkos::deep_copy(neumann_h, this->neumann);
 
   const auto& offsets = this->fields_offsets;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -942,17 +1020,17 @@ evaluateFields(typename Traits::EvalData workset)
         const int row = dof_lids(offsets[node][row_eq]);
 
         if (f != Teuchos::null) {
-          f_nonconstView[row] += this->neumann(cell, node, dim).val();
+          f_nonconstView[row] += neumann_h(cell, node, dim).val();
         }
 
         if (JV != Teuchos::null) {
           for (int col=0; col<workset.num_cols_x; col++) {
-            JV_nonconst2dView[col][row] += this->neumann(cell, node, dim).dx(col);
+            JV_nonconst2dView[col][row] += neumann_h(cell, node, dim).dx(col);
           }
         }
         if (fp != Teuchos::null) {
           for (int col=0; col<workset.num_cols_p; col++) {
-            fp_nonconst2dView[col][row] += this->neumann(cell, node, dim).dx(col+workset.param_offset);
+            fp_nonconst2dView[col][row] += neumann_h(cell, node, dim).dx(col+workset.param_offset);
           }
         }
       }
@@ -986,8 +1064,13 @@ evaluateFields(typename Traits::EvalData workset)
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
+  // The neumann array lives on device: copy it to host for the scatter
+  auto neumann_h = Kokkos::create_mirror_view(this->neumann);
+  Kokkos::deep_copy(neumann_h, this->neumann);
 
-  const auto& local_Vp = workset.local_Vp;
+  // local_Vp lives on device: copy it to host
+  const auto local_Vp = Kokkos::create_mirror_view(workset.local_Vp);
+  Kokkos::deep_copy(local_Vp, workset.local_Vp);
 
   constexpr auto ALL = Kokkos::ALL();
   if (trans) {
@@ -1009,7 +1092,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int node = 0; node < this->numNodes; ++node) {
             for (int dim = 0; dim < this->numDOFsSet; ++dim){
               int eq = this->offset[dim];
-              val += this->neumann(cell, node, dim).dx(i)*local_Vp(cell,node*neq+eq,col);
+              val += neumann_h(cell, node, dim).dx(i)*local_Vp(cell,node*neq+eq,col);
             }
           }
           fpV_nonconst2dView[col][row] += val;
@@ -1034,7 +1117,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i) {
-              val += this->neumann(cell, node, dim).dx(i)*local_Vp(cell,i,col);
+              val += neumann_h(cell, node, dim).dx(i)*local_Vp(cell,i,col);
             }
             fpV_nonconst2dView[col][row] += val;
           }
