@@ -191,6 +191,30 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
 
 template<typename EvalT, typename Traits>
 void ScatterSideEqnResidualBase<EvalT, Traits>::
+copy_fields_to_host ()
+{
+  auto copy = [](host_view_t& v_h, const PHX::MDField<const ScalarT>& f) {
+    v_h = Kokkos::create_mirror_view(f.get_view());
+    Kokkos::deep_copy(v_h, f.get_view());
+  };
+  switch (tensorRank) {
+    case 0:
+      val_h.resize(val.size());
+      for (size_t eq=0; eq<val.size(); ++eq) {
+        copy(val_h[eq],val[eq]);
+      }
+      break;
+    case 1:
+      copy(valVec_h,valVec);
+      break;
+    case 2:
+      copy(valTensor_h,valTensor);
+      break;
+  }
+}
+
+template<typename EvalT, typename Traits>
+void ScatterSideEqnResidualBase<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   gatherSideSetNodeGIDs(*workset.disc);
@@ -198,6 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (workset.sideSets->find(this->sideSetName)!=workset.sideSets->end()) {
     sideSet = workset.sideSets->at(this->sideSetName);
     if (sideSet.size()>0) {
+      copy_fields_to_host();
       doEvaluateFields(workset,sideSet);
     }
   }

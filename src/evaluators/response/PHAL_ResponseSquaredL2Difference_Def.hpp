@@ -28,6 +28,8 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   fieldDim = getLayout(dl,rank,layout);
   layout->dimensions(dims);
+  dims_2 = (fieldDim >= 1) ? dims[2] : 0;
+  dims_3 = (fieldDim >= 2) ? dims[3] : 0;
 
   sourceField = decltype(sourceField)(fname,layout);
   w_measure   = decltype(w_measure)("Weights",dl->qp_scalar);
@@ -89,7 +91,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
 void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
@@ -100,12 +102,13 @@ template<typename EvalT, typename Traits, typename SourceScalarT, typename Targe
 void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
   switch(fieldDim)
   {
     case 0:
-      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                           KOKKOS_CLASS_LAMBDA(const int& cell) {
         ScalarT sum = 0;
         for (int qp=0; qp<numQPs; ++qp)
         {
@@ -115,39 +118,41 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
           sum += sq * w_measure(cell,qp);
         }
         this->local_response_eval(cell, 0) = sum*scaling;
-        this->global_response_eval(0) += sum*scaling;
-      }
+        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+      });
       break;
     case 1:
-      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                           KOKKOS_CLASS_LAMBDA(const int& cell) {
         ScalarT sum = 0;
         for (int qp=0; qp<numQPs; ++qp)
         {
           ScalarT sq = 0;
           // Computing squared difference at qp
-          for (size_t j=0; j<dims[2]; ++j)
+          for (int j=0; j<dims_2; ++j)
             sq += std::pow(sourceField(cell,qp,j)-(target_value ? target_value_val : targetField(cell,qp,j)),2);
           sum += sq * w_measure(cell,qp);
         }
         this->local_response_eval(cell, 0) = sum*scaling;
-        this->global_response_eval(0) += sum*scaling;
-      }
+        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+      });
       break;
     case 2:
-      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                           KOKKOS_CLASS_LAMBDA(const int& cell) {
         ScalarT sum = 0;
         for (int qp=0; qp<numQPs; ++qp)
         {
           ScalarT sq = 0;
           // Computing squared difference at qp
-          for (size_t j=0; j<dims[2]; ++j)
-            for (size_t k=0; k<dims[3]; ++k)
+          for (int j=0; j<dims_2; ++j)
+            for (int k=0; k<dims_3; ++k)
               sq += std::pow(sourceField(cell,qp,j,k)-(target_value ? target_value_val : targetField(cell,qp,j,k)),2);
           sum += sq * w_measure(cell,qp);
         }
         this->local_response_eval(cell, 0) = sum*scaling;
-        this->global_response_eval(0) += sum*scaling;
-      }
+        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
+      });
       break;
   }
 
