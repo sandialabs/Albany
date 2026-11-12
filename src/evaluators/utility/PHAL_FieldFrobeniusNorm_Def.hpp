@@ -229,7 +229,8 @@ void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Tr
     // The parameter field lives in device memory: copy it to host before reading it
     auto regularizationParam_h = Kokkos::create_mirror_view(regularizationParam.get_static_view());
     Kokkos::deep_copy(regularizationParam_h, regularizationParam.get_static_view());
-    const ScalarT param = Albany::convertScalar<const ScalarT>(regularizationParam_h(0));
+    const EScalarT param_val = regularizationParam_h(0);
+    const ScalarT param = Albany::convertScalar<ScalarT>(param_val);
     if (regularization_type==GIVEN_PARAMETER)
       regularization = param;
     else
