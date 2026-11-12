@@ -384,7 +384,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     numCellsOnSidesOnBlocks[ordinalEbIndex[ebIndex]][elem_side]++;
   }
   // The cells lists are filled on host, then copied to device
-  using cells_host_t = typename Kokkos::DynRankView<int, PHX::Device>::HostMirror;
+  using cells_host_t = typename Kokkos::DynRankView<int, PHX::Device>::host_mirror_type;
   std::vector<std::vector<cells_host_t> > cellsOnSidesOnBlocks_h;
   cellsOnSidesOnBlocks.resize(ordinalEbIndex.size());
   cellsOnSidesOnBlocks_h.resize(ordinalEbIndex.size());
