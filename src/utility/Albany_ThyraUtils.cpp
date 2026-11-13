@@ -13,6 +13,7 @@
 #include "Thyra_DefaultSpmdVectorSpace.hpp"
 #include "Thyra_DefaultSpmdVector.hpp"
 
+#include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
 #include "Teuchos_RCP.hpp"
 
@@ -386,38 +387,137 @@ void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val)
 
 }
 
+namespace {
+
+// A matrix with the graph of mat as a static graph, and the values of mat. A matrix with a
+// static graph can have its values replaced (resumeFill/fillComplete) without touching the
+// graph, as done by transpose(A,At) below.
+Teuchos::RCP<Tpetra_CrsMatrix> staticGraphCopy (const Tpetra_CrsMatrix& mat)
+{
+  auto copy = Teuchos::rcp(new Tpetra_CrsMatrix(mat.getCrsGraph()));
+  Kokkos::deep_copy(copy->getLocalValuesDevice(Tpetra::Access::OverwriteAll),
+                    mat.getLocalValuesDevice(Tpetra::Access::ReadOnly));
+  copy->fillComplete(mat.getDomainMap(),mat.getRangeMap());
+  return copy;
+}
+
+// Number of entries where two views of the same length differ (on device)
+template<typename ViewT>
+struct CountDiffsFunctor {
+  ViewT a, b;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const std::size_t i, int& n) const { n += (a(i)!=b(i)) ? 1 : 0; }
+};
+
+template<typename ViewT>
+int countDiffs (const ViewT& a, const ViewT& b)
+{
+  using exec_space = typename Tpetra_CrsMatrix::execution_space;
+  int n = 0;
+  using policy_type = Kokkos::RangePolicy<exec_space,Kokkos::IndexType<std::size_t>>;
+  Kokkos::parallel_reduce("Albany::countDiffs",policy_type(0,a.extent(0)),
+                          CountDiffsFunctor<ViewT>{a,b},n);
+  return n;
+}
+
+// Whether the two (fill complete) matrices have the same structure: same maps, and same
+// local graph on every rank. Collective: all the ranks get the same answer.
+bool haveSameStructure (const Tpetra_CrsMatrix& A, const Tpetra_CrsMatrix& B)
+{
+  // Note: isSameAs is collective, and its result is the same on all ranks, so the
+  //       short-circuit evaluation is the same on all ranks too.
+  if (!A.isFillComplete() || !B.isFillComplete()) {
+    return false;
+  }
+  if (!A.getRowMap()->isSameAs(*B.getRowMap()) ||
+      !A.getColMap()->isSameAs(*B.getColMap()) ||
+      !A.getDomainMap()->isSameAs(*B.getDomainMap()) ||
+      !A.getRangeMap()->isSameAs(*B.getRangeMap())) {
+    return false;
+  }
+
+  const auto gA = A.getCrsGraph()->getLocalGraphDevice();
+  const auto gB = B.getCrsGraph()->getLocalGraphDevice();
+  int locallySame = gA.row_map.extent(0)==gB.row_map.extent(0) &&
+                    gA.entries.extent(0)==gB.entries.extent(0);
+  if (locallySame) {
+    locallySame = countDiffs(gA.row_map,gB.row_map)==0 &&
+                  countDiffs(gA.entries,gB.entries)==0;
+  }
+  int globallySame = 0;
+  Teuchos::reduceAll(*A.getComm(),Teuchos::REDUCE_MIN,locallySame,Teuchos::outArg(globallySame));
+  return globallySame==1;
+}
+
+} // anonymous namespace
+
 Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_LinearOp>& lop) {
   Teuchos::RCP<Thyra_LinearOp> lopt;
 
   // Allow failure, since we don't know what the underlying linear algebra is
   auto tmat = getConstTpetraMatrix(lop,false);
   if (!tmat.is_null()) {
-    Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
-    auto tmat_t = transposer.createTranspose();
-    lopt = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(tmat_t));
+    Teuchos::RCP<const Tpetra_CrsMatrix> tmat_t;
+    {
+      Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
+      tmat_t = transposer.createTranspose();
+    }
+    // A static graph, so that transpose(lop,lopt) only replaces the values
+    lopt = createThyraLinearOp(Teuchos::rcp_implicit_cast<Tpetra_Operator>(staticGraphCopy(*tmat_t)));
   }
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (lopt.is_null(), std::runtime_error,
-    "Error in transpose! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
+    "Error in getTransposedOp! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 
   return lopt;
-} 
+}
 
-void transpose (const Teuchos::RCP<Thyra_LinearOp> lop) {
-  Teuchos::RCP<Thyra_LinearOp> lopt;
-
-  bool is_cast_null=true;
+void transpose (const Teuchos::RCP<const Thyra_LinearOp>& lop,
+                const Teuchos::RCP<Thyra_LinearOp>&       lopt)
+{
   // Allow failure, since we don't know what the underlying linear algebra is
-  auto tmat = getTpetraMatrix(lop,false);
-  if (!tmat.is_null()) {
-    Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
-    *tmat = *transposer.createTranspose();
-    is_cast_null=false;
+  auto tmat   = getConstTpetraMatrix(lop,false);
+  auto tmat_t = getTpetraMatrix(lopt,false);
+  if (!tmat.is_null() && !tmat_t.is_null()) {
+    // The values of a Tpetra::FECrsMatrix are shared with the overlapped matrix used for the
+    // FE assembly. Replacing them (or the matrix, e.g., *tmat_t = *transpose, a shallow copy)
+    // breaks this sharing: the matrices assembled later in lopt would not be seen.
+    TEUCHOS_TEST_FOR_EXCEPTION (!getTpetraFECrsMatrix(lopt,false).is_null(), std::logic_error,
+        "Error in transpose! The output linear op cannot be a Tpetra::FECrsMatrix.\n"
+        "       Use a regular Tpetra::CrsMatrix (e.g., from getTransposedOp).\n");
+
+    Teuchos::RCP<const Tpetra_CrsMatrix> transposed;
+    {
+      Tpetra::RowMatrixTransposer<ST,LO,Tpetra_GO,KokkosNode> transposer(tmat);
+      transposed = transposer.createTranspose();
+    }
+
+    if (haveSameStructure(*tmat_t,*transposed)) {
+      // Usual case: lopt holds the transpose of a matrix with the same graph as lop (e.g., it
+      // comes from getTransposedOp, or from a previous call). Replace the values only, so that
+      // lopt keeps its matrix and graph.
+      tmat_t->resumeFill();
+      Kokkos::deep_copy(tmat_t->getLocalValuesDevice(Tpetra::Access::OverwriteAll),
+                        transposed->getLocalValuesDevice(Tpetra::Access::ReadOnly));
+      auto fillParams = Teuchos::rcp(new Teuchos::ParameterList());
+      fillParams->set("No Nonlocal Changes",true);
+      tmat_t->fillComplete(tmat_t->getDomainMap(),tmat_t->getRangeMap(),fillParams);
+    } else {
+      // The structure changed (e.g., lopt was created for another graph): replace the matrix
+      // of lopt (shallow copy), and reinitialize lopt, so that its vector spaces are those
+      // of the new matrix.
+      *tmat_t = *staticGraphCopy(*transposed);
+      auto tlop = Teuchos::rcp_dynamic_cast<Thyra_TpetraLinearOp>(lopt,true);
+      tlop->initialize(createThyraVectorSpace(tmat_t->getRangeMap()),
+                       createThyraVectorSpace(tmat_t->getDomainMap()),
+                       tmat_t);
+    }
+    return;
   }
 
   // If all the tries above are unsuccessful, throw an error.
-  TEUCHOS_TEST_FOR_EXCEPTION (is_cast_null, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
     "Error in transpose! Could not cast Thyra_LinearOp to any of the supported concrete types.\n");
 }
 

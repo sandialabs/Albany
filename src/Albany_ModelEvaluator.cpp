@@ -542,7 +542,28 @@ ModelEvaluator::get_p_names(int l) const
 Teuchos::RCP<Thyra_LinearOp>
 ModelEvaluator::create_W_op() const
 {
+  if (adjoint_model) {
+    // W is the transpose of the Jacobian. It is a regular Tpetra::CrsMatrix, and not the
+    // Tpetra::FECrsMatrix of the discretization: the values of a FECrsMatrix are shared with
+    // the overlapped matrix used for the FE assembly, and cannot be replaced by those of
+    // another matrix. The Jacobian is assembled in getAdjointAssemblyOp(), and transposed
+    // into W (see evalModelImpl).
+    return getTransposedOp(getAdjointAssemblyOp().getConst());
+  }
   return app->getDisc()->createJacobianOp();
+}
+
+Teuchos::RCP<Thyra_LinearOp>
+ModelEvaluator::getAdjointAssemblyOp() const
+{
+  // The Jacobian op of the current discretization: recreate it if the solution space changed
+  // (e.g., after mesh adaptation)
+  const auto vs = app->getVectorSpace();
+  if (adjoint_assembly_op.is_null() || adjoint_assembly_vs.get()!=vs.get()) {
+    adjoint_assembly_op = app->getDisc()->createJacobianOp();
+    adjoint_assembly_vs = vs;
+  }
+  return adjoint_assembly_op;
 }
 
 Teuchos::RCP<Thyra_Preconditioner>
@@ -1213,15 +1234,16 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     // read in to MATLAB for proper reading in of Mass.
     // IMPORTANT NOTE: keep this call BEFORE the computation of the actual jacobian,
     //                 so you don't overwrite the jacobian.
+    const auto mm_op = adjoint_model ? getAdjointAssemblyOp() : W_op_out;
     app->computeGlobalJacobian(
         0.0, 1.0, 0.0, curr_time,
         x, x_dot, x_dotdot,
         sacado_param_vec,
-        Teuchos::null, W_op_out);
+        Teuchos::null, mm_op);
 
-    writeMatrixMarket(W_op_out,"stiffness.mm");
-    writeMatrixMarket(W_op_out->range(),"range_space.mm");
-    writeMatrixMarket(W_op_out->domain(),"domain_space.mm");
+    writeMatrixMarket(mm_op,"stiffness.mm");
+    writeMatrixMarket(mm_op->range(),"range_space.mm");
+    writeMatrixMarket(mm_op->domain(),"domain_space.mm");
 #endif
 
 #ifdef WRITE_MASS_MATRIX_TO_MM_FILE
@@ -1231,29 +1253,39 @@ evalModelImpl(const Thyra_InArgs&  inArgs,
     // read in to MATLAB for proper reading in of Mass.
     // IMPORTANT NOTE: keep this call BEFORE the computation of the actual jacobian,
     //                 so you don't overwrite the jacobian.
+    const auto mm_op = adjoint_model ? getAdjointAssemblyOp() : W_op_out;
     app->computeGlobalJacobian(
         1.0, 0.0, 0.0, curr_time,
         x, x_dot, x_dotdot,
         sacado_param_vec,
-        Teuchos::null, W_op_out);
+        Teuchos::null, mm_op);
 
-    writeMatrixMarket(W_op_out,"mass.mm");
-    writeMatrixMarket(W_op_out->range(),"range_space.mm");
-    writeMatrixMarket(W_op_out->domain(),"domain_space.mm");
+    writeMatrixMarket(mm_op,"mass.mm");
+    writeMatrixMarket(mm_op->range(),"range_space.mm");
+    writeMatrixMarket(mm_op->domain(),"domain_space.mm");
 #endif
 
   bool f_already_computed = false;
 
   // W matrix
   if (Teuchos::nonnull(W_op_out)) {
-    app->computeGlobalJacobian(
-        alpha, beta, omega, curr_time,
-        x, x_dot, x_dotdot,
-        sacado_param_vec,
-        f_out, W_op_out, dt);
     if(adjoint_model) {
+      // Assemble the Jacobian in the FE matrix of this model, then store its transpose
+      // in W, a regular Tpetra::CrsMatrix (see create_W_op)
+      const auto jac_op = getAdjointAssemblyOp();
+      app->computeGlobalJacobian(
+          alpha, beta, omega, curr_time,
+          x, x_dot, x_dotdot,
+          sacado_param_vec,
+          f_out, jac_op, dt);
       TEUCHOS_FUNC_TIME_MONITOR("Albany Transpose Jacobian");
-      Albany::transpose(W_op_out);
+      Albany::transpose(jac_op.getConst(), W_op_out);
+    } else {
+      app->computeGlobalJacobian(
+          alpha, beta, omega, curr_time,
+          x, x_dot, x_dotdot,
+          sacado_param_vec,
+          f_out, W_op_out, dt);
     }
 
     f_already_computed = true;
