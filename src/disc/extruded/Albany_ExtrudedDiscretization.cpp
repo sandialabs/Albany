@@ -176,14 +176,7 @@ ExtrudedDiscretization::writeMeshDatabaseToFile(const double time,
 Teuchos::ParameterList&
 ExtrudedDiscretization::getAdaptParams ()
 {
-  // the 'basalside' specifies the adapt parameters
-  if (m_disc_params->isSublist("Side Set Discretizations") &&
-      m_disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
-    return m_disc_params->sublist("Side Set Discretizations")
-                        .sublist("basalside")
-                        .sublist("Mesh Adaptivity");
-  }
-  return m_disc_params->sublist("Mesh Adaptivity");
+  return Albany::getAdaptParams(*m_disc_params);
 }
 
 Teuchos::RCP<AdaptationData>
