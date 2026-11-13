@@ -13,6 +13,7 @@ set(SOURCES
     problems/Albany_SideLaplacianProblem.cpp
     evaluators/PHAL_AdvDiffResid.cpp
     evaluators/PHAL_HeatEqResid.cpp
+    evaluators/PHAL_LinearSpaceTimeField.cpp
     evaluators/PHAL_SideLaplacianResidual.cpp
     evaluators/PHAL_ThermalConductivity.cpp
   )
@@ -27,6 +28,8 @@ set(SOURCES
     evaluators/PHAL_AdvDiffResid_Def.hpp
     evaluators/PHAL_HeatEqResid.hpp
     evaluators/PHAL_HeatEqResid_Def.hpp
+    evaluators/PHAL_LinearSpaceTimeField.hpp
+    evaluators/PHAL_LinearSpaceTimeField_Def.hpp
     evaluators/PHAL_SideLaplacianResidual.hpp
     evaluators/PHAL_SideLaplacianResidual_Def.hpp
     evaluators/PHAL_ThermalConductivity.hpp

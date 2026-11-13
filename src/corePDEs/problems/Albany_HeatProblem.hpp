@@ -123,6 +123,7 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
+#include "PHAL_LinearSpaceTimeField.hpp"
 
 
 template <typename EvalT>
@@ -347,6 +348,28 @@ Albany::HeatProblem::constructEvaluators(
     }
   }
 
+  if (params->isSublist("Target Temperature")) {
+    // Analytic target temperature at the quadrature points ("Target Temperature"), e.g., for the
+    // response "Squared L2 Difference Source ST Target MST" with Target Field Name: Target Temperature
+    Teuchos::ParameterList& targetList = params->sublist("Target Temperature");
+    const std::string targetType = targetList.get<std::string>("Type", "Linear Space-Time");
+    TEUCHOS_TEST_FOR_EXCEPTION (targetType != "Linear Space-Time", Teuchos::Exceptions::InvalidParameter,
+        "Error! Invalid Problem->Target Temperature->Type \"" << targetType << "\".\n"
+        "       The only valid type is \"Linear Space-Time\": T = c_0 + c_1 x_1 + ... + c_d x_d + c_t t,\n"
+        "       with Coefficients: [c_0, c_1, ..., c_d, c_t].\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (!targetList.isType<Teuchos::Array<double>>("Coefficients"), Teuchos::Exceptions::InvalidParameter,
+        "Error! Missing Problem->Target Temperature->Coefficients, [c_0, c_1, ..., c_d, c_t] for\n"
+        "       T = c_0 + c_1 x_1 + ... + c_d x_d + c_t t.\n");
+
+    RCP<ParameterList> p = rcp(new ParameterList("Target Temperature"));
+    p->set<string>("Field Name", "Target Temperature");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set<Teuchos::Array<double>>("Coefficients", targetList.get<Teuchos::Array<double>>("Coefficients"));
+
+    ev = rcp(new PHAL::LinearSpaceTimeField<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Temperature Resid
     RCP<ParameterList> p = rcp(new ParameterList("Temperature Resid"));
 
@@ -366,7 +389,7 @@ Albany::HeatProblem::constructEvaluators(
     p->set<string>("ThermalConductivity Name", "ThermalConductivity");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<string>("Absorption Name", "ThermalConductivity");
+    p->set<string>("Absorption Name", "Absorption");
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Gradient QP Variable Name", "Temperature Gradient");
