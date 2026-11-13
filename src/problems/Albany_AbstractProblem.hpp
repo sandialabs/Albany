@@ -172,7 +172,10 @@ class AbstractProblem {
   //! With an explicit Tempus stepper, Albany::SolverFactory uses these masks to solve
   //! the constraint at every stage, and to integrate the differential dofs explicitly
   //! (see Albany::ExplicitODEModelEvaluator). Without them, an explicit stepper cannot
-  //! be used at all, since the mass matrix of a DAE is singular.
+  //! be used at all, since the mass matrix of a DAE is singular. With an implicit
+  //! stepper and the adjoint sensitivities of Tempus, the algebraic mask is given to
+  //! Tempus ("Algebraic Equations Mask"), for the adjoint jumps of the "Final Time"
+  //! and "Sum Over Times" responses.
   virtual bool
   getDAEMasks(
       const AbstractDiscretization& /* disc */,
