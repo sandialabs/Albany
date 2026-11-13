@@ -186,6 +186,13 @@ public:
   //! Tells code whether to construct forward or adjoint ME
   //The latter has the Jacobian transposed
   bool adjoint_model;
+
+  //! Adjoint model: the FE matrix the Jacobian is assembled in, before it is transposed
+  //! into W (a regular Tpetra::CrsMatrix, see create_W_op), and the solution space it was
+  //! created for
+  Teuchos::RCP<Thyra_LinearOp> getAdjointAssemblyOp() const;
+  mutable Teuchos::RCP<Thyra_LinearOp>          adjoint_assembly_op;
+  mutable Teuchos::RCP<const Thyra_VectorSpace> adjoint_assembly_vs;
 };
 
 } // namespace Albany
