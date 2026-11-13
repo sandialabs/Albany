@@ -194,7 +194,10 @@ void ScatterSideEqnResidualBase<EvalT, Traits>::
 copy_fields_to_host ()
 {
   auto copy = [](host_view_t& v_h, const PHX::MDField<const ScalarT>& f) {
-    v_h = Kokkos::create_mirror_view(f.get_view());
+    // Allocate the host copy only once (unless the field was reallocated with a different size)
+    if (v_h.size()!=f.get_view().size()) {
+      v_h = Kokkos::create_mirror_view(f.get_view());
+    }
     Kokkos::deep_copy(v_h, f.get_view());
   };
   switch (tensorRank) {

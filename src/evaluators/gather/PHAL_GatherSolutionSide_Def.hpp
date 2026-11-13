@@ -130,9 +130,17 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr,
 
   const int numSides = dof_mgr->get_topology().getSideCount();
 
+  // Check that all gathered fields have one dof per side node, and get the max number of side nodes
   int maxSideNodes = 0;
   for (int side=0; side<numSides; ++side) {
-    maxSideNodes = std::max(maxSideNodes,static_cast<int>(dof_mgr->getGIDFieldOffsetsSide(offset,side).size()));
+    const int numSideNodes = node_dof_mgr->getGIDFieldOffsetsSide(0,side).size();
+    maxSideNodes = std::max(maxSideNodes,numSideNodes);
+    for (int eq=0; eq<numFields; ++eq) {
+      const int numFieldDofs = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side).size();
+      ALBANY_ASSERT (numFieldDofs==numSideNodes,
+          "Error! Field " << offset+eq << " has " << numFieldDofs << " dofs on side " << side
+          << ", but the side has " << numSideNodes << " nodes.\n");
+    }
   }
 
   m_num_side_nodes.resize("",numSides);
@@ -147,9 +155,6 @@ gather_fields_offsets (const Teuchos::RCP<const Albany::DOFManager>& dof_mgr,
     }
     for (int eq=0; eq<numFields; ++eq) {
       const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side);
-      ALBANY_ASSERT (static_cast<int>(offsets.size())==numSideNodes,
-          "Error! Field " << offset+eq << " has " << offsets.size() << " dofs on side " << side
-          << ", but the side has " << numSideNodes << " nodes.\n");
       for (int node=0; node<numSideNodes; ++node) {
         m_side_dof_offsets.host()(side,node,eq) = offsets[node];
       }
@@ -198,23 +203,26 @@ evaluateFields(typename Traits::EvalData workset)
   if (gather_xdotdot)
     xdotdot_data = Albany::getDeviceData(xdotdot);
 
+  // Capture only device-copyable data (not the whole evaluator)
+  const auto sol = get_accessor();
+  const int nfields = numFields;
   Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+                       KOKKOS_LAMBDA(const int& iside) {
     const int elem_LID = elem_lids(ws_elem_idx(iside));
     const int pos = side_pos(iside);
     const int numNodes = num_side_nodes(pos);
 
-    for (int eq=0; eq<numFields; ++eq) {
+    for (int eq=0; eq<nfields; ++eq) {
       for (int node=0; node<numNodes; ++node) {
         const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
         if (gather_x) {
-          get_ref(iside,node,eq) = x_data(lid);
+          sol.get_ref(iside,node,eq) = x_data(lid);
         }
         if (gather_xdot) {
-          get_ref_dot(iside,node,eq) = xdot_data(lid);
+          sol.get_ref_dot(iside,node,eq) = xdot_data(lid);
         }
         if (gather_xdotdot) {
-          get_ref_dotdot(iside,node,eq) = xdotdot_data(lid);
+          sol.get_ref_dotdot(iside,node,eq) = xdotdot_data(lid);
         }
       }
     }
@@ -269,29 +277,33 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const auto m_coeff = workset.m_coeff;
   const auto n_coeff = workset.n_coeff;
 
+  // Capture only device-copyable data (not the whole evaluator)
+  const auto sol = get_accessor();
+  const int nfields = numFields;
+  const int first_dof = offset;
   Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+                       KOKKOS_LAMBDA(const int& iside) {
     const int elem_LID = elem_lids(ws_elem_idx(iside));
     const int pos = side_pos(iside);
     const int numNodes = num_side_nodes(pos);
 
-    for (int eq=0; eq<numFields; ++eq) {
+    for (int eq=0; eq<nfields; ++eq) {
       for (int node=0; node<numNodes; ++node) {
         // NOTE: node_offsets is to compute the idx of the side node within the cell.
-        const int start = neq*node_offsets(pos,node) + offset;
+        const int start = neq*node_offsets(pos,node) + first_dof;
         const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
         if (gather_x) {
-          ref_t val_ref = get_ref(iside,node,eq);
+          ref_t val_ref = sol.get_ref(iside,node,eq);
           val_ref = FadType(val_ref.size(),x_data(lid));
           val_ref.fastAccessDx(start + eq) = j_coeff;
         }
         if (gather_xdot) {
-          ref_t val_ref = get_ref_dot(iside,node,eq);
+          ref_t val_ref = sol.get_ref_dot(iside,node,eq);
           val_ref = FadType(val_ref.size(),xdot_data(lid));
           val_ref.fastAccessDx(start + eq) = m_coeff;
         }
         if (gather_xdotdot) {
-          ref_t val_ref = get_ref_dotdot(iside,node,eq);
+          ref_t val_ref = sol.get_ref_dotdot(iside,node,eq);
           val_ref = FadType(val_ref.size(),xdotdot_data(lid));
           val_ref.fastAccessDx(start + eq) = n_coeff;
         }
@@ -362,17 +374,20 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
   const auto m_coeff = workset.m_coeff;
   const auto n_coeff = workset.n_coeff;
 
+  // Capture only device-copyable data (not the whole evaluator)
+  const auto sol = get_accessor();
+  const int nfields = numFields;
   Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
-                       KOKKOS_CLASS_LAMBDA(const int& iside) {
+                       KOKKOS_LAMBDA(const int& iside) {
     const int elem_LID = elem_lids(ws_elem_idx(iside));
     const int pos = side_pos(iside);
     const int numNodes = num_side_nodes(pos);
 
-    for (int eq=0; eq<numFields; ++eq) {
+    for (int eq=0; eq<nfields; ++eq) {
       for (int node=0; node<numNodes; ++node) {
         const auto lid = elem_dof_lids(elem_LID,side_offsets(pos,node,eq));
         if (gather_x) {
-          ref_t ref = get_ref(iside,node,eq);
+          ref_t ref = sol.get_ref(iside,node,eq);
           if (gather_Vx) {
             ref = TanFadType(ref.size(),x_data(lid));
             for (int k=0; k<ncolsx; k++){
@@ -384,7 +399,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         }
 
         if (gather_xdot) {
-          ref_t ref = get_ref_dot(iside,node,eq);
+          ref_t ref = sol.get_ref_dot(iside,node,eq);
           if (gather_Vxdot) {
             ref = TanFadType(ref.size(),xdot_data(lid));
             for (int k=0; k<ncolsx; k++){
@@ -396,7 +411,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
         }
 
         if (gather_xdotdot) {
-          ref_t ref = get_ref_dotdot(iside,node,eq);
+          ref_t ref = sol.get_ref_dotdot(iside,node,eq);
           if (gather_Vxdotdot) {
             ref = TanFadType(ref.size(),xdotdot_data(lid));
             for (int k=0; k<ncolsx; k++) {

@@ -334,10 +334,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
 
-  const std::vector<Albany::SideStruct>& sideSet = it->second;
-
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
+
+  const std::vector<Albany::SideStruct>& sideSet = it->second;
 
   using DynRankViewRealT = Kokkos::DynRankView<RealType, PHX::Device>;
   using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
@@ -420,12 +420,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   const auto coords = coordVec.get_view();
   const auto nm = neumann;
 
-  // Offsets of the dofs, on device
-  Kokkos::View<int*, PHX::Device> dof_offsets("dof_offsets",numDOFsSet);
-  {
+  // Offsets of the dofs, on device (only needed to read the dof field for vector dofs)
+  Kokkos::View<int*, PHX::Device> dof_offsets;
+  if (isVectorDOF && (bc_type == ROBIN || bc_type == STEFAN_BOLTZMANN)) {
+    TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(this->offset.size())<numDOFsSet, std::logic_error,
+        "Error! Neumann BC has " << this->offset.size() << " dof offsets, but " << numDOFsSet << " dofs are set.\n");
+    dof_offsets = Kokkos::View<int*, PHX::Device>("dof_offsets",numDOFsSet);
     auto dof_offsets_h = Kokkos::create_mirror_view(dof_offsets);
     for (int i=0; i<numDOFsSet; ++i) {
-      dof_offsets_h(i) = (i<static_cast<int>(this->offset.size())) ? this->offset[i] : 0;
+      dof_offsets_h(i) = this->offset[i];
     }
     Kokkos::deep_copy(dof_offsets,dof_offsets_h);
   }
