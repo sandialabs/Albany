@@ -164,6 +164,49 @@ IF(NOT Kokkos_ENABLE_CUDA)
                     ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_sensitivity.yaml)
     add_test(${testName} ${Albany.exe} input_mismip_transient_sensitivity.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+    if (ALBANY_ROL)
+      # Transient optimization of the coupled FO-thickness problem (AlbanyAnalysis), with a misfit
+      # of the thickness on the upper surface. The controls are the (log of the) friction
+      # coefficient: a scalar (Mu), or a distributed field on the bed (basal_friction_log) with a
+      # gradient regularization.
+      #  - ROL driver (discrete adjoint of Backward Euler): Mu and Beta, Final Time response.
+      #  - Tempus driver (adjoint sensitivities of Tempus, continuous adjoint): Mu, Final Time and
+      #    Sum Over Times responses. Their adjoint jumps need the algebraic equations of the DAE
+      #    (the velocity), which Albany gives to Tempus ("Algebraic Equations Mask").
+      # Exact derivatives require ALBANY_MESH_DEPENDS_ON_SOLUTION.
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_beta.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_beta.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+
+      # The tests use the coarse MISMIP mesh (AsciiMeshes/MISMIP_coarse)
+      if (NOT ALBANY_PARALLEL_EXODUS)
+        set (testNameDecompMesh ${testNameRoot}_MISMIP_coarse_2d_decompMesh)
+        add_test (NAME ${testNameDecompMesh}
+              COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} mismip_2d.exo
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP_coarse)
+        set_tests_properties (${testNameDecompMesh} PROPERTIES FIXTURES_SETUP MismipCoarseMeshSetup2d)
+      endif()
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_ROL_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Beta_ROL_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_beta.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Distributed" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_Tempus_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;FinalTime;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_Tempus_SumOverTimes)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;SumOverTimes;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+    endif()
   else()
     set (testName ${testNameRoot}_MISMIP_Transient_Impl)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient.yaml
