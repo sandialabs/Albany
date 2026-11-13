@@ -14,10 +14,6 @@
 #include "Albany_StringUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#ifdef ALBANY_OMEGAH
-#include "Albany_OmegahDiscretization.hpp"
-#endif
-
 #include <vector>
 #include <algorithm>
 #include "Albany_ProblemUtils.hpp"
@@ -71,14 +67,6 @@ void ExtrudedDiscretization::setNumEq (int neq)
   // Ask the basal mesh to store the solution as a (Level,Eq) layered field (see copySolutionData).
   // NOTE: m_basal_disc was created with this very sublist (see DiscretizationFactory)
   m_disc_params->sublist("Side Set Discretizations").sublist("basalside").set("Solution Field Levels",num_levels);
-
-#ifdef ALBANY_OMEGAH
-  // Let the basal disc unpack the per-column 'solution' tag for vtk output
-  auto omegah_basal = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(m_basal_disc);
-  if (not omegah_basal.is_null()) {
-    omegah_basal->setSolutionLevels(neq,num_levels);
-  }
-#endif
 }
 
 void

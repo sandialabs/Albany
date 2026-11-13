@@ -525,22 +525,22 @@ void OmegahDiscretization::setNumEq (int neq)
   m_neq = neq;
 }
 
-void OmegahDiscretization::
-setSolutionLevels (const int neq_per_level, const int nlev)
+int OmegahDiscretization::solutionLevels () const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (neq_per_level*nlev != m_neq, std::logic_error,
-      "Error! The per level component count must add up to neq.\n"
-      "  - neq_per_level: " << neq_per_level << "\n"
-      "  - nlev: " << nlev << "\n"
+  const int nlev = m_disc_params->get("Solution Field Levels",1);
+  TEUCHOS_TEST_FOR_EXCEPTION (nlev<1 or m_neq % nlev != 0, std::logic_error,
+      "Error! Invalid 'Solution Field Levels'.\n"
+      "  - Solution Field Levels: " << nlev << "\n"
       "  - neq: " << m_neq << "\n");
-  m_neq_per_level = neq_per_level;
-  m_num_levels    = nlev;
+  return nlev;
 }
 
 std::vector<std::pair<std::string,int>>
 OmegahDiscretization::solutionLevelFields () const
 {
-  if (m_neq_per_level<1) { return {}; }
+  const int nlev = solutionLevels();
+  if (nlev<2) { return {}; }
+  const int neq_per_level = m_neq / nlev;
 
   bool use_components = not m_solution_components.empty();
   int ncomps = 0;
@@ -548,7 +548,7 @@ OmegahDiscretization::solutionLevelFields () const
     use_components &= n>0;
     ncomps += n;
   }
-  if (use_components and ncomps==m_neq_per_level) {
+  if (use_components and ncomps==neq_per_level) {
     auto fields = m_solution_components;
     for (auto& f : fields) {
       std::replace(f.first.begin(),f.first.end(),' ','_');
@@ -557,7 +557,7 @@ OmegahDiscretization::solutionLevelFields () const
   }
 
   std::vector<std::pair<std::string,int>> fields;
-  for (int k=0; k<m_neq_per_level; ++k) {
+  for (int k=0; k<neq_per_level; ++k) {
     fields.emplace_back("cmp" + std::to_string(k),1);
   }
   return fields;
@@ -574,12 +574,13 @@ bool OmegahDiscretization::addSolutionLevelTags ()
     return false;
   }
 
-  for (int ilev=0; ilev<m_num_levels; ++ilev) {
+  const int nlev = solutionLevels();
+  for (int ilev=0; ilev<nlev; ++ilev) {
     int eq = 0;
     for (const auto& [name,n] : fields) {
       mfa->addVertexTagSlice(solution_dof_name(),
                              name + "_level" + std::to_string(ilev),
-                             eq*m_num_levels+ilev, n, m_num_levels);
+                             eq*nlev+ilev, n, nlev);
       eq += n;
     }
   }
@@ -591,8 +592,10 @@ void OmegahDiscretization::removeSolutionLevelTags ()
   auto mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_solution_mfa);
   if (mfa.is_null()) { return; }
 
-  for (int ilev=0; ilev<m_num_levels; ++ilev) {
-    for (const auto& [name,n] : solutionLevelFields()) {
+  const auto fields = solutionLevelFields();
+  const int nlev = solutionLevels();
+  for (int ilev=0; ilev<nlev; ++ilev) {
+    for (const auto& [name,n] : fields) {
       mfa->removeVertexTag(name + "_level" + std::to_string(ilev));
     }
   }
