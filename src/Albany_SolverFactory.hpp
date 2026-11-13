@@ -90,6 +90,16 @@ protected:
   //! adjoint jumps of a DAE (Tempus->Sensitivities->"Algebraic Equations Mask")
   void setupTempusAdjointDAE (const Teuchos::RCP<Application>& app);
 
+  //! Before each forward time integration of the Tempus solver, solve for the algebraic dofs
+  //! of the initial state of a DAE, with the current parameters (Problem->"Consistent Initial
+  //! State"; on by default with the adjoint sensitivities of Tempus, which need a consistent
+  //! initial state). See Albany::ConsistentInitialStateSolver.
+  void setupConsistentInitialState (const Teuchos::RCP<Application>& app,
+                                    const Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>& solver,
+                                    const bool forwardMode);
+
+  Teuchos::RCP<const Teuchos::ParameterList> getValidConsistentInitialStateParameters() const;
+
   //! Parameter list specifying what solver to create
   Teuchos::RCP<Teuchos::ParameterList>      m_appParams;
 
