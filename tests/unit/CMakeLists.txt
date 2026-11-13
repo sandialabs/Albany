@@ -93,6 +93,11 @@ create_unit_test (NAME    HessianVecFad
                   SOURCES HessianVecFad.cpp
                   SERIAL_ONLY)
 
+# Transpose of the Jacobian for the adjoint model (getTransposedOp, transpose)
+create_unit_test (NAME    TransposeUtils
+                  PREFIX  ${dirName}
+                  SOURCES TransposeUtils.cpp)
+
 #####################################################################
 
 add_subdirectory(disc)
