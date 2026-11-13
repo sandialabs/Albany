@@ -125,9 +125,17 @@ inline void addToLocalRowValue (const Teuchos::RCP<Thyra_LinearOp>& lop,
 
 void scale (const Teuchos::RCP<Thyra_LinearOp>& lop, const ST val); 
 
+// A new linear op with the transpose of lop, as a regular Tpetra::CrsMatrix with a static graph
+// (even if lop is a Tpetra::FECrsMatrix), so that transpose(lop,lopt) can later replace its values.
 Teuchos::RCP<Thyra_LinearOp> getTransposedOp (const Teuchos::RCP<const Thyra_LinearOp>& lop);
 
-void transpose (const Teuchos::RCP<Thyra_LinearOp> lop);
+// Store the transpose of lop in lopt. If lopt already has the structure of the transpose of lop
+// (e.g., lopt comes from getTransposedOp(lop), or from a previous call with a matrix with the same
+// graph), only its values are replaced: lopt keeps its matrix and graph. Otherwise, the matrix of
+// lopt is replaced. lopt cannot be a Tpetra::FECrsMatrix: its values are shared with the
+// overlapped matrix used for the FE assembly, so they cannot be replaced by those of another matrix.
+void transpose (const Teuchos::RCP<const Thyra_LinearOp>& lop,
+                const Teuchos::RCP<Thyra_LinearOp>&       lopt);
 
 // Get a kokkos compatible object to view the content of the linear op on device
 DeviceLocalMatrix<const ST> getDeviceData (Teuchos::RCP<const Thyra_LinearOp>& lop);
