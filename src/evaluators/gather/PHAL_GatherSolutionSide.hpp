@@ -56,53 +56,76 @@ public:
   // This function requires template specialization, in derived class below
   void evaluateFields(typename Traits::EvalData d);
 
-protected:
   typedef typename EvalT::ScalarT ScalarT;
   using ref_t = typename PHAL::Ref<typename EvalT::ScalarT>::type;
 
-  // These functions are used to select the correct field based on rank.
-  // They are called from *inside* for loops, but the switch statement
-  // is constant for all iterations, so the compiler branch predictor
-  // can easily guess the correct branch, making the conditional jump
-  // cheap.
-  KOKKOS_INLINE_FUNCTION
-  ref_t get_ref (const int side, const int node, const int eq) const {
-    switch (solRank) {
-      case 0:
-        return val(side,node);
-      case 1:
-        return valVec(side,node,eq);
-      case 2:
-        return valTensor(side,node,eq/numDim,eq%numDim);
+  // Lightweight, device-copyable accessor to the gathered fields. Kernels capture this
+  // (rather than the whole evaluator) to select the correct field based on rank.
+  // The switch statement is constant for all iterations, so the branch is cheap.
+  struct SideSolAccessor {
+    decltype(PHX::MDField<ScalarT,Side,Node>().get_static_view())         val, val_dot, val_dotdot;
+    decltype(PHX::MDField<ScalarT,Side,Node,Dim>().get_static_view())     valVec, valVec_dot, valVec_dotdot;
+    decltype(PHX::MDField<ScalarT,Side,Node,Dim,Dim>().get_static_view()) valTensor, valTensor_dot, valTensor_dotdot;
+    int solRank;
+    int numDim;
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref (const int side, const int node, const int eq) const {
+      switch (solRank) {
+        case 0:
+          return val(side,node);
+        case 1:
+          return valVec(side,node,eq);
+        case 2:
+          return valTensor(side,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
     }
-    Kokkos::abort("Unsupported tensor rank");
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref_dot (const int side, const int node, const int eq) const {
+      switch (solRank) {
+        case 0:
+          return val_dot(side,node);
+        case 1:
+          return valVec_dot(side,node,eq);
+        case 2:
+          return valTensor_dot(side,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    ref_t get_ref_dotdot (const int side, const int node, const int eq) const {
+      switch (solRank) {
+        case 0:
+          return val_dotdot(side,node);
+        case 1:
+          return valVec_dotdot(side,node,eq);
+        case 2:
+          return valTensor_dotdot(side,node,eq/numDim,eq%numDim);
+      }
+      Kokkos::abort("Unsupported tensor rank");
+    }
+  };
+
+  SideSolAccessor get_accessor () const {
+    SideSolAccessor a;
+    a.val              = val.get_static_view();
+    a.val_dot          = val_dot.get_static_view();
+    a.val_dotdot       = val_dotdot.get_static_view();
+    a.valVec           = valVec.get_static_view();
+    a.valVec_dot       = valVec_dot.get_static_view();
+    a.valVec_dotdot    = valVec_dotdot.get_static_view();
+    a.valTensor        = valTensor.get_static_view();
+    a.valTensor_dot    = valTensor_dot.get_static_view();
+    a.valTensor_dotdot = valTensor_dotdot.get_static_view();
+    a.solRank = solRank;
+    a.numDim  = numDim;
+    return a;
   }
 
-  KOKKOS_INLINE_FUNCTION
-  ref_t get_ref_dot (const int side, const int node, const int eq) const {
-    switch (solRank) {
-      case 0:
-        return val_dot(side,node);
-      case 1:
-        return valVec_dot(side,node,eq);
-      case 2:
-        return valTensor_dot(side,node,eq/numDim,eq%numDim);
-    }
-    Kokkos::abort("Unsupported tensor rank");
-  }
-
-  KOKKOS_INLINE_FUNCTION
-  ref_t get_ref_dotdot (const int side, const int node, const int eq) const {
-    switch (solRank) {
-      case 0:
-        return val_dotdot(side,node);
-      case 1:
-        return valVec_dotdot(side,node,eq);
-      case 2:
-        return valTensor_dotdot(side,node,eq/numDim,eq%numDim);
-    }
-    Kokkos::abort("Unsupported tensor rank");
-  }
+protected:
 
   using ExecutionSpace = PHX::Device::execution_space;
   using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
