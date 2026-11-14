@@ -225,6 +225,12 @@ computeField (const std::string& field_name,
               bool nodal, bool scalar, bool layered,
               const Teuchos::RCP<Teuchos::FancyOStream>& out);
 
+// The 'Mesh Adaptivity' sublist of the discretization parameters. For extruded
+// meshes, adaptation is driven by the basal side discretization, so the sublist
+// is the one of 'Side Set Discretizations'->'basalside'.
+bool hasAdaptParams (const Teuchos::ParameterList& disc_params);
+Teuchos::ParameterList& getAdaptParams (Teuchos::ParameterList& disc_params);
+
 }  // namespace Albany
 
 #endif  // ALBANY_DISCRETIZATION_UTILS_HPP

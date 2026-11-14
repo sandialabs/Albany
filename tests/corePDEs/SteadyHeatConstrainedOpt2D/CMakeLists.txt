@@ -18,7 +18,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param.yaml
 add_test(${testName} ${Albany.exe} input_dirichlet_dist_param.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "Basic;Forward")
 
-if (ALBANY_OMEGAH)
+if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   # Copy Input files from source to binary dir
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dirichlet_dist_param_Omega_h.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_dirichlet_dist_param_Omega_h.yaml COPYONLY)

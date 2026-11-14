@@ -19,6 +19,10 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_DualView.hpp"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace Albany {
 
 class AbstractDiscretization
@@ -278,6 +282,16 @@ public:
   //! Get number of total DOFs per node
   int getNumEq() const { return m_neq; }
 
+  //! Name and number of components of each solution field, in solution component
+  //! order (see AbstractProblem::getSolutionComponents). Used to label mesh output.
+  virtual void
+  setSolutionComponents (const std::vector<std::pair<std::string,int>>& /* comps */) {}
+
+  //! return true if mesh adaptation is enabled in the input deck
+  bool adaptationEnabled () {
+    return getAdaptParams().get<std::string>("Type","None") != "None";
+  }
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
   virtual Teuchos::RCP<Thyra_Vector>
   getSolutionField(bool overlapped = false) const = 0;
@@ -379,6 +393,11 @@ protected:
                           const Teuchos::RCP<const Thyra_Vector>& solution_dot,
                           const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
                           const Teuchos::RCP<const Thyra_MultiVector>& dxdp) = 0;
+
+  // support delegating where the 'Mesh Adaptivity' sublist comes from
+  virtual Teuchos::ParameterList& getAdaptParams () {
+    return m_disc_params->sublist("Mesh Adaptivity");
+  }
 
   // From std::vector<SideSet> build corresponding kokkos structures
   void buildSideSetsViews ();

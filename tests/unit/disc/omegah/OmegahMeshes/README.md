@@ -8,3 +8,4 @@
 - `gis_unstruct_basal_populated.osh`
   - Omega\_h mesh created with `exo2osh` tool from scorec Omega\_h  master @ e1be29b
     from `gis_unstruct_basal_populated.exo`
+  - The `lateralside` class set was then renamed to `lateral_side_set`

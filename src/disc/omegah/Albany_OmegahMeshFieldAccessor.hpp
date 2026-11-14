@@ -109,6 +109,23 @@ public:
   // To be called after adaptation, where the stored tags are no longer valid and need to be reset
   void reset_mesh_tags ();
 
+  // Names of the fields stored on mesh vertices. Omega_h drops any tag that is not
+  // registered in AdaptOpts::xfer_opts, so these must be registered for interpolation
+  // before adapting, or they would come back zero-filled on the new mesh.
+  std::vector<std::string> get_nodal_field_names () const;
+
+  // Copy ncomps components of an existing vertex tag into a new vertex tag. Component c
+  // of the new tag is component first_cmp+c*stride of the source tag. Supports unpacking
+  // the 'solution' tag into per level tags by component (e.g., velocity, thickness, etc.).
+  void addVertexTagSlice (const std::string& src_name,
+                          const std::string& dst_name,
+                          const int          first_cmp,
+                          const int          ncomps,
+                          const int          stride = 1);
+
+  // Remove a tag added by addVertexTagSlice. No-op if the tag is not present.
+  void removeVertexTag (const std::string& name);
+
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
 

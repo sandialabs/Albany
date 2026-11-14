@@ -346,7 +346,18 @@ int main(int argc, char *argv[])
       bool writeToMatrixMarketDistrSolnMap = debugParams.get(
           "Write Distributed Solution and Map to MatrixMarket", false);
 
-      const RCP<const Thyra_Vector> xfinal = thyraResponses.back();
+      RCP<const Thyra_Vector> xfinal = thyraResponses.back();
+
+      const auto disc = albanyApp->getDiscretization();
+      if (Teuchos::nonnull(xfinal) && Teuchos::nonnull(disc) &&
+          disc->adaptationEnabled()) {
+        const auto xdisc = disc->getSolutionField();
+        if (Teuchos::nonnull(xdisc) &&
+            !xfinal->space()->isCompatible(*xdisc->space())) {
+          xfinal = xdisc;
+        }
+      }
+
       auto mnv = Albany::mean(xfinal);
       *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
       *out << "\nNumber of Comparisons Attempted: " << comparisons << std::endl;

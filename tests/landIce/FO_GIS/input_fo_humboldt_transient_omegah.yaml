@@ -1,16 +1,13 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Debug Output:
-    #Write Solution to MatrixMarket: -3
-    #Write Jacobian to MatrixMarket: -1
-    #Write Residual to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Transient
     Name: LandIce Coupled FO H 3D
     Compute Sensitivities: false
     Allow Loss Of Derivative Terms: true
+    Time Step: 2.0e-01
     Basal Side Name: basalside
     Surface Side Name: upperside
     Flat Bed Approximation: true

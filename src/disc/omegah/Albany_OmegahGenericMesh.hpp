@@ -60,6 +60,14 @@ public:
   std::vector<std::string> createNodeSets();
   std::vector<std::string> createSideSets();
 
+  // The max node/elem gids are lazily computed and cached. Adaptation changes them,
+  // so the cache must be dropped after the mesh is modified.
+  void invalidateCachedMaxGids ();
+
+  // Recompute meshSpecs[0]->worksetSize from the current element count.
+  // Must be called after the mesh is adapted.
+  void updateWorksetSize ();
+
 protected:
   // Load a mesh from a .osh file
   void loadOmegahMesh ();
@@ -73,8 +81,14 @@ protected:
   };
 
   using PartToGeoModelEntities = strmap_t<std::vector<GeoModelEntity>>;
+
+  // NOTE: these two are hard-coded for box meshes, and must only be used from buildBox
   PartToGeoModelEntities setNodeSetsGeoModelEntities () const;
   PartToGeoModelEntities setSideSetsGeoModelEntities () const;
+
+  // Fills nodeSetsGeoModelEntities/sideSetsGeoModelEntities using the omegah class
+  // sets named in the 'Mark Parts' input array. Used for meshes read from file.
+  void readGeoModelEntitiesFromClassSets ();
 
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                 Teuchos::ParameterList& req_fields_info) override;
@@ -95,6 +109,10 @@ protected:
   mutable GO m_max_elem_gid = -1; //set when get_max_elem_gid() called
 
   bool m_has_restart_solution = false;
+
+  // Whether createSideSets should also tag the entities bounding each side.
+  // Needed when a side set doubles as a node set (see createSideSets).
+  bool m_mark_side_sets_downward = false;
 
 private:
 

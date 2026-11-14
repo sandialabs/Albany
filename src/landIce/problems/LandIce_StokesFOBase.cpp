@@ -2,6 +2,7 @@
 #include "Albany_GeneralPurposeFieldsNames.hpp"
 
 #include "Albany_ProblemUtils.hpp"  // For 'getIntrepidwBasis'
+#include "Albany_DiscretizationUtils.hpp"
 #include "Albany_StringUtils.hpp" // for 'upper_case'
 #include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_I4_FEM.hpp"
@@ -9,6 +10,8 @@
 #include "LandIce_DepthIntegratedBasisUtils.hpp"
 
 #include "Teuchos_CompilerCodeTweakMacros.hpp"
+
+#include <algorithm>
 
 namespace LandIce {
 
@@ -71,8 +74,8 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // If mesh adaptation is enabled, make sure the disc knows which field drives it.
   // Unless the user picked one, we use the effective strain rate (computed by this problem)
   effective_strain_rate_name = "effective_strain_rate";
-  if (discParams->isSublist("Mesh Adaptivity")) {
-    auto& adapt_pl = discParams->sublist("Mesh Adaptivity");
+  if (Albany::hasAdaptParams(*discParams)) {
+    auto& adapt_pl = Albany::getAdaptParams(*discParams);
     adapt_enabled = adapt_pl.get<std::string>("Type","None")!="None";
     if (adapt_enabled) {
       if (not adapt_pl.isParameter("Indicator Field Name")) {
@@ -137,6 +140,22 @@ StokesFOBase (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     computeConstantModes = true;
     computeRotationModes = false;
   }
+}
+
+std::vector<std::pair<std::string,int>> StokesFOBase::getSolutionComponents() const
+{
+  std::vector<std::pair<int,std::string>> by_offset;
+  for (int i=0; i<dof_names.size(); ++i) {
+    by_offset.emplace_back(dof_offsets[i],dof_names[i]);
+  }
+  std::sort(by_offset.begin(),by_offset.end());
+
+  std::vector<std::pair<std::string,int>> comps;
+  for (std::size_t i=0; i<by_offset.size(); ++i) {
+    const int end = i+1<by_offset.size() ? by_offset[i+1].first : static_cast<int>(neq);
+    comps.emplace_back(by_offset[i].second, end-by_offset[i].first);
+  }
+  return comps;
 }
 
 void StokesFOBase::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,

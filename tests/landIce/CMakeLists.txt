@@ -1,5 +1,8 @@
 add_subdirectory(ExoMeshes)
 add_subdirectory(AsciiMeshes)
+if (ALBANY_OMEGAH)
+  add_subdirectory(OmegahMeshes)
+endif()
 add_subdirectory(EllipticMockModel)
 add_subdirectory(FO_AIS)
 add_subdirectory(FO_MMS)

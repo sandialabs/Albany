@@ -3,6 +3,9 @@
 #include "Albany_OmegahUtils.hpp"
 #include "OmegahGhost.hpp"
 #include <Omega_h_map.hpp>
+#include <Omega_h_for.hpp>
+
+#include <iostream>
 
 namespace Albany {
 
@@ -183,6 +186,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 {
   // Elem states
   int num_ws = worksets_sizes.size();
+  elemStateArrays.clear();
   elemStateArrays.resize(worksets_sizes.size());
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).array.data();
@@ -211,6 +215,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
   // Nodal states
   // NOTE: nodal states have just 1 workset
+  nodeStateArrays.clear();
   nodeStateArrays.resize(1);
   int num_nodes = m_mesh->nverts();
   for (const auto& st : nodal_sis) {
@@ -536,6 +541,64 @@ setSolutionFieldsMetadata (const int neq)
   addFieldOnMesh("solution",0,neq);
 }
 
+std::vector<std::string> OmegahMeshFieldAccessor::get_nodal_field_names () const
+{
+  std::vector<std::string> names;
+  for (const auto& [name, tag_handle] : m_tags) {
+    if (tag_handle.ent_dim==0) {
+      names.push_back(name);
+    }
+  }
+  return names;
+}
+
+void OmegahMeshFieldAccessor::
+addVertexTagSlice (const std::string& src_name,
+                   const std::string& dst_name,
+                   const int          first_cmp,
+                   const int          ncomps,
+                   const int          stride)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(0,src_name), std::runtime_error,
+      "Error! Cannot slice tag '" + src_name + "': no such tag on mesh vertices.\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (not Omega_h::is<ST>(m_mesh->get_tagbase(0,src_name)), std::runtime_error,
+      "Error! Tag '" + src_name + "' is not of real (double) type.\n");
+  auto src_tag = m_mesh->get_tag<ST>(0,src_name);
+
+  const int src_ncomps = src_tag->ncomps();
+  TEUCHOS_TEST_FOR_EXCEPTION (first_cmp<0 || ncomps<1 || stride<1 || first_cmp+(ncomps-1)*stride>=src_ncomps,
+      std::logic_error,
+      "Error! Requested slice is out of the source tag's component range.\n"
+      "  - tag name: " + src_name + "\n"
+      "  - tag ncomps: " << src_ncomps << "\n"
+      "  - first_cmp: " << first_cmp << "\n"
+      "  - ncomps: " << ncomps << "\n"
+      "  - stride: " << stride << "\n");
+
+  const auto src = src_tag->array();
+  const int nverts = m_mesh->nents(0);
+  Omega_h::Write<ST> dst(nverts*ncomps,dst_name);
+  Omega_h::parallel_for(nverts, OMEGA_H_LAMBDA(const LO& i) {
+    for (int c=0; c<ncomps; ++c) {
+      dst[i*ncomps+c] = src[i*src_ncomps+first_cmp+c*stride];
+    }
+  });
+
+  if (m_mesh->has_tag(0,dst_name)) {
+    m_mesh->remove_tag(0,dst_name);
+  }
+  m_mesh->add_tag<ST>(0,dst_name,ncomps,read(dst),false);
+}
+
+void OmegahMeshFieldAccessor::
+removeVertexTag (const std::string& name)
+{
+  if (m_mesh->has_tag(0,name)) {
+    m_mesh->remove_tag(0,name);
+  }
+}
+
 void OmegahMeshFieldAccessor::reset_mesh_tags ()
 {
   for (auto& [name, tag_handle] : m_tags) {
@@ -548,6 +611,10 @@ void OmegahMeshFieldAccessor::reset_mesh_tags ()
       Kokkos::deep_copy(array.view(),tag->array().view());
       m_mesh->set_tag(dim,name,read(array));
     } else {
+      if (!m_mesh->comm()->rank()) {
+        std::cout << "WARNING! Field '" << name << "' (dim " << dim << ") did not "
+                     "survive the mesh adaptation and has been reset to zero.\n";
+      }
       array = Omega_h::Write<ST>(m_mesh->nents(dim)*ncmp,name);
       m_mesh->add_tag(dim,name,ncmp,read(array));
     }

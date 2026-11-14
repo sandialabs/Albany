@@ -22,6 +22,7 @@
 #include "Teuchos_RCP.hpp"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Albany {
@@ -181,6 +182,12 @@ class AbstractProblem {
   {
     return false;
   }
+
+  //! Name and number of components of each solution field, in solution component
+  //! order. Used to label the solution in mesh output. Empty (the default) if the
+  //! problem does not describe its solution layout.
+  virtual std::vector<std::pair<std::string,int>>
+  getSolutionComponents() const { return {}; }
 
  protected:
   Teuchos::Array<Teuchos::Array<int>> offsets_;
