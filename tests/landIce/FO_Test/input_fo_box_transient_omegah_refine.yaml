@@ -62,7 +62,7 @@ ANONYMOUS:
     Number Of Time Derivatives: 1
     # Exodus Output File Name: output/humboldt_transient.exo
     Columnwise Ordering: false
-    NumLayers: 5
+    NumLayers: 1
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
@@ -90,62 +90,20 @@ ANONYMOUS:
         Field Name: thickness_forcing
         Field Type: Node Scalar
         Field Origin: Mesh
-    Mesh Adaptivity:
-      Refine Only: true
-      Refine Only Max Length: 0.98
-      Type: SPR # superconvergent patch recovery
-      # 'Adapt Ratio' defines the acceptable margin of error,
-      #   expressed as a factor greater than zero.
-      #   Setting this equal to zero would request zero element
-      #   size everywhere, i.e. infinite refinement.
-      #   Increasing it results in larger mesh elements;
-      #   this is a (nonlinear) scaling factor on the resulting
-      #   size field.
-      Adapt Ratio: 1.8
-      # Error Thresold:
-      #  SPR computes the sum of error norms raised to the power
-      #  (2d/(2p+d)) over all elements, where d is the mesh
-      #  dimension and p is the recovered field polynomial order.
-      #  For this example d=2 and p=2.
-      #  The 'Error Threshold' specifies the maxium allowed error
-      #  before mesh adaptation is triggered;
-      #  i.e., `if (error > threshold) runMeshAdaptation(...)` .
-      Error Threshold: 0.3
-      Minimum Edge Length: 3.0 # min desired edge length in physical space
-      Maximum Edge Length: 8.0 # max desired edge length in physical space
-      Write VTK Files: true # write VTK files before and after adaptation
-      Verbose: true # write additional mesh adaptation info to stdout
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
       basalside:
         Method: Omegah
+        VTK Output File Name: fo_box_transient_refine
+        VTK Write Interval: 1
         Mesh Creation Method: Box2D
-        Number of Elements: [4, 4]   # M x N basal mesh (configurable)
+        Number of Elements: [2, 2]   # M x N basal mesh (configurable)
         Box Scaling: [40.0, 40.0]    # domain [0,40]x[0,40] (km)
         Number Of Time Derivatives: 1
         Mesh Adaptivity:
           Refine Only: true
           Refine Only Max Length: 0.98
-          Type: SPR # superconvergent patch recovery
-          # 'Adapt Ratio' defines the acceptable margin of error,
-          #   expressed as a factor greater than zero.
-          #   Setting this equal to zero would request zero element
-          #   size everywhere, i.e. infinite refinement.
-          #   Increasing it results in larger mesh elements;
-          #   this is a (nonlinear) scaling factor on the resulting
-          #   size field.
-          Adapt Ratio: 1.8
-          # Error Thresold:
-          #  SPR computes the sum of error norms raised to the power
-          #  (2d/(2p+d)) over all elements, where d is the mesh
-          #  dimension and p is the recovered field polynomial order.
-          #  For this example d=2 and p=2.
-          #  The 'Error Threshold' specifies the maxium allowed error
-          #  before mesh adaptation is triggered;
-          #  i.e., `if (error > threshold) runMeshAdaptation(...)` .
-          Error Threshold: 0.3
-          Minimum Edge Length: 3.0 # min desired edge length in physical space
-          Maximum Edge Length: 8.0 # max desired edge length in physical space
+          Type: Test
           Write VTK Files: true # write VTK files before and after adaptation
           Verbose: true # write additional mesh adaptation info to stdout
         Required Fields Info:

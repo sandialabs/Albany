@@ -163,6 +163,8 @@ updateMesh ()
 {
   // Make sure we don't reuse old dof mgrs (if adapting)
   m_key_to_dof_mgr.clear();
+  m_dof_managers.clear();
+  m_node_dof_managers.clear();
 
   // Create DOF managers
   auto sol_dof_mgr  = create_dof_mgr("",FE_Type::HGRAD,1,m_neq);
@@ -600,7 +602,7 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
   checkAdaptCount++;
   auto adapt_data = Teuchos::rcp(new AdaptationData());
   auto mesh = m_mesh_struct->getOmegahMesh();
-  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_params = getAdaptParams();
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   if (adapt_type=="None") {
     return adapt_data;
@@ -654,7 +656,21 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
     }
     return adapt_data;
   } else if (mesh->dim() == 2) {
-    if (!isMeshfieldsEnabled()) {
+    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR" and adapt_type!="Test", std::runtime_error,
+        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
+        " - valid choices for 2D: None, SPR, Test\n");
+
+    const bool isTest = adapt_type=="Test";
+    const bool isNullAdapt = adapt_params.get<bool>("Null Adapt",false);
+    const bool isRefineOnly = adapt_params.get<bool>("Refine Only",false);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (isTest and not (isNullAdapt or isRefineOnly), std::runtime_error,
+        "Error! Adaptation type 'Test' requires one of the debug knobs to be set.\n"
+        " - set 'Null Adapt' to leave the mesh unchanged and exercise only the rebuild\n"
+        " - set 'Refine Only' to refine by edge length ('Refine Only Max Length')\n"
+        " - use 'Type: SPR' to drive the adaptation from the error estimator instead\n");
+
+    if (not isTest and not isMeshfieldsEnabled()) {
       if (!mesh->comm()->rank()) {
         std::cout << "Warning: 2D Omega_h mesh adaptation requires Meshfields. "
           << "Configure Albany with ENABLE_MESHFIELDS=ON to enable it. "
@@ -662,18 +678,13 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
       }
       return adapt_data;
     }
-    TEUCHOS_TEST_FOR_EXCEPTION (adapt_type!="SPR", std::runtime_error,
-        "Error! Adaptation type '" << adapt_type << "' not supported.\n"
-        " - valid choices for 2D: None, SPR\n");
 
     TEUCHOS_TEST_FOR_EXCEPTION (mesh->nents(2)==0, std::runtime_error,
         "Error! At least one process has no mesh elements.\n");
 
-    const bool isNullAdapt = adapt_params.get<bool>("Null Adapt",false);
-    const bool isRefineOnly = adapt_params.get<bool>("Refine Only",false);
     if( isNullAdapt || isRefineOnly ) {
       adapt_data->type = AdaptationType::Topology;
-    } else if( !isNullAdapt ) {
+    } else {
 #ifdef ALBANY_MESHFIELDS
       auto eff_strain_name = adapt_params.get<std::string>("Effective Strain Name","solution_grad_norm");
       auto effectiveStrain = getEffectiveStrainRate(*mesh,eff_strain_name);
@@ -761,7 +772,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   TEUCHOS_TEST_FOR_EXCEPTION (ohMesh->nghost_layers()<1, std::runtime_error,
       "Error! Adaptation requires a ghosted omegah mesh with at least one layer\n");
 
-  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_params = getAdaptParams();
   const auto verbose = adapt_params.get<bool>("Verbose",false);
   const auto writeVtk = adapt_params.get<bool>("Write VTK Files",false);
 
@@ -814,7 +825,7 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
         std::cout << "mesh now has " << nelems << " total elements\n";
       }
     }
-  } else if (ohMesh->dim() == 2 && isMeshfieldsEnabled()) {
+  } else if (ohMesh->dim() == 2 && (isMeshfieldsEnabled() || adapt_params.get<std::string>("Type","None")=="Test")) {
 
     Omega_h::AdaptOpts opts(&(*ohMesh));
     opts.verbosity = (verbose ? Omega_h::EACH_ADAPT : Omega_h::SILENT);
@@ -843,15 +854,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
                      "the post-adaptation rebuild is exercised.\n";
       }
     } else if (adapt_params.get<bool>("Refine Only",false)) {
-      // Debug knob: ignore the SPR size field and simply split long edges.
-      // Refinement only ADDS vertices: every vertex of the old mesh survives with its
-      // exact values, and new ones are linearly interpolated along the edge they split.
-      // So a correct field transfer should leave the solution essentially unchanged,
-      // and the residual should stay close to the pre-adaptation one. If it does not,
-      // the error is in WHAT we transfer, not in information lost to coarsening.
       if (!ohMesh->comm()->rank()) {
-        std::cout << "WARNING! 'Refine Only' is on: ignoring the SPR size field and "
-                     "refining by edge length.\n";
+        std::cout << "WARNING! 'Refine Only' is on: refining by edge length rather than "
+                     "by a computed size field.\n";
       }
       if (!ohMesh->has_tag(Omega_h::VERT,"metric")) {
         Omega_h::add_implied_metric_tag(ohMesh.get());
@@ -865,6 +870,9 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
       opts.min_quality_allowed = 0.0;
       Omega_h::adapt(ohMesh.get(), opts);
     } else {
+      TEUCHOS_TEST_FOR_EXCEPTION (!ohMesh->has_tag(Omega_h::VERT,"tgtLength"), std::runtime_error,
+          "Error! Adaptation was requested, but no 'tgtLength' size field was computed.\n"
+          " - this is the SPR size field, written by checkForAdaptation for 'Type: SPR'\n");
       const auto tgtLength_oh = ohMesh->get_array<Omega_h::Real>(Omega_h::VERT, "tgtLength");
       const auto isos = Omega_h::isos_from_lengths(tgtLength_oh);
       const auto min_size = adapt_params.get<double>("Minimum Edge Length",0.08);

@@ -70,6 +70,18 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
   auto [x,xdot,xdotdot,dxdp] = unpackState(state.getConst());
 
   auto disc = app_->getDiscretization();
+
+  {
+    auto ext_disc = Teuchos::rcp_dynamic_cast<ExtrudedDiscretization>(disc);
+    if (Teuchos::nonnull(ext_disc)) {
+      static int before_wedge_dump_count = 0;
+      const std::string name = "before_adapt_3d" + std::to_string(before_wedge_dump_count++);
+      // 'sol' comes from the solution manager's owned (non-overlapped) space.
+      auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
+      ext_disc->writeWedgeVtk(name, sol->col(0), false);
+    }
+  }
+
   auto adaptData = disc->checkForAdaptation(x,xdot,xdotdot,dxdp,is_first_time_step_);
   if (adaptData->type != AdaptationType::None) {
     disc->adapt(adaptData);
@@ -122,6 +134,7 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
         static int wedge_dump_count = 0;
         const std::string name = "after_adapt_3d" + std::to_string(wedge_dump_count++);
         // 'sol' comes from the solution manager's owned (non-overlapped) space.
+        auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
         ext_disc->writeWedgeVtk(name, sol->col(0), false);
       }
     }

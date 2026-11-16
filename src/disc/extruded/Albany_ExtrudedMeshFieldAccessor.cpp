@@ -366,6 +366,146 @@ saveVector (const Thyra_Vector&  /* field_vector */,
   throw NotYetImplemented("ExtrudedMeshFieldAccessor::saveVector()");
 }
 
+// --- Layered (3d) solution <-> basal tag packing ---------------------------------
+
+void ExtrudedMeshFieldAccessor::
+setLayeredSolutionInfo (const Teuchos::RCP<const LayeredMeshNumbering<LO>>& node_numbering_lid,
+                        const Teuchos::RCP<const DOFManager>& basal_node_dof_mgr,
+                        const Teuchos::RCP<const DOFManager>& basal_sol_dof_mgr,
+                        const Teuchos::RCP<const DOFManager>& sol_dof_mgr,
+                        const int neq)
+{
+  m_node_numbering_lid  = node_numbering_lid;
+  m_basal_node_dof_mgr  = basal_node_dof_mgr.create_weak();
+  m_basal_sol_dof_mgr   = basal_sol_dof_mgr.create_weak();
+  m_sol_dof_mgr         = sol_dof_mgr.create_weak();
+  m_neq                 = neq;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (
+      basal_sol_dof_mgr->getNumFields() != neq*(m_elem_numbering_lid->numLayers+1),
+      std::logic_error,
+      "Error! The basal solution dof manager must have neq*(numLayers+1) components.\n"
+      "  - basal components: " << basal_sol_dof_mgr->getNumFields() << "\n"
+      "  - neq*(numLayers+1): " << neq*(m_elem_numbering_lid->numLayers+1) << "\n");
+}
+
+// Walk every 3d dof of every column, handing the caller the 3d dof lid together with
+// the basal node and (level,eq) it belongs to. Both directions share this walk, so
+// the two can only ever disagree via basal_cmp -- which is a single expression.
+template<typename Func>
+void ExtrudedMeshFieldAccessor::
+forEachColumnDof (const bool overlapped, Func&& f) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (m_sol_dof_mgr.is_null(), std::logic_error,
+      "Error! setLayeredSolutionInfo was not called before a layered solution transfer.\n");
+
+  const int num_layers = m_elem_numbering_lid->numLayers;
+  const auto& elem_dof_lids = m_sol_dof_mgr->elem_dof_lids().host();
+  const auto& basal_elems   = m_basal_node_dof_mgr->getAlbanyConnManager()->getElementsInBlock();
+  const int num_basal_elems = basal_elems.size();
+  const auto& basal_ov_indexer = m_basal_node_dof_mgr->ov_indexer();
+
+  // The basal accessor stores the tag over basal vertices, indexed by basal node LID.
+  const auto& basal_conn = m_basal_node_dof_mgr->getAlbanyConnManager();
+
+  for (int ibelem=0; ibelem<num_basal_elems; ++ibelem) {
+    const auto& basal_node_gids = m_basal_node_dof_mgr->getElementGIDs(ibelem);
+    const int num_basal_nodes = basal_node_gids.size();
+    const auto basal_ownership = basal_conn->getOwnership(ibelem);
+
+    for (int ilay=0; ilay<num_layers; ++ilay) {
+      const int ielem3d = m_elem_numbering_lid->getId(ibelem,ilay);
+      for (int eq=0; eq<m_neq; ++eq) {
+        const auto& offsets = m_sol_dof_mgr->getGIDFieldOffsets(eq);
+        // offsets are ordered layer-by-layer within the wedge: first the bottom
+        // face's nodes, then the top face's, in basal-node order.
+        for (size_t k=0; k<offsets.size(); ++k) {
+          const LO dof_lid = elem_dof_lids(ielem3d,offsets[k]);
+          if (dof_lid<0) { continue; }
+
+          const int iside = static_cast<int>(k)/num_basal_nodes;  // 0=bottom, 1=top
+          const int n     = static_cast<int>(k)%num_basal_nodes;
+          const int ilev  = ilay + iside;                         // absolute node level
+
+          const LO basal_nlid = basal_ov_indexer->getLocalElement(basal_node_gids[n]);
+          if (basal_nlid<0) { continue; }
+
+          // Skip columns we don't own when non-overlapped data was requested.
+          if (not overlapped and basal_ownership[n]!=Owned) { continue; }
+
+          f(dof_lid, basal_nlid, ilev, eq, ibelem, n);
+        }
+      }
+    }
+  }
+}
+
+Teuchos::RCP<Thyra_Vector> ExtrudedMeshFieldAccessor::
+projectSolutionToBasal (const Thyra_Vector& soln,
+                        const bool          overlapped) const
+{
+  auto soln_data = getLocalData(Teuchos::rcpFromRef(soln));
+
+  // Permute the 3d solution into the layout the BASAL solution dof manager expects.
+  // That dof mgr has neq*nlev components and Panzer numbers them node-major within a
+  // basal element, so its dof for (basal node n, component c) is the one the basal
+  // accessor will write to tag slot c of vertex n.
+  auto basal_soln = Thyra::createMember(m_basal_sol_dof_mgr->ov_vs());
+  basal_soln->assign(0.0);
+  auto basal_data = getNonconstLocalData(basal_soln);
+
+  const auto& basal_elem_dof_lids = m_basal_sol_dof_mgr->elem_dof_lids().host();
+
+  forEachColumnDof(overlapped,
+    [&](const LO dof_lid, const LO /*basal_nlid*/, const int ilev, const int eq,
+        const int ibelem, const int n) {
+      const int c = basal_cmp(ilev,eq);
+      const auto& boffs = m_basal_sol_dof_mgr->getGIDFieldOffsets(c);
+      const LO blid = basal_elem_dof_lids(ibelem,boffs[n]);
+      if (blid>=0) { basal_data[blid] = soln_data[dof_lid]; }
+    });
+
+  return basal_soln;
+}
+
+void ExtrudedMeshFieldAccessor::
+saveLayeredSolution (const Thyra_Vector& soln,
+                     const std::string&  field_name,
+                     const bool          overlapped)
+{
+  // Project into the basal dof mgr's layout; the basal accessor's own saveVector
+  // then does the rest, correctly and unchanged.
+  auto basal_soln = projectSolutionToBasal(soln,overlapped);
+
+  m_basal_field_accessor->saveVector(*basal_soln,field_name,m_basal_sol_dof_mgr,true);
+}
+
+void ExtrudedMeshFieldAccessor::
+fillLayeredSolution (Thyra_Vector&      soln,
+                     const std::string& field_name,
+                     const bool         overlapped)
+{
+  // Read the tag into the basal dof mgr's layout, then apply the inverse permutation.
+  auto basal_soln = Thyra::createMember(m_basal_sol_dof_mgr->ov_vs());
+  basal_soln->assign(0.0);
+  m_basal_field_accessor->fillVector(*basal_soln,field_name,m_basal_sol_dof_mgr,true);
+  auto basal_data = getLocalData(basal_soln.getConst());
+
+  auto soln_data = getNonconstLocalData(Teuchos::rcpFromRef(soln));
+
+  const auto& basal_elem_dof_lids = m_basal_sol_dof_mgr->elem_dof_lids().host();
+
+  // Exact inverse of saveLayeredSolution: same walk, same basal_cmp.
+  forEachColumnDof(overlapped,
+    [&](const LO dof_lid, const LO /*basal_nlid*/, const int ilev, const int eq,
+        const int ibelem, const int n) {
+      const int c = basal_cmp(ilev,eq);
+      const auto& boffs = m_basal_sol_dof_mgr->getGIDFieldOffsets(c);
+      const LO blid = basal_elem_dof_lids(ibelem,boffs[n]);
+      if (blid>=0) { soln_data[dof_lid] = basal_data[blid]; }
+    });
+}
+
 void ExtrudedMeshFieldAccessor::
 saveSolnVector (const Thyra_Vector&  /* soln */,
                 const mv_ptr_t&      /* soln_dxdp */,
