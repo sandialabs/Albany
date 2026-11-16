@@ -559,6 +559,7 @@ Application::createDiscretization()
       stateMgr.getStateInfoStruct(),
       stateMgr.getSideSetStateInfoStruct(),
       problem->getNullSpace());
+  disc->setSolutionComponents(problem->getSolutionComponents());
   // For extruded meshes, we need the number of layers in postRegistrationSetup
   const auto& layers_data = disc->getMeshStruct()->layers_data;
   if (!layers_data.cell.lid.is_null()) {

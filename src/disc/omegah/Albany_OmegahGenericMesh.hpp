@@ -81,8 +81,14 @@ protected:
   };
 
   using PartToGeoModelEntities = strmap_t<std::vector<GeoModelEntity>>;
+
+  // NOTE: these two are hard-coded for box meshes, and must only be used from buildBox
   PartToGeoModelEntities setNodeSetsGeoModelEntities () const;
   PartToGeoModelEntities setSideSetsGeoModelEntities () const;
+
+  // Fills nodeSetsGeoModelEntities/sideSetsGeoModelEntities using the omegah class
+  // sets named in the 'Mark Parts' input array. Used for meshes read from file.
+  void readGeoModelEntitiesFromClassSets ();
 
   void loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
                                 Teuchos::ParameterList& req_fields_info) override;

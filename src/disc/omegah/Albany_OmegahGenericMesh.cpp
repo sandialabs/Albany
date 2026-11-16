@@ -185,9 +185,7 @@ mark_part_entities (const std::string& name,
       "  - part dim : " << dim << "\n"
       "  - num ents : " << m_mesh->nents(dim) << "\n"
       "  - array dim: " << is_entity_in_part.size() << "\n");
-  if( ! m_mesh->has_tag(dim,name) ) {
-    m_mesh->add_tag(dim,name,1,is_entity_in_part);
-  }
+  m_mesh->add_tag(dim,name,1,is_entity_in_part);
 
   if (markDownward) {
     TEUCHOS_TEST_FOR_EXCEPTION (dim==0, std::logic_error,
@@ -256,9 +254,6 @@ loadOmegahMesh ()
 
   setCoordinates();
 
-  // Node/Side sets names
-  std::vector<std::string> nsNames, ssNames;
-
   // The omegah 'exo2osh' converter creates geometric model entities from node
   // and side sets that exist within the exodus file.
   // The mesh entities in the sets are then 'classified' (sets the association)
@@ -270,55 +265,7 @@ loadOmegahMesh ()
   // topological definition of the domain is a common part of the mesh
   // generation/adaptation workflow.
   // A dimension and id uniquely defines a geometric model entity.
-  const auto& parts_names = m_params->get<Teuchos::Array<std::string>>("Mark Parts",{});
-  for (const auto& pn : parts_names) {
-    TEUCHOS_TEST_FOR_EXCEPTION(m_mesh->class_sets.count(pn)==0, std::runtime_error,
-        "Error! Part '" + pn + "' was not found in the mesh class_sets. "
-        "Marked parts must exist in mesh->class_sets.\n");
-
-    const auto& class_pairs = m_mesh->class_sets.at(pn);
-    TEUCHOS_TEST_FOR_EXCEPTION(class_pairs.empty(), std::runtime_error,
-        "Error! Class set '" + pn + "' is empty in the mesh file.\n");
-
-    // Determine the mesh entity dimension from the first class pair's model dimension.
-    // For sidesets created by exo2osh, class pairs have model_dim = mesh.dim()-1.
-    const int ent_dim = class_pairs[0].dim;
-
-    // Build a union mark for all geometric entities in this class set
-    auto is_in_part = Omega_h::Read<Omega_h::I8>(m_mesh->nents(ent_dim), 0);
-    for (const auto& cp : class_pairs) {
-      TEUCHOS_TEST_FOR_EXCEPTION(cp.dim != ent_dim, std::runtime_error,
-          "Error! Class set '" + pn + "' has pairs with mixed entity dimensions.\n");
-      auto mark = Omega_h::mark_by_class(m_mesh.get(), ent_dim, cp.dim, cp.id);
-      is_in_part = Omega_h::lor_each(is_in_part, mark);
-    }
-
-    // Infer the Topo_type from (mesh_family, ent_dim)
-    Topo_type topo;
-    const bool isSimplex = (m_mesh->family()==OMEGA_H_SIMPLEX);
-    bool mark_downward = true;
-    if (ent_dim==0) {
-      topo = Topo_type::vertex;
-      mark_downward = false;
-    } else if (ent_dim==1) {
-      topo = Topo_type::edge;
-    } else if (ent_dim==2) {
-      topo = isSimplex ? Topo_type::triangle : Topo_type::quadrilateral;
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-          "Error! Class set part with entity dimension " + std::to_string(ent_dim) + " not supported.\n");
-    }
-
-    this->declare_part(pn, topo, is_in_part, mark_downward);
-
-    if (ent_dim>=m_mesh->dim()-1) {
-      ssNames.push_back(pn);
-      if (mark_downward)
-        nsNames.push_back(pn);
-    } else if (ent_dim==0) {
-      nsNames.push_back(pn);
-    }
-  }
+  readGeoModelEntitiesFromClassSets ();
 
   const CellTopologyData* ctd;
 
@@ -359,6 +306,18 @@ loadOmegahMesh ()
   };
   this->declare_part(ebName,elem_topo);
 
+  // Mark the side sets downward, so that their bounding entities (in particular the
+  // vertices) carry the side set tag as well. This lets each side set double as a node
+  // set, which is what the extruded mesh relies on to build the 'extruded_<name>' and
+  // 'basal_<name>' node sets out of the basal mesh node sets.
+  // The flag is stored, so that re-creating the sets after a mesh adaptation reproduces
+  // the same tags.
+  m_mark_side_sets_downward = true;
+
+  auto nsNames = createNodeSets();
+  auto ssNames = createSideSets();
+  nsNames.insert(nsNames.end(),ssNames.begin(),ssNames.end());
+
   // Omega_h does not know what worksets are, so all elements are in one workset
   this->meshSpecs.resize(1);
   int ws_size_max = m_params->get<int>("Workset Size", -1);
@@ -368,6 +327,48 @@ loadOmegahMesh ()
       new MeshSpecsStruct(MeshType::Unstructured, *ctd, m_mesh->dim(),
                           nsNames, ssNames, ws_size, ebName,
                           ebNameToIndex));
+}
+
+void OmegahGenericMesh::
+readGeoModelEntitiesFromClassSets ()
+{
+  const auto& parts_names = m_params->get<Teuchos::Array<std::string>>("Mark Parts",{});
+  for (const auto& pn : parts_names) {
+    TEUCHOS_TEST_FOR_EXCEPTION(m_mesh->class_sets.count(pn)==0, std::runtime_error,
+        "Error! Part '" + pn + "' was not found in the mesh class_sets. "
+        "Marked parts must exist in mesh->class_sets.\n");
+
+    const auto& class_pairs = m_mesh->class_sets.at(pn);
+    TEUCHOS_TEST_FOR_EXCEPTION(class_pairs.empty(), std::runtime_error,
+        "Error! Class set '" + pn + "' is empty in the mesh file.\n");
+
+    const bool is_node_set = pn.find("node_set")!=std::string::npos;
+    const bool is_side_set = pn.find("side_set")!=std::string::npos;
+    TEUCHOS_TEST_FOR_EXCEPTION(not is_node_set and not is_side_set, std::runtime_error,
+        "Error! Cannot deduce whether the part '" + pn + "' is a node set or a side set.\n"
+        "  Names of parts listed in 'Mark Parts' must contain either 'node_set' or 'side_set'.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(is_node_set and is_side_set, std::runtime_error,
+        "Error! The name of part '" + pn + "' contains both 'node_set' and 'side_set', "
+        "so it is ambiguous whether it is a node set or a side set.\n");
+
+    std::vector<GeoModelEntity> gm_ents;
+    gm_ents.reserve(class_pairs.size());
+    for (const auto& cp : class_pairs) {
+      TEUCHOS_TEST_FOR_EXCEPTION(cp.dim<0 or cp.dim>m_mesh->dim(), std::runtime_error,
+          "Error! Class set '" + pn + "' contains a geometric model entity whose dimension "
+          "is not compatible with the mesh.\n"
+          "  - model entity dim: " << cp.dim << "\n"
+          "  - model entity id : " << cp.id << "\n"
+          "  - mesh dim        : " << m_mesh->dim() << "\n");
+      gm_ents.push_back({static_cast<int>(cp.dim),static_cast<int>(cp.id)});
+    }
+
+    if (is_node_set) {
+      nodeSetsGeoModelEntities[pn] = gm_ents;
+    } else {
+      sideSetsGeoModelEntities[pn] = gm_ents;
+    }
+  }
 }
 
 OmegahGenericMesh::PartToGeoModelEntities
@@ -523,7 +524,7 @@ OmegahGenericMesh::createSideSets()
 #endif
     // Mark downward (e.g., edge sides also tag their vertices), so that node-based dof managers
     // (e.g., the one used for the basal mesh of an extruded discretization) can compute masks for side sets
-    this->declare_part(name,side_topo,tag,sideDim>0);
+    this->declare_part(name,side_topo,tag,m_mark_side_sets_downward);
   }
   return ssNames;
 }

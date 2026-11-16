@@ -1,11 +1,6 @@
 %YAML 1.1
 ---
 ANONYMOUS:
-  Debug Output:
-    Derivative Check: 1
-    #Write Solution to MatrixMarket: -3
-    #Write Jacobian to MatrixMarket: -1
-    #Write Residual to MatrixMarket: -1
   Problem:
     Phalanx Graph Visualization Detail: 0
     Solution Method: Transient
@@ -67,10 +62,10 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
-    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography]
+    Extrude Basal Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
     Interpolate Basal Layered Fields: [temperature,velocity]
     Required Fields Info:
-      Number Of Fields: 5
+      Number Of Fields: 6
       Field 0:
         Field Name: ice_thickness
         Field Type: Node Scalar
@@ -90,6 +85,10 @@ ANONYMOUS:
       Field 4:
         Field Name: velocity
         Field Type: Node Vector
+        Field Origin: Mesh
+      Field 5:
+        Field Name: thickness_forcing
+        Field Type: Node Scalar
         Field Origin: Mesh
     Side Set Discretizations:
       Side Sets: [basalside, upperside]
@@ -126,7 +125,7 @@ ANONYMOUS:
           Verbose: true # write additional mesh adaptation info to stdout
           Effective Strain Name: sliding_velocity
         Required Fields Info:
-          Number Of Fields: 7
+          Number Of Fields: 8
           Field 0:
             Field Name: ice_thickness
             Field Type: Node Scalar
@@ -161,6 +160,11 @@ ANONYMOUS:
             Vector Dim: 2
             File Name: ../AsciiMeshes/Humboldt/extruded_surface_velocity.ascii
           Field 6:
+            Field Name: thickness_forcing
+            Field Type: Node Scalar
+            Field Origin: File
+            Field Value: 0.0
+          Field 7:
             Field Name: sliding_velocity
             Field Type: Elem Scalar
             Field Usage: Output
@@ -260,9 +264,12 @@ ANONYMOUS:
                           'fact: iluk level-of-fill': 0
                 Rescue Bad Newton Solve: true
             Line Search:
-              Full Step:
-                Full Step: 1.0
-              Method: Full Step
+              Method: Backtrack
+              Backtrack:
+                Max Iters: 20
+                Default Step: 1.0
+                Minimum Step: 1.0e-6
+                Reduction Factor: 0.5
             Nonlinear Solver: Line Search Based
             Printing:
               Output Precision: 3

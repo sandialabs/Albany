@@ -69,6 +69,10 @@ public:
 
   void setNumEq (int neq) override;
 
+  void setSolutionComponents (const std::vector<std::pair<std::string,int>>& comps) override {
+    m_basal_disc->setSolutionComponents(comps);
+  }
+
   // --- Get/set solution/residual/field vectors to/from mesh --- //
 
   Teuchos::RCP<Thyra_Vector> getSolutionField (const bool overlapped = false) const override;

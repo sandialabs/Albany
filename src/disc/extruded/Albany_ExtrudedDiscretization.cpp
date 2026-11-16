@@ -15,6 +15,10 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_CombineAndScatterManager.hpp"
 
+#ifdef ALBANY_OMEGAH
+#include "Albany_OmegahDiscretization.hpp"
+#endif
+
 #include <limits>
 #include <vector>
 #include <algorithm>
@@ -64,14 +68,19 @@ void ExtrudedDiscretization::setNumEq (int neq)
 {
   m_neq = neq;
 
-  // On the basal mesh, make the solution vector numNodeLayers times longer
-  const int num_levels = m_extruded_mesh->layers_data.node.gid->numLayers;
-  int basal_neq = neq * num_levels;
+  // On the basal mesh, make the solution vector numNodeLayers times longer.
+  // The node numbering's numLayers is the number of node levels, num_layers+1.
+  const int nlev = m_extruded_mesh->layers_data.node.gid->numLayers;
+  int basal_neq = neq * nlev;
   m_basal_disc->setNumEq(basal_neq);
 
-  // Ask the basal mesh to store the solution as a (Level,Eq) layered field (see copySolutionData).
-  // NOTE: m_basal_disc was created with this very sublist (see DiscretizationFactory)
-  m_disc_params->sublist("Side Set Discretizations").sublist("basalside").set("Solution Field Levels",num_levels);
+#ifdef ALBANY_OMEGAH
+  // Let the basal disc unpack the per-column 'solution' tag for vtk output
+  auto omegah_basal = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(m_basal_disc);
+  if (not omegah_basal.is_null()) {
+    omegah_basal->setSolutionLevels(neq,nlev);
+  }
+#endif
 }
 
 void
@@ -999,22 +1008,45 @@ ExtrudedDiscretization::computeWorksetInfo()
 
   const int num_elems = m_extruded_mesh->get_num_local_elements();
   const int ws_size = m_extruded_mesh->meshSpecs[0]->worksetSize;
-  const int num_ws  = (num_elems + ws_size - 1) / ws_size;
+
+  // The 3d worksets must be the columns of the basal worksets: 3d elem states that are
+  // stored on the basal mesh are views of the basal workset state arrays, laid out as
+  // (basal elem, layer), so 3d workset ws must contain exactly the columns of basal
+  // workset ws, in the same order, with the layer index striding fastest.
+  const auto& cell_lid = *m_extruded_mesh->layers_data.cell.lid;
+  const int num_layers = cell_lid.numLayers;
+  const auto& basal_ws_sizes = m_basal_disc->getWorksetsSizes();
+  const auto basal_ws_elems = m_basal_disc->getWsElementLIDs().host();
+  const int num_ws = basal_ws_sizes.size();
 
   m_workset_sizes.resize(num_ws);
   m_workset_elements = DualView<int**>("ws_elem",num_ws,ws_size);
-  for (int ws=0,lid=0; ws<num_ws; ++ws) {
-    // For the last ws, we may have less elems.
-    int this_ws_size = ws==(num_ws-1) ? num_elems-ws*ws_size : ws_size;
+  int num_ws_elems = 0;
+  for (int ws=0; ws<num_ws; ++ws) {
+    const int this_ws_size = basal_ws_sizes[ws]*num_layers;
+    TEUCHOS_TEST_FOR_EXCEPTION (this_ws_size>ws_size, std::runtime_error,
+        "[ExtrudedDiscretization::computeWorksetInfo] 3d workset exceeds the workset size.\n"
+        "  - workset: " << ws << "\n"
+        "  - basal workset size: " << basal_ws_sizes[ws] << "\n"
+        "  - num layers: " << num_layers << "\n"
+        "  - 3d workset size: " << ws_size << "\n");
     m_workset_sizes[ws] = this_ws_size;
-    for (int ie=0; ie<this_ws_size; ++ie, ++lid) {
-      m_workset_elements.host()(ws,ie) = lid;
+    for (int ib=0; ib<basal_ws_sizes[ws]; ++ib) {
+      const int basal_lid = basal_ws_elems(ws,ib);
+      for (int il=0; il<num_layers; ++il) {
+        m_workset_elements.host()(ws,ib*num_layers+il) = cell_lid.getId(basal_lid,il);
+      }
     }
     // Fill the remainder (if any) with very invalid numbers
     for (int ie=this_ws_size; ie<ws_size; ++ie) {
       m_workset_elements.host()(ws,ie) = -1;
     }
+    num_ws_elems += this_ws_size;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION (num_ws_elems!=num_elems, std::runtime_error,
+      "[ExtrudedDiscretization::computeWorksetInfo] Worksets do not cover all 3d elements.\n"
+      "  - elems in worksets: " << num_ws_elems << "\n"
+      "  - local 3d elems: " << num_elems << "\n");
   m_workset_elements.sync_to_dev();
 
   // For now, everything has the same element block name, and same phys index

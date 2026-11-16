@@ -19,6 +19,10 @@
 #include "Albany_GlobalLocalIndexer.hpp"
 #include "Albany_DualView.hpp"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace Albany {
 
 class AbstractDiscretization
@@ -277,6 +281,11 @@ public:
 
   //! Get number of total DOFs per node
   int getNumEq() const { return m_neq; }
+
+  //! Name and number of components of each solution field, in solution component
+  //! order (see AbstractProblem::getSolutionComponents). Used to label mesh output.
+  virtual void
+  setSolutionComponents (const std::vector<std::pair<std::string,int>>& /* comps */) {}
 
   //! return true if mesh adaptation is enabled in the input deck
   bool adaptationEnabled () {

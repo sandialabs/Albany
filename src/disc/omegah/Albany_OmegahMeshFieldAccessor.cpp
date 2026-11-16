@@ -3,6 +3,7 @@
 #include "Albany_OmegahUtils.hpp"
 #include "OmegahGhost.hpp"
 #include <Omega_h_map.hpp>
+#include <Omega_h_for.hpp>
 
 #include <iostream>
 
@@ -549,6 +550,51 @@ std::vector<std::string> OmegahMeshFieldAccessor::get_nodal_field_names () const
     }
   }
   return names;
+}
+
+void OmegahMeshFieldAccessor::
+addVertexTagSlice (const std::string& src_name,
+                   const std::string& dst_name,
+                   const int          first_cmp,
+                   const int          ncomps)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(0,src_name), std::runtime_error,
+      "Error! Cannot slice tag '" + src_name + "': no such tag on mesh vertices.\n");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (not Omega_h::is<ST>(m_mesh->get_tagbase(0,src_name)), std::runtime_error,
+      "Error! Tag '" + src_name + "' is not of real (double) type.\n");
+  auto src_tag = m_mesh->get_tag<ST>(0,src_name);
+
+  const int src_ncomps = src_tag->ncomps();
+  TEUCHOS_TEST_FOR_EXCEPTION (first_cmp<0 || ncomps<1 || first_cmp+ncomps>src_ncomps,
+      std::logic_error,
+      "Error! Requested slice is out of the source tag's component range.\n"
+      "  - tag name: " + src_name + "\n"
+      "  - tag ncomps: " << src_ncomps << "\n"
+      "  - first_cmp: " << first_cmp << "\n"
+      "  - ncomps: " << ncomps << "\n");
+
+  const auto src = src_tag->array();
+  const int nverts = m_mesh->nents(0);
+  Omega_h::Write<ST> dst(nverts*ncomps,dst_name);
+  Omega_h::parallel_for(nverts, OMEGA_H_LAMBDA(const LO& i) {
+    for (int c=0; c<ncomps; ++c) {
+      dst[i*ncomps+c] = src[i*src_ncomps+first_cmp+c];
+    }
+  });
+
+  if (m_mesh->has_tag(0,dst_name)) {
+    m_mesh->remove_tag(0,dst_name);
+  }
+  m_mesh->add_tag<ST>(0,dst_name,ncomps,read(dst),false);
+}
+
+void OmegahMeshFieldAccessor::
+removeVertexTag (const std::string& name)
+{
+  if (m_mesh->has_tag(0,name)) {
+    m_mesh->remove_tag(0,name);
+  }
 }
 
 void OmegahMeshFieldAccessor::reset_mesh_tags ()

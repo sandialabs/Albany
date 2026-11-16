@@ -143,6 +143,14 @@ createStateArrays (const WorksetArray<int>& worksets_sizes)
 
     auto& state = elemStateArrays[ws][st.name];
     int ws_size = worksets_sizes[ws];
+    size_t size_3d = ws_size;
+    for (size_t i=1; i<st.dim.size(); ++i) size_3d *= st.dim[i];
+    TEUCHOS_TEST_FOR_EXCEPTION (size_3d!=bstate.host().size(), std::runtime_error,
+        "Error! 3d workset state does not match the basal workset state it views.\n"
+        "  - state name: " + st.name + "\n"
+        "  - workset: " << ws << "\n"
+        "  - 3d state size: " << size_3d << "\n"
+        "  - basal state size: " << bstate.host().size() << "\n");
     switch (st.dim.size()) {
       case 1:
         state.reset_from_dev_host_ptr(data_d,data_h,ws_size); break;
