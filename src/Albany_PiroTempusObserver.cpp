@@ -73,6 +73,10 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
     disc->adapt(adaptData);
     app_->getAdaptSolMgr()->reset_solution_space(false);
     auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
+    app_->buildDistributedParameters(app_->getAppPL(),true /* is_rebuild */);
+    // The field managers size their fields (in particular the side set ones) from the
+    // discretization, so they must be re-setup against the adapted mesh.
+    app_->refreshFieldManagers();
     auto num_time_derivs = app_->getNumTimeDerivs();
 
     // current state: x_old for the upcoming solve

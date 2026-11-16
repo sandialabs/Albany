@@ -60,6 +60,14 @@ public:
   std::vector<std::string> createNodeSets();
   std::vector<std::string> createSideSets();
 
+  // The max node/elem gids are lazily computed and cached. Adaptation changes them,
+  // so the cache must be dropped after the mesh is modified.
+  void invalidateCachedMaxGids ();
+
+  // Recompute meshSpecs[0]->worksetSize from the current element count.
+  // Must be called after the mesh is adapted.
+  void updateWorksetSize ();
+
 protected:
   // Load a mesh from a .osh file
   void loadOmegahMesh ();

@@ -190,9 +190,20 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
 }
 
 void ExtrudedDiscretization::
-adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */)
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::adapt");
+  // Adapt the basal mesh. This also runs m_basal_disc->updateMesh(), so the basal
+  // disc is consistent with the new basal mesh when we return from here.
+  m_basal_disc->adapt(adaptData);
+
+  // The 3d layered numbering is built on top of the basal entity counts, which the
+  // adaptation just changed. Refresh them before rebuilding anything that uses them.
+  m_extruded_mesh->updateHorizEntityCounts();
+
+  // Rebuild the extruded dof managers, worksets, node/side sets, graphs, ... so that
+  // this disc (and its vector spaces) describe the adapted mesh. Without this, the
+  // extruded disc would still advertise the pre-adaptation vector spaces.
+  updateMesh();
 }
 
 Teuchos::RCP<Thyra_Vector>
@@ -750,6 +761,7 @@ ExtrudedDiscretization::computeWorksetInfo()
   m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
   m_extruded_mesh->get_field_accessor()->transferNodeStatesToElemStates();
   m_extruded_mesh->get_extruded_field_accessor()->setWorksetElements(m_workset_elements);
+  m_extruded_mesh->get_extruded_field_accessor()->setElemWorksetIdx(m_elem_ws_idx);
 
   // Extrude/interpolate basal fields
   const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
@@ -975,8 +987,6 @@ ExtrudedDiscretization::computeNodeSets()
     auto& ns_elem_pos = m_nodeSets[ns];
     auto& ns_coords   = m_nodeSetCoords[ns];
 
-    // updateMesh may be called more than once (e.g., by a driver that updates the geometry
-    // before each solve, like the MPAS interface), so discard what previous calls stored
     ns_gids.clear();
     ns_elem_pos.clear();
     ns_coords.clear();
@@ -1033,6 +1043,13 @@ void
 ExtrudedDiscretization::updateMesh()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: updateMesh");
+
+  // Make sure we don't reuse old dof mgrs (if adapting). create_dof_mgr returns any
+  // cached dof mgr matching the requested specs, so without this the extruded disc
+  // would keep the ones built for the pre-adaptation mesh.
+  m_key_to_dof_mgr.clear();
+  m_dof_managers.clear();
+  m_node_dof_managers.clear();
 
   // First, make sure the basal disc is updated
   m_basal_disc->updateMesh();

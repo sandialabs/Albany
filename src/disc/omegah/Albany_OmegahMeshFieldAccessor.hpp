@@ -109,6 +109,11 @@ public:
   // To be called after adaptation, where the stored tags are no longer valid and need to be reset
   void reset_mesh_tags ();
 
+  // Names of the fields stored on mesh vertices. Omega_h drops any tag that is not
+  // registered in AdaptOpts::xfer_opts, so these must be registered for interpolation
+  // before adapting, or they would come back zero-filled on the new mesh.
+  std::vector<std::string> get_nodal_field_names () const;
+
 protected:
   Teuchos::RCP<Omega_h::Mesh>   m_mesh;
 

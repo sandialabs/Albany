@@ -4,6 +4,8 @@
 #include "OmegahGhost.hpp"
 #include <Omega_h_map.hpp>
 
+#include <iostream>
+
 namespace Albany {
 
 OmegahMeshFieldAccessor::
@@ -183,6 +185,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 {
   // Elem states
   int num_ws = worksets_sizes.size();
+  elemStateArrays.clear();
   elemStateArrays.resize(worksets_sizes.size());
   for (const auto& st : elem_sis) {
     auto data = m_tags.at(st->name).array.data();
@@ -211,6 +214,7 @@ void OmegahMeshFieldAccessor::createStateArrays (const WorksetArray<int>& workse
 
   // Nodal states
   // NOTE: nodal states have just 1 workset
+  nodeStateArrays.clear();
   nodeStateArrays.resize(1);
   int num_nodes = m_mesh->nverts();
   for (const auto& st : nodal_sis) {
@@ -536,6 +540,17 @@ setSolutionFieldsMetadata (const int neq)
   addFieldOnMesh("solution",0,neq);
 }
 
+std::vector<std::string> OmegahMeshFieldAccessor::get_nodal_field_names () const
+{
+  std::vector<std::string> names;
+  for (const auto& [name, tag_handle] : m_tags) {
+    if (tag_handle.ent_dim==0) {
+      names.push_back(name);
+    }
+  }
+  return names;
+}
+
 void OmegahMeshFieldAccessor::reset_mesh_tags ()
 {
   for (auto& [name, tag_handle] : m_tags) {
@@ -548,6 +563,10 @@ void OmegahMeshFieldAccessor::reset_mesh_tags ()
       Kokkos::deep_copy(array.view(),tag->array().view());
       m_mesh->set_tag(dim,name,read(array));
     } else {
+      if (!m_mesh->comm()->rank()) {
+        std::cout << "WARNING! Field '" << name << "' (dim " << dim << ") did not "
+                     "survive the mesh adaptation and has been reset to zero.\n";
+      }
       array = Omega_h::Write<ST>(m_mesh->nents(dim)*ncmp,name);
       m_mesh->add_tag(dim,name,ncmp,read(array));
     }

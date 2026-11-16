@@ -814,6 +814,16 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 
     Omega_h::AdaptOpts opts(&(*ohMesh));
     opts.verbosity = (verbose ? Omega_h::EACH_ADAPT : Omega_h::SILENT);
+
+    // Omega_h only carries over the tags listed in xfer_opts; any other tag is simply
+    // dropped from the adapted mesh, and would later be re-allocated zero-filled.
+    // Register every nodal field for linear interpolation, so that fields read from
+    // file at startup (ice_thickness, surface_height, ...) survive the adaptation.
+    // This covers the solution and its time derivatives too, since they are nodal.
+    auto omegah_mfa = Teuchos::rcp_dynamic_cast<OmegahMeshFieldAccessor>(m_mesh_struct->get_field_accessor());
+    for (const auto& fname : omegah_mfa->get_nodal_field_names()) {
+      opts.xfer_opts.type_map[fname] = OMEGA_H_LINEAR_INTERP;
+    }
     opts.xfer_opts.type_map[solution_dof_name()] = OMEGA_H_LINEAR_INTERP;
     opts.xfer_opts.type_map[std::string(solution_dof_name())+"_dot"] = OMEGA_H_LINEAR_INTERP;
 
@@ -830,10 +840,17 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   if( writeVtk ) {
     std::string afterAdaptName = "after_adapt" + std::to_string(adaptCount) + ".vtk";
     Omega_h::vtk::write_parallel(afterAdaptName, ohMesh.get());
+    std::string afterAdaptNameOsh = "after_adapt" + std::to_string(adaptCount) + ".osh";
+    Omega_h::binary::write(afterAdaptNameOsh, ohMesh.get());
   }
 
   //adaptation requires ghosting and calls to adapt() don't preserve it
   ohMesh->set_parting(Omega_h_Parting::OMEGA_H_GHOSTED);
+
+  //the entity counts and gids changed, so drop the cached max node/elem gids
+  //and recompute the workset size from the new element count
+  m_mesh_struct->invalidateCachedMaxGids();
+  m_mesh_struct->updateWorksetSize();
 
   //create node and side set tags
   m_mesh_struct->createNodeSets();
