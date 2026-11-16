@@ -646,4 +646,35 @@ computeField (const std::string& field_name,
   return field_mv;
 }
 
+namespace {
+
+bool isExtruded (const Teuchos::ParameterList& disc_params)
+{
+  return disc_params.isType<std::string>("Method") &&
+         disc_params.get<std::string>("Method")=="Extruded";
+}
+
+} // anonymous namespace
+
+bool hasAdaptParams (const Teuchos::ParameterList& disc_params)
+{
+  if (isExtruded(disc_params)) {
+    if (not disc_params.isSublist("Side Set Discretizations")) return false;
+    const auto& ssd_params = disc_params.sublist("Side Set Discretizations");
+    return ssd_params.isSublist("basalside") &&
+           ssd_params.sublist("basalside").isSublist("Mesh Adaptivity");
+  }
+  return disc_params.isSublist("Mesh Adaptivity");
+}
+
+Teuchos::ParameterList& getAdaptParams (Teuchos::ParameterList& disc_params)
+{
+  if (isExtruded(disc_params)) {
+    return disc_params.sublist("Side Set Discretizations")
+                      .sublist("basalside")
+                      .sublist("Mesh Adaptivity");
+  }
+  return disc_params.sublist("Mesh Adaptivity");
+}
+
 } // namespace Albany

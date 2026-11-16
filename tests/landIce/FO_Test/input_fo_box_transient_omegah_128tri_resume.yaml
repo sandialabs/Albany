@@ -59,6 +59,7 @@ ANONYMOUS:
       Type: FO INTERP SURF GRAD
   Discretization:
     Method: Extruded
+    Restart Solution: true
     Number Of Time Derivatives: 1
     # Exodus Output File Name: output/humboldt_transient.exo
     Columnwise Ordering: true

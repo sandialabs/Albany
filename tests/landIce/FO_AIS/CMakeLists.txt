@@ -10,7 +10,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_AIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
   set (USE_SERIAL_MESH "false")

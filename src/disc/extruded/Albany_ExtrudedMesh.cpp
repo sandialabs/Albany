@@ -290,4 +290,53 @@ void ExtrudedMesh::updateHorizEntityCounts ()
   //       OmegahGenericMesh::updateWorksetSize.
 }
 
+void ExtrudedMesh::
+setLevelsNormalizedCoords (const std::vector<double>& z_ref)
+{
+  const int num_node_layers = layers_data.node.gid->numLayers;
+  TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(z_ref.size())!=num_node_layers, std::invalid_argument,
+      "[ExtrudedMesh::setLevelsNormalizedCoords] Error! Wrong number of levels.\n"
+      "  - input size      : " << z_ref.size() << "\n"
+      "  - number of levels: " << num_node_layers << " (NumLayers+1)\n");
+  constexpr double tol = 1e-6; // e.g., levels computed by summing layer thickness fractions
+  TEUCHOS_TEST_FOR_EXCEPTION (std::abs(z_ref.front())>tol or std::abs(z_ref.back()-1)>tol, std::invalid_argument,
+      "[ExtrudedMesh::setLevelsNormalizedCoords] Error! The normalized levels must go from 0 (bottom) to 1 (top).\n"
+      "  - first level: " << z_ref.front() << "\n"
+      "  - last level : " << z_ref.back() << "\n");
+
+  // Snap the first and last levels to 0 and 1, so that the bottom and top of the mesh are exactly the bed
+  // and the surface
+  auto levels = z_ref;
+  levels.front() = 0.0;
+  levels.back() = 1.0;
+  for (int i=0; i<num_node_layers-1; ++i) {
+    TEUCHOS_TEST_FOR_EXCEPTION (not (levels[i+1]>levels[i]), std::invalid_argument,
+        "[ExtrudedMesh::setLevelsNormalizedCoords] Error! The normalized levels must be strictly increasing.\n"
+        "  - level " << i << ": " << levels[i] << "\n"
+        "  - level " << i+1 << ": " << levels[i+1] << "\n");
+  }
+
+  m_levels_normalized_coords = levels;
+
+  // If the bulk data is not set yet, setBulkData will use these levels
+  if (isBulkDataSet()) {
+    layers_data.z_ref = levels;
+    setLayersRefData();
+  }
+}
+
+void ExtrudedMesh::setLayersRefData ()
+{
+  const int num_elem_layers = layers_data.cell.lid->numLayers;
+  layers_data.dz_ref.resize(num_elem_layers);
+  for (int i = 0; i < num_elem_layers; i++)
+    layers_data.dz_ref[i] = layers_data.z_ref[i+1]-layers_data.z_ref[i];
+
+  // The field accessor uses these to interpolate basal layered fields, and to set the layers
+  // coords of the basal states that store 3d outputs
+  auto& vec_states = m_field_accessor->getMeshVectorStates();
+  vec_states["layers_dz_ref"] = layers_data.dz_ref;
+  vec_states["layers_z_ref"] = layers_data.z_ref;
+}
+
 } // namespace Albany

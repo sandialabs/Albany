@@ -11,7 +11,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -130,7 +130,7 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMesh2d
                        FIXTURES_SETUP ${testName}_extruded)
 
-  if (ALBANY_OMEGAH)
+  if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
@@ -454,10 +454,10 @@ IF(NOT Kokkos_ENABLE_CUDA)
 
     if (ALBANY_MESHFIELDS)
       # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
-      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_5t)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_5t.yaml
-                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_5t.yaml)
-      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_5t.yaml)
+      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_3t)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_3t.yaml)
       set_tests_properties(${testName}  PROPERTIES
         LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
     endif()

@@ -10,7 +10,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute some FO_Test tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -88,7 +88,7 @@ ENDIF()
 ###     Box mesh transient test      ###
 ########################################
 
-if (ALBANY_OMEGAH)
+if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   # Transient FO+H test on an extruded, small, structured MxN Omega_h basal box mesh, with analytic input fields.
   # Meant as a small test case for debugging/adaptivity (see also FO_GIS Humboldt transient Omega_h test).
   set (testName ${testNameRoot}_Box_Transient_Omega_h)

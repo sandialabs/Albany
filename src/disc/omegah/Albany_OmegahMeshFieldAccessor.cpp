@@ -556,7 +556,8 @@ void OmegahMeshFieldAccessor::
 addVertexTagSlice (const std::string& src_name,
                    const std::string& dst_name,
                    const int          first_cmp,
-                   const int          ncomps)
+                   const int          ncomps,
+                   const int          stride)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(0,src_name), std::runtime_error,
       "Error! Cannot slice tag '" + src_name + "': no such tag on mesh vertices.\n");
@@ -566,20 +567,21 @@ addVertexTagSlice (const std::string& src_name,
   auto src_tag = m_mesh->get_tag<ST>(0,src_name);
 
   const int src_ncomps = src_tag->ncomps();
-  TEUCHOS_TEST_FOR_EXCEPTION (first_cmp<0 || ncomps<1 || first_cmp+ncomps>src_ncomps,
+  TEUCHOS_TEST_FOR_EXCEPTION (first_cmp<0 || ncomps<1 || stride<1 || first_cmp+(ncomps-1)*stride>=src_ncomps,
       std::logic_error,
       "Error! Requested slice is out of the source tag's component range.\n"
       "  - tag name: " + src_name + "\n"
       "  - tag ncomps: " << src_ncomps << "\n"
       "  - first_cmp: " << first_cmp << "\n"
-      "  - ncomps: " << ncomps << "\n");
+      "  - ncomps: " << ncomps << "\n"
+      "  - stride: " << stride << "\n");
 
   const auto src = src_tag->array();
   const int nverts = m_mesh->nents(0);
   Omega_h::Write<ST> dst(nverts*ncomps,dst_name);
   Omega_h::parallel_for(nverts, OMEGA_H_LAMBDA(const LO& i) {
     for (int c=0; c<ncomps; ++c) {
-      dst[i*ncomps+c] = src[i*src_ncomps+first_cmp+c];
+      dst[i*ncomps+c] = src[i*src_ncomps+first_cmp+c*stride];
     }
   });
 

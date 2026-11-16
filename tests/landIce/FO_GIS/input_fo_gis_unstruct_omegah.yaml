@@ -198,7 +198,7 @@ ANONYMOUS:
       Line Search:
         Full Step:
           Full Step: 1.0
-        Method: Backtrack
+        Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
         Output Precision: 3

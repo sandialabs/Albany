@@ -14,10 +14,6 @@
 #include "Albany_StringUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
-#ifdef ALBANY_OMEGAH
-#include "Albany_OmegahDiscretization.hpp"
-#endif
-
 #include <vector>
 #include <algorithm>
 #include "Albany_ProblemUtils.hpp"
@@ -63,19 +59,14 @@ void ExtrudedDiscretization::setNumEq (int neq)
 {
   m_neq = neq;
 
-  // On the basal mesh, make the solution vector numNodeLayers times longer.
-  // The node numbering's numLayers is the number of node levels, num_layers+1.
-  const int nlev = m_extruded_mesh->layers_data.node.gid->numLayers;
-  int basal_neq = neq * nlev;
+  // On the basal mesh, make the solution vector numNodeLayers times longer
+  const int num_levels = m_extruded_mesh->layers_data.node.gid->numLayers;
+  int basal_neq = neq * num_levels;
   m_basal_disc->setNumEq(basal_neq);
 
-#ifdef ALBANY_OMEGAH
-  // Let the basal disc unpack the per-column 'solution' tag for vtk output
-  auto omegah_basal = Teuchos::rcp_dynamic_cast<OmegahDiscretization>(m_basal_disc);
-  if (not omegah_basal.is_null()) {
-    omegah_basal->setSolutionLevels(neq,nlev);
-  }
-#endif
+  // Ask the basal mesh to store the solution as a (Level,Eq) layered field (see copySolutionData).
+  // NOTE: m_basal_disc was created with this very sublist (see DiscretizationFactory)
+  m_disc_params->sublist("Side Set Discretizations").sublist("basalside").set("Solution Field Levels",num_levels);
 }
 
 void
@@ -117,20 +108,17 @@ ExtrudedDiscretization::setupMLCoords()
       getOverlapVectorSpace());
 }
 
-// NOTE: the 3d solution must be PERMUTED into the basal per-column layout before it
-// can be stored on the basal mesh -- see the note on basal_cmp in
-// ExtrudedMeshFieldAccessor. Forwarding the 3d vector straight to the basal disc
-// packs dofs from the other nodes of a basal element into a vertex's column.
 void
 ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln,
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  m_extruded_mesh->get_extruded_field_accessor()
-      ->saveLayeredSolution(soln,solution_dof_name(),overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,overlapped);
 }
 
 void
@@ -140,11 +128,12 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dot,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  mfa->saveLayeredSolution(soln,    solution_dof_name(),          overlapped);
-  mfa->saveLayeredSolution(soln_dot,solution_dof_name()+"_dot",   overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,
+                                            *solutionToBasal(soln_dot,overlapped),overlapped);
 }
 
 void
@@ -155,12 +144,13 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dotdot,
     const bool overlapped)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (soln_dxdp != Teuchos::null, std::runtime_error,
-      "ExtrudedDiscretization::writeSolutionToMeshDatabase does not support sensitivities yet.");
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  mfa->saveLayeredSolution(soln,       solution_dof_name(),           overlapped);
-  mfa->saveLayeredSolution(soln_dot,   solution_dof_name()+"_dot",    overlapped);
-  mfa->saveLayeredSolution(soln_dotdot,solution_dof_name()+"_dotdot", overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,
+                                            *solutionToBasal(soln_dot,overlapped),
+                                            *solutionToBasal(soln_dotdot,overlapped),overlapped);
 }
 
 void
@@ -186,14 +176,7 @@ ExtrudedDiscretization::writeMeshDatabaseToFile(const double time,
 Teuchos::ParameterList&
 ExtrudedDiscretization::getAdaptParams ()
 {
-  // the 'basalside' specifies the adapt parameters
-  if (m_disc_params->isSublist("Side Set Discretizations") &&
-      m_disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
-    return m_disc_params->sublist("Side Set Discretizations")
-                        .sublist("basalside")
-                        .sublist("Mesh Adaptivity");
-  }
-  return m_disc_params->sublist("Mesh Adaptivity");
+  return Albany::getAdaptParams(*m_disc_params);
 }
 
 Teuchos::RCP<AdaptationData>
@@ -210,33 +193,25 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution,
     return adapt_data;
   }
 
-  // The basal disc knows nothing about columns: it will re-pack whatever vector it is
-  // given into its own solution tag using the BASAL dof manager. Handing it the 3d
-  // vector packs dofs belonging to the other nodes of a basal element into a vertex's
-  // column (see the note on basal_cmp in ExtrudedMeshFieldAccessor), which is both
-  // wrong in the tag it writes -- the one 'Mesh Adaptivity: Write VTK Files' dumps --
-  // and wrong in the error indicator computed from it. Project first, so the basal
-  // disc receives a vector already in its own layout.
-  //
-  // NOTE: projectSolutionToBasal returns a vector over the basal solution dof mgr's
-  //       OVERLAPPED space, which is what the basal accessor's saveVector indexes
-  //       (it uses elem_dof_lids regardless of its 'overlapped' flag; the flag only
-  //       selects which entities it writes, and a sync_tag then fills the ghosts).
-  //       So we walk the full overlapped column set here.
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  const bool overlapped = true;
+  // The basal disc stores the (owned) solution vectors it is given, so they must be in
+  // the basal layout (see copySolutionData)
+  const bool overlapped = false;
 
-  auto basal_solution = mfa->projectSolutionToBasal(*solution,overlapped);
+  auto basal_solution = solutionToBasal(*solution,overlapped);
   Teuchos::RCP<Thyra_Vector> basal_solution_dot, basal_solution_dotdot;
   if (solution_dot!=Teuchos::null) {
-    basal_solution_dot = mfa->projectSolutionToBasal(*solution_dot,overlapped);
+    basal_solution_dot = solutionToBasal(*solution_dot,overlapped);
   }
   if (solution_dotdot!=Teuchos::null) {
-    basal_solution_dotdot = mfa->projectSolutionToBasal(*solution_dotdot,overlapped);
+    basal_solution_dotdot = solutionToBasal(*solution_dotdot,overlapped);
+  }
+  Teuchos::RCP<const Thyra_MultiVector> basal_dxdp;
+  if (dxdp!=Teuchos::null) {
+    basal_dxdp = solutionToBasal(*dxdp,overlapped);
   }
 
   return m_basal_disc->checkForAdaptation(basal_solution,basal_solution_dot,
-                                          basal_solution_dotdot,dxdp);
+                                          basal_solution_dotdot,basal_dxdp);
 }
 
 void ExtrudedDiscretization::
@@ -256,17 +231,12 @@ adapt (const Teuchos::RCP<AdaptationData>& adaptData)
   updateMesh();
 }
 
-// NOTE: the inverse of the permutation applied by writeSolutionToMeshDatabase.
-// Both directions live in ExtrudedMeshFieldAccessor and share one walk, so they
-// cannot drift apart.
 Teuchos::RCP<Thyra_Vector>
 ExtrudedDiscretization::getSolutionField(bool overlapped) const
 {
-  auto soln = Thyra::createMember(overlapped ? getOverlapVectorSpace()
-                                             : getVectorSpace());
-  soln->assign(0.0);
-  m_extruded_mesh->get_extruded_field_accessor()
-      ->fillLayeredSolution(*soln,solution_dof_name(),overlapped);
+  auto b_soln = m_basal_disc->getSolutionField(overlapped);
+  auto soln = Thyra::createMember(overlapped ? getOverlapVectorSpace() : getVectorSpace());
+  copySolutionData(*b_soln,*soln,false);
   return soln;
 }
 
@@ -286,14 +256,11 @@ ExtrudedDiscretization::getSolutionMV(
     Thyra_MultiVector& result,
     const bool         overlapped) const
 {
-  const std::string names[3] = {
-    solution_dof_name(),
-    solution_dof_name()+"_dot",
-    solution_dof_name()+"_dotdot"
-  };
-  auto mfa = m_extruded_mesh->get_extruded_field_accessor();
-  for (int icol=0; icol<result.domain()->dim(); ++icol) {
-    mfa->fillLayeredSolution(*result.col(icol),names[icol],overlapped);
+  auto vs = overlapped ? m_basal_disc->getOverlapVectorSpace() : m_basal_disc->getVectorSpace();
+  auto b_result = Thyra::createMembers(vs,result.domain()->dim());
+  m_basal_disc->getSolutionMV(*b_result,overlapped);
+  for (int i=0; i<result.domain()->dim(); ++i) {
+    copySolutionData(*b_result->col(i),*result.col(i),false);
   }
 }
 
@@ -434,8 +401,32 @@ ExtrudedDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  auto mfa = m_extruded_mesh->get_field_accessor();
-  mfa->saveVector(result, name, getDOFManager(name), overlapped);
+  // NOTE: we cannot pass the 3d vector to the basal disc as is: the basal and 3d DOF managers
+  //       lids are NOT related by a simple formula (see copyNodalData).
+  const auto& mfa = m_extruded_mesh->get_field_accessor();
+  const auto st = mfa->getNodalSIS().find(name,false);
+  TEUCHOS_TEST_FOR_EXCEPTION (st.is_null(), std::runtime_error,
+      "[ExtrudedDiscretization::setField] Error! '" + name + "' is not a 3d nodal state.\n");
+
+  if (st->interpolated) {
+    // The basal field holds the original layered data (on its own layers, which in general
+    // are not the mesh levels), from which the 3d field was interpolated. Do not overwrite it.
+    // This is the case, e.g., of Dirichlet fields interpolated from basal layered data.
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (not st->extruded, std::runtime_error,
+      "[ExtrudedDiscretization::setField] Error! Cannot store 3d field '" + name + "' in the basal mesh,\n"
+      "  since it is neither extruded nor interpolated from a basal field.\n");
+
+  // Extruded field: store in the basal field the values of the lowest level where the 3d field
+  // has dofs (level 0, or the top level for fields defined only on the top part).
+  const auto& dof_mgr_3d = getDOFManager(name);
+  const auto& dof_mgr_2d = m_basal_disc->getDOFManager(name);
+  auto b_field = Thyra::createMember(overlapped ? dof_mgr_2d->ov_vs() : dof_mgr_2d->vs());
+  b_field->assign(0.0);
+  copyNodalData(result,*b_field,true,*dof_mgr_3d,*dof_mgr_2d,false);
+  m_basal_disc->setField(*b_field,name,overlapped);
 }
 
 void ExtrudedDiscretization::computeCoordinates ()
@@ -820,17 +811,6 @@ ExtrudedDiscretization::computeWorksetInfo()
   m_extruded_mesh->get_extruded_field_accessor()->setWorksetElements(m_workset_elements);
   m_extruded_mesh->get_extruded_field_accessor()->setElemWorksetIdx(m_elem_ws_idx);
 
-  // Give the accessor what it needs to permute the 3d solution into the basal
-  // per-column layout. This must happen HERE (not in setFieldData): the dof managers
-  // below are rebuilt by every updateMesh, including the one that follows adaptation,
-  // so a pointer captured earlier would go stale exactly when the mesh changes.
-  m_extruded_mesh->get_extruded_field_accessor()->setLayeredSolutionInfo(
-      m_extruded_mesh->layers_data.node.lid,
-      m_basal_disc->getNodeDOFManager(),
-      m_basal_disc->getDOFManager(),
-      getDOFManager(),
-      m_neq);
-
   // Extrude/interpolate basal fields
   const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
   const auto& interpolate_names = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
@@ -1055,6 +1035,8 @@ ExtrudedDiscretization::computeNodeSets()
     auto& ns_elem_pos = m_nodeSets[ns];
     auto& ns_coords   = m_nodeSetCoords[ns];
 
+    // updateMesh may be called more than once (e.g., by a driver that updates the geometry
+    // before each solve, like the MPAS interface), so discard what previous calls stored
     ns_gids.clear();
     ns_elem_pos.clear();
     ns_coords.clear();
