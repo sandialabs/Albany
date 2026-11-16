@@ -104,6 +104,10 @@ protected:
 
   bool m_has_restart_solution = false;
 
+  // Whether createSideSets should also tag the entities bounding each side.
+  // Needed when a side set doubles as a node set (see createSideSets).
+  bool m_mark_side_sets_downward = false;
+
 private:
 
   // For each node/side set name, store the geometric model entities that belong to it

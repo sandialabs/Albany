@@ -18,11 +18,127 @@
 #include "Albany_TpetraThyraUtils.hpp"
 #include "Albany_Utils.hpp"
 
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <iomanip>
+#include <set>
+#include <vector>
+
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
 // **********************************************************************
 
 namespace PHAL {
+
+namespace {
+
+// DIAGNOSTIC: report the dofs that the Dirichlet evaluator actually writes to, keyed by
+// the COORDINATES of the node they belong to. The node set stores (elem_lid,node_pos)
+// pairs, and the dof lid is looked up through the solution dof manager, so a node set
+// that was rebuilt against stale connectivity would still have the right SIZE (which is
+// all the set-count diagnostic checks) while resolving to the wrong dofs entirely.
+//
+// Coordinates are the invariant to check against: the physical boundary the set is
+// classified on does not move when the mesh is adapted, so the set of constrained
+// coordinates must be the same before and after (up to the vertices added/removed by
+// the adaptation itself). The report prints a checksum over the coordinates and the
+// bounding box of the constrained nodes; if a rebuild silently remapped the set to
+// interior dofs, the bounding box collapses inward and the checksum changes.
+//
+// Enabled by setting the env var ALBANY_DEBUG_DBC_COORDS to a non-empty value.
+template<typename Workset>
+void dirichletDofCoordsReport (const Workset& dirichlet_workset,
+                               const std::string& nodeSetID,
+                               const int offset)
+{
+  static const bool enabled = (std::getenv("ALBANY_DEBUG_DBC_COORDS")!=nullptr);
+  if (not enabled) return;
+
+  const auto& ns_node_elem_pos = dirichlet_workset.nodeSets->at(nodeSetID);
+  const auto  disc        = dirichlet_workset.disc;
+  const auto& sol_dof_mgr = disc->getDOFManager();
+  const auto& node_dof_mgr= disc->getNodeDOFManager();
+
+  const auto& sol_elem_dof_lids  = sol_dof_mgr->elem_dof_lids().host();
+  const auto& node_elem_dof_lids = node_dof_mgr->elem_dof_lids().host();
+  const auto& sol_offsets  = sol_dof_mgr->getGIDFieldOffsets(offset);
+  const auto& node_offsets = node_dof_mgr->getGIDFieldOffsets(0);
+
+  const auto& coords = disc->getCoordinates();
+  const int   ndim   = disc->getNumDim();
+  const int   nnodes = coords.size()/ndim;
+
+  double lo[3] = { 1e300, 1e300, 1e300};
+  double hi[3] = {-1e300,-1e300,-1e300};
+  double chksum = 0.0;
+  long long nbad_node = 0, nbad_dof = 0;
+  const int sol_len = Albany::getLocalSubdim(dirichlet_workset.f->space());
+
+  // Sorted list of (coords,dof lid), so the report is independent of the order in which
+  // the node set happens to enumerate its entries.
+  std::vector<std::pair<std::array<double,3>,int>> entries;
+  entries.reserve(ns_node_elem_pos.size());
+
+  for (const auto& ep : ns_node_elem_pos) {
+    const int ielem = ep.first;
+    const int pos   = ep.second;
+    const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
+    const int n_lid = node_elem_dof_lids(ielem,node_offsets[pos]);
+
+    if (x_lid<0 or x_lid>=sol_len) { ++nbad_dof; continue; }
+    if (n_lid<0 or n_lid>=nnodes)  { ++nbad_node; continue; }
+
+    std::array<double,3> c = {0,0,0};
+    for (int d=0; d<ndim; ++d) {
+      c[d] = coords[ndim*n_lid+d];
+      lo[d] = std::min(lo[d],c[d]);
+      hi[d] = std::max(hi[d],c[d]);
+      // Order-independent checksum: each coordinate contributes the same regardless of
+      // where it appears in the list.
+      chksum += c[d]*c[d] + 0.5*std::abs(c[d]);
+    }
+    entries.push_back({c,x_lid});
+  }
+
+  std::sort(entries.begin(),entries.end());
+
+  // Count the distinct dofs actually constrained. A node set that resolves several
+  // (elem,pos) pairs to the SAME dof (as it legitimately does, since a node is shared
+  // by several elements) is fine; one that resolves to FEWER distinct dofs than there
+  // are distinct constrained coordinates is not.
+  std::set<int> distinct_dofs;
+  std::set<std::array<double,3>> distinct_coords;
+  for (const auto& e : entries) {
+    distinct_dofs.insert(e.second);
+    distinct_coords.insert(e.first);
+  }
+
+  auto out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << " [dbc coords] node set '" << nodeSetID << "' dof offset " << offset << ":\n"
+       << "     (elem,pos) pairs   : " << ns_node_elem_pos.size() << "\n"
+       << "     distinct dofs      : " << distinct_dofs.size() << "\n"
+       << "     distinct coords    : " << distinct_coords.size() << "\n"
+       << "     out-of-range dofs  : " << nbad_dof << "\n"
+       << "     out-of-range nodes : " << nbad_node << "\n"
+       << "     coord checksum     : " << std::setprecision(17) << chksum << "\n"
+       << "     bounding box       : [" << lo[0] << ", " << hi[0] << "]";
+  for (int d=1; d<ndim; ++d) {
+    *out << " x [" << lo[d] << ", " << hi[d] << "]";
+  }
+  *out << "\n";
+
+  // First few constrained nodes, sorted by coordinate, so two runs can be diffed
+  // directly to see WHICH nodes gained or lost a constraint.
+  const int nshow = std::min<int>(10,entries.size());
+  for (int i=0; i<nshow; ++i) {
+    *out << "     [" << i << "] (" << entries[i].first[0];
+    for (int d=1; d<ndim; ++d) *out << ", " << entries[i].first[d];
+    *out << ") -> dof lid " << entries[i].second << "\n";
+  }
+}
+
+} // anonymous namespace
 
 template <typename EvalT, typename Traits>
 SDirichletField_Base<EvalT, Traits>::
@@ -102,6 +218,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[pos]);
     f_view[x_lid]   = 0.0;
   }
+
+  dirichletDofCoordsReport(dirichlet_workset,this->nodeSetID,this->offset);
 }
 
 // **********************************************************************

@@ -9,6 +9,8 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
+#include "Albany_ExtrudedDiscretization.hpp"
+
 #include <Thyra_DefaultMultiVectorProductVector.hpp>
 
 #include <Tempus_Stepper.hpp>
@@ -105,6 +107,23 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
       auto stepper = integrator.getStepper();
       stepper->setModel(model_);
       stepper->initialize();
+    }
+
+    // DIAGNOSTIC: dump the 3d extruded mesh, as wedges, with the post-adaptation
+    // solution on it -- after the adaptation and the disc/solution-manager rebuild,
+    // but BEFORE the first write of this step. The existing Omega_h vtk files only
+    // show the 2d basal mesh, so they cannot reveal a column that was extruded onto
+    // the wrong basal data or numbered inconsistently. 'sol' is the solution just
+    // read back into the NEW discretization's layout, which is exactly the object
+    // whose correctness is in question here.
+    {
+      auto ext_disc = Teuchos::rcp_dynamic_cast<ExtrudedDiscretization>(disc);
+      if (Teuchos::nonnull(ext_disc)) {
+        static int wedge_dump_count = 0;
+        const std::string name = "after_adapt_3d" + std::to_string(wedge_dump_count++);
+        // 'sol' comes from the solution manager's owned (non-overlapped) space.
+        ext_disc->writeWedgeVtk(name, sol->col(0), false);
+      }
     }
   }
 }

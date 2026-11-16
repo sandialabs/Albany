@@ -662,6 +662,7 @@ buildBox (const int dim)
 
   nodeSetsGeoModelEntities = setNodeSetsGeoModelEntities();
   sideSetsGeoModelEntities = setSideSetsGeoModelEntities();
+  m_mark_side_sets_downward = true; // want to mark vertices in side sets
   auto nsNames = createNodeSets();
   auto ssNames = createSideSets();
 
