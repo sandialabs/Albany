@@ -24,8 +24,8 @@ ANONYMOUS:
         Type: Scalar Response
         Name: Solution Average
     Dirichlet BCs:
-      DBC on NS extruded_x- for DOF U0: 0.0
-      DBC on NS extruded_x- for DOF U1: 0.0
+      DBC on NS extruded_x-_side_set for DOF U0: 0.0
+      DBC on NS extruded_x-_side_set for DOF U1: 0.0
     Neumann BCs: {}
     LandIce BCs:
       Number: 2
@@ -98,7 +98,7 @@ ANONYMOUS:
         VTK Write Interval: 1
         Mesh Creation Method: OshFile
         Input Filename: box22_0.45_5l_128tri.osh
-        Mark Parts: ['x-', 'x+', 'y-', 'y+']
+        Mark Parts: ['x-_side_set', 'x+_side_set', 'y-_side_set', 'y+_side_set']
         Number Of Time Derivatives: 1
         Restart From Mesh Solution: true
         Required Fields Info:
@@ -263,6 +263,9 @@ ANONYMOUS:
                   'fact: iluk level-of-fill': 0
 
 
-  # TODO: add 'Regression For Response 0' with a Test Value generated from a real run
+  Regression For Response 0:
+    Absolute Tolerance: 1.0e-06
+    Relative Tolerance: 1.0e-06
+    Test Value: -4.129716045950e+01
 ...
 

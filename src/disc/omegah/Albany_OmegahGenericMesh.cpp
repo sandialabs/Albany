@@ -315,7 +315,10 @@ loadOmegahMesh ()
   m_mark_side_sets_downward = true;
 
   auto nsNames = createNodeSets();
-  auto ssNames = createSideSets();
+  std::vector<std::string> ssNames;
+  if (m_mesh->dim()-1 > 0) {
+    ssNames = createSideSets();
+  }
   nsNames.insert(nsNames.end(),ssNames.begin(),ssNames.end());
 
   // Omega_h does not know what worksets are, so all elements are in one workset
@@ -674,7 +677,10 @@ buildBox (const int dim)
   sideSetsGeoModelEntities = setSideSetsGeoModelEntities();
   m_mark_side_sets_downward = true; // want to mark vertices in side sets
   auto nsNames = createNodeSets();
-  auto ssNames = createSideSets();
+  std::vector<std::string> ssNames;
+  if (dim-1 > 0) {
+    ssNames = createSideSets();
+  }
 
   // Omega_h does not know what worksets are, so all elements are in one workset
   const CellTopologyData* ctd;

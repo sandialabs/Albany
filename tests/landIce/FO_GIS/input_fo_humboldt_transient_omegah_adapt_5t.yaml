@@ -108,7 +108,7 @@ ANONYMOUS:
           #   Increasing it results in larger mesh elements;
           #   this is a (nonlinear) scaling factor on the resulting
           #   size field.
-          Adapt Ratio: 0.007
+          Adapt Ratio: 0.02
           # Error Thresold:
           #  SPR computes the sum of error norms raised to the power
           #  (2d/(2p+d)) over all elements, where d is the mesh
@@ -119,7 +119,7 @@ ANONYMOUS:
           #  i.e., `if (error > threshold) runMeshAdaptation(...)` .
           Error Threshold: 0.3
           Minimum Edge Length: 1.5 # min desired edge length in physical space
-          Maximum Edge Length: 40.0 # max desired edge length in physical space
+          Maximum Edge Length: 30.0 # max desired edge length in physical space
           Write VTK Files: true # write VTK files before and after adaptation
           Verbose: true # write additional mesh adaptation info to stdout
         Required Fields Info:
@@ -318,6 +318,6 @@ ANONYMOUS:
     Relative Tolerance: 1.0e-06
     #Sensitivity For Parameter 0:
     #  Test Value: 1.829334359669e+07
-    Test Value: 6.299846947873e+06
+    Test Value: 7.344659247238e+06
 ...
 
