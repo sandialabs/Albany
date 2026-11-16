@@ -19,6 +19,8 @@
 #include "Teuchos_Tuple.hpp"
 
 #include <cmath>
+#include <iomanip>
+#include <limits>
 
 #include "Teuchos_TestForException.hpp"
 
@@ -302,8 +304,16 @@ bool RegressionTests::scaledCompare(
   auto abs_ok  = (d <= fabs(absTol));
   auto ok      = rel_ok || abs_ok;
   if (!ok) {
-    *out << name << ": " << x1 << " != " << x2 << " (rel " << relTol << " abs "
-        << absTol << ")\n";
+    // Print the values with all their digits: the stream may be set to just a few (e.g., by the
+    // solvers), and then the two values may look the same
+    const auto flags     = out->flags();
+    const auto precision = out->precision();
+    out->unsetf(std::ios_base::floatfield);
+    *out << std::setprecision(std::numeric_limits<double>::digits10)
+         << name << ": " << x1 << " != " << x2;
+    out->flags(flags);
+    out->precision(precision);
+    *out << " (rel " << relTol << " abs " << absTol << ")\n";
   }
   return !ok;
 }
