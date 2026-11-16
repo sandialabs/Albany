@@ -239,6 +239,15 @@ loadOmegahMesh ()
 
   const auto& filename = m_params->get<std::string>("Input Filename");
   Omega_h::binary::read(filename, lib.world(), m_mesh.get());
+
+  if (m_params->get("Restart From Mesh Solution",false)) {
+    const std::string sol_name = "solution";
+    TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(0,sol_name), std::runtime_error,
+        "Error! 'Restart From Mesh Solution' was requested, but the mesh file does "
+        "not contain a nodal '" + sol_name + "' tag.\n"
+        " - mesh file: " + filename + "\n");
+    m_has_restart_solution = true;
+  }
   if (m_params->get("Rebalance",true)) {
     m_mesh->balance(); // re-partition to the number of ranks in world communicator
   }
@@ -839,6 +848,13 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     // Ok, it's an input (or input-output) field. Find out where the field comes from
     forigin = fparams.get<std::string>("Field Origin","INVALID");
     if (forigin=="Mesh") {
+      const int ent_dim = std::regex_search(ftype,nodal_r) ? 0 : m_mesh->dim();
+      TEUCHOS_TEST_FOR_EXCEPTION (not m_mesh->has_tag(ent_dim,fname), std::runtime_error,
+          "Error! Field '" << fname << "' has 'Field Origin: Mesh', but no such tag "
+          "exists in the mesh.\n"
+          " - field name: " << fname << "\n"
+          " - field type: " << ftype << "\n"
+          " - entity dim: " << ent_dim << "\n");
       *out << "  - Skipping field '" << fname << "' since it's listed as present in the mesh.\n";
       continue;
     } else {

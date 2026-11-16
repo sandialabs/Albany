@@ -222,9 +222,12 @@ ANONYMOUS:
                           'fact: iluk level-of-fill': 0
                 Rescue Bad Newton Solve: true
             Line Search:
-              Full Step:
-                Full Step: 1.0
-              Method: Full Step
+              Method: Backtrack
+              Backtrack:
+                Max Iters: 20
+                Default Step: 1.0
+                Minimum Step: 1.0e-6
+                Reduction Factor: 0.5
             Nonlinear Solver: Line Search Based
             Printing:
               Output Precision: 3
