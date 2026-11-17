@@ -36,10 +36,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test.yaml
 set (testName ${testNameRoot}_Dry_Bed)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_dry_bed_test.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+albany_tests_require_static_fad(${testName})
 
 set (testName ${testNameRoot}_Wet_Bed)
 add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+albany_tests_require_static_fad(${testName})
 
 # If Iopx is not present, we must decompose the input mesh first
 if (NOT ALBANY_PARALLEL_EXODUS)
@@ -84,6 +86,7 @@ if (ALBANY_FROSCH)
   set (testName ${testNameRoot}_Wet_Bed_FROSch)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_FROSch.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward;FROSch")
+  albany_tests_require_static_fad(${testName})
   
   set (testName ${testNameRoot}_Humboldt_fluxDiv)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_Humboldt_fluxDiv.yaml)
@@ -125,6 +128,7 @@ if (ALBANY_TEKO AND ALBANY_MUELU AND ALBANY_FROSCH)
   set (testName ${testNameRoot}_Wet_Bed_Teko)
   add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test_teko.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+  albany_tests_require_static_fad(${testName})
 endif()
 
 if(${PYTHON_TEST})

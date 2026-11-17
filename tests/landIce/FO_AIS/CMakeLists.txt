@@ -51,6 +51,7 @@ if(ALBANY_MUELU)
   else()
     set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Forward")
   endif()
+  albany_tests_require_static_fad(${testNameRoot}_MueLuKokkos)
 endif()
 
 if(ALBANY_MUELU)

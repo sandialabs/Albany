@@ -20,6 +20,7 @@ endif()
  
 # Create the test
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
+albany_tests_require_static_fad(${testName}_Humboldt)
 # If Iopx is not present, we must decompose the input mesh first
 if (NOT ALBANY_PARALLEL_EXODUS)
 	add_test (NAME ${testName}_Humboldt_decompMesh
