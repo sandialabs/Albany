@@ -11,7 +11,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -130,20 +130,14 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMesh2d
                        FIXTURES_SETUP ${testName}_extruded)
 
-  if (ALBANY_OMEGAH)
-    add_test (NAME ${testName}_CreateGisOsh
-          COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d.exo gis_unstruct_2d.osh
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
-    set_tests_properties (${testName}_CreateGisOsh PROPERTIES FIXTURES_SETUP CreateGisOshMesh)
-
+  if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
     add_test(${testName}_Omega_h ${Albany.exe} input_fo_gis_unstruct_omegah.yaml)
     set_tests_properties(${testName}_Omega_h
                          PROPERTIES
-                         LABELS "LandIce;Forward;Omega_h"
-                         FIXTURES_REQUIRED CreateGisOshMesh)
+                         LABELS "LandIce;Forward;Omega_h")
   endif()
 
   # Memoization run
@@ -457,6 +451,16 @@ IF(NOT Kokkos_ENABLE_CUDA)
       LABELS "LandIce;Forward;Omega_h")
     # set_tests_properties(${testName}  PROPERTIES
     #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
+
+    if (ALBANY_MESHFIELDS)
+      # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
+      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_3t)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+      set_tests_properties(${testName}  PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+    endif()
 
   endif()
 

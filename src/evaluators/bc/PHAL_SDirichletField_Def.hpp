@@ -120,16 +120,22 @@ void
 SDirichletField<PHAL::AlbanyTraits::Jacobian, Traits>::
 set_row_and_col_is_dbc(typename Traits::EvalData dirichlet_workset)
 {
-  // Check for early return
-  if (not col_is_dbc_.is_null()) {
-    return;
-  }
-
   Teuchos::RCP<const Thyra_LinearOp> J = dirichlet_workset.Jac;
 
   auto  range_vs  = J->range();
   auto  col_vs    = Albany::getColumnSpace(J);
   auto  domain_vs = range_vs;  // we are assuming this!
+
+  // Check for early return. NOTE: the cached vectors are tied to the vector spaces
+  // of the Jacobian they were built from, so they can only be reused if those spaces
+  // are still the current ones. After a mesh adaptation the Jacobian is rebuilt on a
+  // new (larger) column space, and reusing the old col_is_dbc_ would index it out of
+  // bounds in evaluateFields below.
+  if (not col_is_dbc_.is_null() and
+      col_is_dbc_->space()->isCompatible(*col_vs) and
+      row_is_dbc_->space()->isCompatible(*range_vs)) {
+    return;
+  }
 
   row_is_dbc_ = Thyra::createMember(range_vs);
   col_is_dbc_ = Thyra::createMember(col_vs);

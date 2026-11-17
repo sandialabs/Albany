@@ -19,12 +19,22 @@ std::tuple<Teuchos::RCP<const Thyra_Vector>,
            Teuchos::RCP<const Thyra_Vector>,
            Teuchos::RCP<const Thyra_Vector>,
            Teuchos::RCP<const Thyra_MultiVector>>
-unpackState (const Teuchos::RCP<const Tempus::SolutionState<ST>>& state)
+unpackState (const Teuchos::RCP<const Tempus::SolutionState<ST>>& state,
+             const int num_time_derivs)
 {
   Teuchos::RCP<const Thyra_Vector> x       = state->getX();
   Teuchos::RCP<const Thyra_Vector> xdot    = state->getXDot();
   Teuchos::RCP<const Thyra_Vector> xdotdot = state->getXDotDot();
   Teuchos::RCP<const Thyra_MultiVector> dxdp;
+
+  // When the integrator starts from a nonzero initial time, Tempus builds the
+  // initial state via IntegratorBasic::initializeSolutionHistory(t0,x0,...),
+  // which always allocates a (zero) xdotdot, even if the model does not provide
+  // one. Drop it here, since the solution manager only has num_time_derivs+1
+  // vectors to scatter into.
+  if (num_time_derivs < 2) {
+    xdotdot = Teuchos::null;
+  }
 
   using DMVPV = Thyra::DefaultMultiVectorProductVector<ST>;
   auto px       = Teuchos::rcp_dynamic_cast<const DMVPV>(x);
@@ -65,7 +75,7 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
   auto  history = integrator.getSolutionHistory();
   auto  state = history->getCurrentState();
 
-  auto [x,xdot,xdotdot,dxdp] = unpackState(state.getConst());
+  auto [x,xdot,xdotdot,dxdp] = unpackState(state.getConst(),app_->getNumTimeDerivs());
 
   auto disc = app_->getDiscretization();
   auto adaptData = disc->checkForAdaptation(x,xdot,xdotdot,dxdp,is_first_time_step_);
@@ -73,6 +83,10 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
     disc->adapt(adaptData);
     app_->getAdaptSolMgr()->reset_solution_space(false);
     auto sol = app_->getAdaptSolMgr()->getCurrentSolution();
+    app_->buildDistributedParameters(app_->getAppPL(),true /* is_rebuild */);
+    // The field managers size their fields (in particular the side set ones) from the
+    // discretization, so they must be re-setup against the adapted mesh.
+    app_->refreshFieldManagers();
     auto num_time_derivs = app_->getNumTimeDerivs();
 
     // current state: x_old for the upcoming solve
@@ -120,7 +134,7 @@ observeEndTimeStep(const Tempus::Integrator<ST>& integrator)
   }
 
   auto time = state->getTime();
-  auto [x,xdot,xdotdot,dxdp] = unpackState(state.getConst());
+  auto [x,xdot,xdotdot,dxdp] = unpackState(state.getConst(),app_->getNumTimeDerivs());
 
   if (Teuchos::nonnull(explicit_ode_model_)) {
     // Solve the algebraic constraint (e.g., the FO velocity) at the new state, so that
