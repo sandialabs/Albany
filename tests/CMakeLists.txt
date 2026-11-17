@@ -218,6 +218,25 @@ IF(${PYTHON_TEST})
   set(PYTHON_TEST_HELPERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python)
 ENDIF()
 
+# On GPU backends, DFad allocates memory inside device kernels, which fails
+# (or corrupts derivatives) for larger problems; those tests need SFad or SLFad.
+set(ALBANY_GPU_DFAD FALSE)
+IF((Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL) AND
+   (ENABLE_FAD_TYPE STREQUAL "DFad" OR ENABLE_TAN_FAD_TYPE STREQUAL "DFad" OR
+    ENABLE_HES_VEC_FAD_TYPE STREQUAL "DFad"))
+  set(ALBANY_GPU_DFAD TRUE)
+  MESSAGE("-- GPU build with DFad: tests requiring SFad or SLFad are disabled")
+ENDIF()
+
+# Disable the given tests when they cannot run with DFad on a GPU backend.
+# The list of tests was determined on a GPU with 12GB of memory; some of them
+# may run with DFad on GPUs with more memory.
+function(albany_tests_require_static_fad)
+  IF(ALBANY_GPU_DFAD)
+    set_tests_properties(${ARGN} PROPERTIES DISABLED TRUE)
+  ENDIF()
+endfunction()
+
 IF (ALBANY_UNIT_TESTS)
   add_subdirectory(unit)
 ENDIF()

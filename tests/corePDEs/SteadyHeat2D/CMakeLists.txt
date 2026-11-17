@@ -17,6 +17,7 @@ if (ALBANY_IFPACK2)
 
   add_test(${testName}_SERIAL ${SerialAlbany.exe} input.yaml)
   set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "Basic;Forward")
+  albany_tests_require_static_fad(${testName}_SERIAL)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_RegressFail.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_RegressFail.yaml COPYONLY)

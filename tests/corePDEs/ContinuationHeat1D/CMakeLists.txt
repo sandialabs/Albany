@@ -17,4 +17,5 @@ if (ALBANY_IFPACK2)
 
   add_test(${testName} ${Albany.exe} input.yaml)
   set_tests_properties(${testName} PROPERTIES LABELS "Basic;Forward")
+  albany_tests_require_static_fad(${testName})
 endif ()
