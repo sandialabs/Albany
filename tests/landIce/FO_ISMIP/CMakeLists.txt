@@ -30,6 +30,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testB.yaml
 
 add_test(${testName} ${Albany.exe} input_fo_ismip-hom_testB.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
+albany_tests_require_static_fad(${testName})
 
 
 ####################################
