@@ -178,20 +178,6 @@ if (ALBANY_IFPACK2)
   endif()
 endif()
 
-if (NOT ALBANY_PARALLEL_EXODUS)
-	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_2d_decompMesh)
-  add_test (NAME ${testNameHumboldtDecompMesh}
-        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetup2d)
-
-	set (testNameHumboldtDecompMesh ${testNameRoot}_Humboldt_contiguous_2d_decompMesh)
-  add_test (NAME ${testNameHumboldtDecompMesh}
-        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_contiguous_2d.exo
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (${testNameHumboldtDecompMesh} PROPERTIES FIXTURES_SETUP humboldtMeshSetupContiguous2d)
-endif()
-
 if (ALBANY_FROSCH)
   # Normal run
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_FROSch.yaml

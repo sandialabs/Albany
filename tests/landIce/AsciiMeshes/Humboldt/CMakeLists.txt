@@ -51,4 +51,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/A_notLumped_humboldt.mm
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/D_notLumped_humboldt.mm
                ${CMAKE_CURRENT_BINARY_DIR}/D_notLumped_humboldt.mm COPYONLY)
 
+# If Iopx is not present, the 2d meshes must be decomposed first. Do it once here,
+# for all the tests that use them, so concurrent tests don't overwrite the files.
+if (NOT ALBANY_PARALLEL_EXODUS)
+  add_test (NAME landIce_Humboldt_2d_decompMesh
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo)
+  set_tests_properties (landIce_Humboldt_2d_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup2d)
+
+  add_test (NAME landIce_Humboldt_contiguous_2d_decompMesh
+            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_contiguous_2d.exo)
+  set_tests_properties (landIce_Humboldt_contiguous_2d_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetupContiguous2d)
+endif()
+
 add_subdirectory(humboldt_contiguous_2d.osh)
