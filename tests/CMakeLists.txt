@@ -218,10 +218,15 @@ IF(${PYTHON_TEST})
   set(PYTHON_TEST_HELPERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python)
 ENDIF()
 
+set(ALBANY_GPU_BACKEND FALSE)
+IF(Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL)
+  set(ALBANY_GPU_BACKEND TRUE)
+ENDIF()
+
 # On GPU backends, DFad allocates memory inside device kernels, which fails
 # (or corrupts derivatives) for larger problems; those tests need SFad or SLFad.
 set(ALBANY_GPU_DFAD FALSE)
-IF((Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL) AND
+IF(ALBANY_GPU_BACKEND AND
    (ENABLE_FAD_TYPE STREQUAL "DFad" OR ENABLE_TAN_FAD_TYPE STREQUAL "DFad" OR
     ENABLE_HES_VEC_FAD_TYPE STREQUAL "DFad"))
   set(ALBANY_GPU_DFAD TRUE)
