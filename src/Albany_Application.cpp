@@ -1274,16 +1274,28 @@ Application::postRegSetup<PHAL::AlbanyTraits::HessianVec>()
 void
 Application::refreshFieldManagers()
 {
+  // Only redo the setup of the evaluation types that were already set up; the others
+  // are set up on first use, as at startup. Setting up all of them would allocate
+  // the fields of every evaluation type, which can exhaust the memory of a GPU.
+  const auto was_setup = [&](const std::string& name) {
+    return phxSetup->contain_eval(name);
+  };
+  const bool residual   = was_setup(PHAL::evalName<PHAL::AlbanyTraits::Residual>("FM",0));
+  const bool jacobian   = was_setup(PHAL::evalName<PHAL::AlbanyTraits::Jacobian>("FM",0));
+  const bool tangent    = was_setup(PHAL::evalName<PHAL::AlbanyTraits::Tangent>("FM",0));
+  const bool distParam  = was_setup(PHAL::evalName<PHAL::AlbanyTraits::DistParamDeriv>("FM",0));
+  const bool hessianVec = was_setup(PHAL::evalName<PHAL::AlbanyTraits::HessianVec>("FM",0));
+
   // Drop the record of which evaluation types have already been set up, so that the
   // post registration setup below actually runs again (it early-outs otherwise).
   phxSetup->clear_evals();
 
   // Problem field managers (residual/jacobian/... , dirichlet and neumann).
-  postRegSetup<PHAL::AlbanyTraits::Residual>();
-  postRegSetup<PHAL::AlbanyTraits::Jacobian>();
-  postRegSetup<PHAL::AlbanyTraits::Tangent>();
-  postRegSetup<PHAL::AlbanyTraits::DistParamDeriv>();
-  postRegSetup<PHAL::AlbanyTraits::HessianVec>();
+  if (residual)   postRegSetup<PHAL::AlbanyTraits::Residual>();
+  if (jacobian)   postRegSetup<PHAL::AlbanyTraits::Jacobian>();
+  if (tangent)    postRegSetup<PHAL::AlbanyTraits::Tangent>();
+  if (distParam)  postRegSetup<PHAL::AlbanyTraits::DistParamDeriv>();
+  if (hessianVec) postRegSetup<PHAL::AlbanyTraits::HessianVec>();
 
   // Response field managers
   for (int i = 0; i < responses.size(); ++i) { responses[i]->postRegSetup(); }
