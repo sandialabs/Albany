@@ -21,17 +21,12 @@ endif()
 # Create the test
 add_test(${testName}_Humboldt ${Albany.exe} input_enthalpy_humboldt.yaml)
 albany_tests_require_static_fad(${testName}_Humboldt)
-# If Iopx is not present, we must decompose the input mesh first
+# If Iopx is not present, the input mesh is decomposed in AsciiMeshes/Humboldt
 if (NOT ALBANY_PARALLEL_EXODUS)
-	add_test (NAME ${testName}_Humboldt_decompMesh
-            COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-    set_tests_properties (${testName}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup)
-
     set_tests_properties(${testName}_Humboldt
                        PROPERTIES
                        LABELS "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
 else ()
     set_tests_properties(${testName}_Humboldt
                        PROPERTIES

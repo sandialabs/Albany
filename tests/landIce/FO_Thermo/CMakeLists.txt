@@ -43,19 +43,6 @@ add_test(${testName} ${Albany.exe} input_FO_Thermo_wet_bed_test.yaml)
 set_tests_properties(${testName} PROPERTIES LABELS "LandIce;Forward")
 albany_tests_require_static_fad(${testName})
 
-# If Iopx is not present, we must decompose the input mesh first
-if (NOT ALBANY_PARALLEL_EXODUS)
-  add_test (NAME ${testNameRoot}_Humboldt_decompMesh
-          COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_2d.exo
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (${testNameRoot}_Humboldt_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetup2d)
-
-  add_test (NAME ${testNameRoot}_Humboldt_contiguous_2d_decompMesh
-        COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} humboldt_contiguous_2d.exo
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-  set_tests_properties (${testNameRoot}_Humboldt_contiguous_2d_decompMesh PROPERTIES FIXTURES_SETUP humboldtMeshSetupContiguous2d)
-endif()
-
 # Copy input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_FO_Thermo_wet_bed_test_fea.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input_FO_Thermo_wet_bed_test_fea.yaml)
