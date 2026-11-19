@@ -26,6 +26,20 @@
 // **********************************************************************
 namespace PHAL {
 
+namespace {
+
+// Host copy of a device field, for the scatters that run on host
+template<typename FieldT>
+auto hostCopy (const FieldT& f)
+{
+  auto f_h = Kokkos::create_mirror_view(f.get_view());
+  Kokkos::deep_copy(f_h, f.get_view());
+  return f_h;
+}
+
+} // anonymous namespace
+
+
 template<typename EvalT, typename Traits>
 SeparableScatterScalarResponseBase<EvalT, Traits>::
 SeparableScatterScalarResponseBase(const Teuchos::ParameterList& p,
@@ -200,6 +214,7 @@ evaluateExtruded2DFieldDerivatives(typename Traits::EvalData workset)
   const int numSideNodes = field_side_offsets.size();
 
   std::vector<LO> field_lids(numNodes);
+  const auto local_response_h = hostCopy(this->local_response);
   for (std::size_t cell=0; cell<workset.numCells; ++cell) {
     // Dofs of the field at the field level of the column of the cell, for each cell node
     const int elem_LID = elem_lids(cell);
@@ -212,7 +227,7 @@ evaluateExtruded2DFieldDerivatives(typename Traits::EvalData workset)
     }
 
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
-      auto val = this->local_response(cell, res);
+      auto val = local_response_h(cell, res);
       for (int node=0; node<numNodes; ++node) {
         dg_data[res][field_lids[node]] += val.dx(field_offsets[node]);
       }
@@ -267,13 +282,14 @@ evaluate2DFieldsDerivativesDueToColumnContraction(
 
   const int columnsOffset = neq*this->numNodes;
   const auto& sideSet = workset.sideSets->find(sidesetName)->second;
+  const auto local_response_h = hostCopy(this->local_response);
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data.cell.lid->getColumnId(side_elem_LID);
     const int side_pos = side.side_pos;
 
     for (std::size_t res=0; res<this->global_response.size(); ++res) {
-      auto val = this->local_response(side_elem_LID, res);
+      auto val = local_response_h(side_elem_LID, res);
 
       const auto f = [&] (const int ilayer, const int pos)
       {
@@ -465,6 +481,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
+  const auto local_response_h = hostCopy(this->local_response);
   for (size_t cell=0; cell<workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
@@ -472,7 +489,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (size_t res=0; res<this->global_response.size(); ++res) {
-      const auto lresp = this->local_response(cell,res);
+      const auto lresp = local_response_h(cell,res);
 
       // We process bot and bot nodes separately
       for (int node=0; node<numSideNodes; ++node) {
@@ -800,6 +817,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int numSideNodes = field_offsets.size();
 
   // Loop over cells in workset
+  const auto local_response_h = hostCopy(this->local_response);
   for (size_t cell=0; cell < workset.numCells; ++cell) {
     const auto elem_LID = elem_lids(cell);
     const auto basal_elem_LID = layers_data.cell.lid->getColumnId(elem_LID);
@@ -808,7 +826,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
 
-      auto lresp = this->local_response(cell,res);
+      auto lresp = local_response_h(cell,res);
       const auto f = [&] (const int node, const int row) {
         if (!hess_vec_prod_g_px_data.is_null()) {
           hess_vec_prod_g_px_data[res][row] += lresp.dx(node).dx(0);
@@ -878,13 +896,14 @@ evaluate2DFieldsDerivativesDueToColumnContraction(typename Traits::EvalData work
   const int columnsOffset = neq*this->numNodes;
 
   const auto& sideSet = workset.sideSets->at(sideset);
+  const auto local_response_h = hostCopy(this->local_response);
   for (const auto& side : sideSet) {
     const int side_elem_LID = side.ws_elem_idx;
     const int basal_elem_LID = layers_data.cell.lid->getColumnId(side_elem_LID);
     const int side_pos = side.side_pos;
 
     for (size_t res=0; res<this->global_response.size(); ++res) {
-      auto val = this->local_response(side_elem_LID, res);
+      auto val = local_response_h(side_elem_LID, res);
       const auto f = [&] (const int ilayer, const int pos)
       {
         const int elem_LID = layers_data.cell.lid->getId(basal_elem_LID,ilayer);

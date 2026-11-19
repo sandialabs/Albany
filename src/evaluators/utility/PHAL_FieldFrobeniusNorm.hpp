@@ -80,9 +80,9 @@ public:
   typedef Kokkos::RangePolicy<ExecutionSpace, Dim3_Tag> Dim3_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Dim2_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const Dim2_Tag& tag, const int& idx) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Dim3_Tag& tag, const int& sideSet_idx) const;
+  void operator() (const Dim3_Tag& tag, const int& idx) const;
 
 };
 
