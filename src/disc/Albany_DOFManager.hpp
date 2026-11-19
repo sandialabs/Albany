@@ -76,6 +76,11 @@ public:
   Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,int,decltype(Kokkos::ALL)>
   getGIDFieldOffsetsSideKokkos (int fieldNum, int side) const;
 
+  // Offsets for all sides, indexed as (side_pos, node); rows are padded
+  // to the largest side closure size
+  Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,decltype(Kokkos::ALL),decltype(Kokkos::ALL)>
+  getGIDFieldOffsetsSidesKokkos (int fieldNum) const;
+
   // If side!=orderedAsInSide, this version returns side offsets ordered
   // in such a way that off[i] on side=$side is directly above/below
   // off[i] on side=$orderAsInSide.

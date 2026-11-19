@@ -190,6 +190,13 @@ getGIDFieldOffsetsSideKokkos (int fieldNum, int side) const
   return getGIDFieldOffsetsSubcellKokkos(fieldNum,m_topo_dim-1,side);
 }
 
+Kokkos::Subview<Kokkos::View<int****,PHX::Device>,int,int,decltype(Kokkos::ALL),decltype(Kokkos::ALL)>
+DOFManager::
+getGIDFieldOffsetsSidesKokkos (int fieldNum) const
+{
+  return Kokkos::subview(m_subcell_closures_view,fieldNum,m_topo_dim-1,Kokkos::ALL,Kokkos::ALL);
+}
+
 const std::vector<int>&
 DOFManager::
 getGIDFieldOffsetsSide (int fieldNum, int side, const int orderAsInSide) const

@@ -56,21 +56,22 @@ evaluateFields (typename Traits::EvalData workset)
     return;
   }
 
-  const auto elem_lids    = workset.disc->getElementLIDs_host(workset.wsIndex);
-  const auto node_dof_mgr = workset.disc->getNodeDOFManager();
+  const auto node_offsets = workset.disc->getNodeDOFManager()->getGIDFieldOffsetsSidesKokkos(0);
 
-  const auto& sideSet = workset.sideSets->at(sideSetName);
-  const int numSides = sideSet.size();
-  for (auto iside=0; iside<numSides; ++iside) {
-    const auto& side = sideSet[iside];
-    const int cell = side.ws_elem_idx;
-    const int pos = side.side_pos;
-    const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
-    const int numSideNodes = node_offsets.size();
+  const auto& sideSet    = workset.sideSetViews->at(sideSetName);
+  const auto ws_elem_idx = sideSet.ws_elem_idx.view_device();
+  const auto side_pos    = sideSet.side_pos.view_device();
+  const int numSideNodes = solution.extent(1);
+
+  Kokkos::parallel_for(this->getName(),
+                       Kokkos::RangePolicy<PHX::Device::execution_space>(0,sideSet.size),
+                       KOKKOS_CLASS_LAMBDA(const int iside) {
+    const int cell = ws_elem_idx(iside);
+    const int pos  = side_pos(iside);
     for (int inode=0; inode<numSideNodes; ++inode) {
-      residual (cell,node_offsets[inode]) = surf_height(iside,inode) - solution(iside,inode);
+      residual(cell,node_offsets(pos,inode)) = surf_height(iside,inode) - solution(iside,inode);
     }
-  }
+  });
 }
 
 } // Namespace PHAL

@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 template<typename EvalT, typename Traits>
 LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::
@@ -82,9 +83,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
-
-  p_reg = 0;
+  Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::preEvaluate(workset);
@@ -98,7 +97,7 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
   // ----------------- Surface side ---------------- //
 
@@ -109,10 +108,10 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
     sideSet = workset.sideSetViews->at(sideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                         KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
       MeshScalarT trapezoid_weight = 0;
       for (unsigned int qp=0; qp<numSideQPs; ++qp)
@@ -124,10 +123,10 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typen
         //using trapezoidal rule to get diagonal mass matrix
         t += std::pow(solution(sideSet_idx,inode),2)* trapezoid_weight;
       }
-      this->local_response_eval(cell, 0) += t*scaling;
-      this->global_response_eval(0) += t*scaling;
-      p_reg += t*scaling;
-    }
+      ScalarT result = t*scaling;
+      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);
+      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
+    });
   }
 
   // Do any local-scattering necessary
@@ -141,8 +140,6 @@ void LandIce::ResponseBoundarySquaredL2Norm<EvalT, Traits>::postEvaluate(typenam
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
-  reg = p_reg;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponseWithExtrudedParams<EvalT, Traits>::postEvaluate(workset);

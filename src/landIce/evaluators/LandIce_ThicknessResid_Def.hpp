@@ -102,31 +102,31 @@ ThicknessResid<EvalT, Traits>::ThicknessResid(
       }
     }
   }
-  auto triCubature = factory.create<PHX::Device,RealType,RealType>(*triangleTopo,cubatureDegree);
+  auto triCubature = factory.create<HostDevice,RealType,RealType>(*triangleTopo,cubatureDegree);
   const int nTriQP = triCubature->getNumPoints();
-  Kokkos::DynRankView<RealType,PHX::Device> triPoints("tri_pts",nTriQP,2);
-  triWeights = Kokkos::DynRankView<RealType,PHX::Device>("tri_wts",nTriQP);
+  Kokkos::DynRankView<RealType,HostDevice> triPoints("tri_pts",nTriQP,2);
+  triWeights = Kokkos::DynRankView<RealType,HostDevice>("tri_wts",nTriQP);
   triCubature->getCubature(triPoints,triWeights);
   // All the numerical kernels operate on the reference 2D triangle,
   // including the wedge-side case.  Avoid evaluating wedge basis functions.
-  Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device, RealType, RealType> triBasis;
-  triBasisValues = Kokkos::DynRankView<RealType,PHX::Device>("tri_values",3,nTriQP);
-  triRefGrad = Kokkos::DynRankView<RealType,PHX::Device>("tri_reference_gradients",3,nTriQP,2);
+  Intrepid2::Basis_HGRAD_TRI_C1_FEM<HostDevice, RealType, RealType> triBasis;
+  triBasisValues = Kokkos::DynRankView<RealType,HostDevice>("tri_values",3,nTriQP);
+  triRefGrad = Kokkos::DynRankView<RealType,HostDevice>("tri_reference_gradients",3,nTriQP,2);
   triBasis.getValues(triBasisValues,triPoints,Intrepid2::OPERATOR_VALUE);
   triBasis.getValues(triRefGrad,triPoints,Intrepid2::OPERATOR_GRAD);
 
   shards::CellTopology lineTopo(cellType->getCellTopologyData()->edge[0].topology);
-  auto edgeCubature = factory.create<PHX::Device,RealType,RealType>(lineTopo,cubatureDegree);
+  auto edgeCubature = factory.create<HostDevice,RealType,RealType>(lineTopo,cubatureDegree);
   const int nEdgeQP = edgeCubature->getNumPoints();
-  Kokkos::DynRankView<RealType,PHX::Device> edgePoints("edge_pts",nEdgeQP,1);
-  edgeWeights = Kokkos::DynRankView<RealType,PHX::Device>("edge_wts",nEdgeQP);
+  Kokkos::DynRankView<RealType,HostDevice> edgePoints("edge_pts",nEdgeQP,1);
+  edgeWeights = Kokkos::DynRankView<RealType,HostDevice>("edge_wts",nEdgeQP);
   edgeCubature->getCubature(edgePoints,edgeWeights);
 
   // Map the 1D edge quadrature directly to each edge of the reference triangle.
-  Kokkos::DynRankView<RealType,PHX::Device> edgeRefPts("edge_on_tri",nEdgeQP,2);
-  edgesBasisValues = Kokkos::DynRankView<RealType,PHX::Device>("tri_edge_values",3,3,nEdgeQP);
+  Kokkos::DynRankView<RealType,HostDevice> edgeRefPts("edge_on_tri",nEdgeQP,2);
+  edgesBasisValues = Kokkos::DynRankView<RealType,HostDevice>("tri_edge_values",3,3,nEdgeQP);
   for (int e=0; e<3; ++e) {
-    Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell(edgeRefPts, edgePoints, 1, e, *triangleTopo);
+    Intrepid2::CellTools<HostDevice>::mapToReferenceSubcell(edgeRefPts, edgePoints, 1, e, *triangleTopo);
     triBasis.getValues(Kokkos::subview(edgesBasisValues,e,Kokkos::ALL(),Kokkos::ALL()),edgeRefPts,Intrepid2::OPERATOR_VALUE);
   }
 
@@ -195,6 +195,24 @@ template<typename EvalT, typename Traits>
 void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   Kokkos::deep_copy(Residual.get_view(),ScalarT(0.0));
+
+  // The assembly runs on host, so work on host copies of the fields
+  const auto toHost = [](const auto& v) {
+    auto v_h = Kokkos::create_mirror_view(v);
+    Kokkos::deep_copy(v_h,v);
+    return v_h;
+  };
+  const auto coordVec_h = toHost(coordVec.get_view());
+  const auto Hdiff_h    = toHost(Hdiff.get_view());
+  const auto H0_h       = toHost(H0.get_view());
+  const auto forcing_h  = toHost(forcing.get_view());
+  decltype(toHost(dHdt.get_view()))   dHdt_h;
+  decltype(toHost(V_cell.get_view())) V_cell_h;
+  decltype(toHost(V_side.get_view())) V_side_h;
+  if (unsteady)     dHdt_h   = toHost(dHdt.get_view());
+  if (cellDim == 2) V_cell_h = toHost(V_cell.get_view());
+  else              V_side_h = toHost(V_side.get_view());
+  const auto Residual_h = toHost(Residual.get_view());
   const Albany::SideSetList& sideSets=*workset.sideSets;
 
   // Up to three boundary edges per horizontal triangle.
@@ -225,12 +243,12 @@ void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData work
   // Reuse one set of Intrepid2 views for all triangles in this workset.
   // We work in 2D here even when the parent cell is a 3D wedge.
   const int nqp=static_cast<int>(triBasisValues.extent_int(1));
-  auto xyCell = Sacado::createDynRankView(coordVec.get_view(),"projected_triangle_xy",1,3,2);
-  auto jac = Sacado::createDynRankView(coordVec.get_view(),"triangle_jacobian",1,nqp,2,2);
-  auto jacInv = Sacado::createDynRankView(coordVec.get_view(),"triangle_inverse_jacobian",1,nqp,2,2);
-  auto jacDet = Sacado::createDynRankView(coordVec.get_view(),"triangle_jacobian_det",1,nqp);
-  auto weighted_measure = Sacado::createDynRankView(coordVec.get_view(),"weighted_measure",1,nqp);
-  auto physGrad = Sacado::createDynRankView(coordVec.get_view(),"physical_triangle_gradients",1,3,nqp,2);
+  auto xyCell = Sacado::createDynRankView(coordVec_h,"projected_triangle_xy",1,3,2);
+  auto jac = Sacado::createDynRankView(coordVec_h,"triangle_jacobian",1,nqp,2,2);
+  auto jacInv = Sacado::createDynRankView(coordVec_h,"triangle_inverse_jacobian",1,nqp,2,2);
+  auto jacDet = Sacado::createDynRankView(coordVec_h,"triangle_jacobian_det",1,nqp);
+  auto weighted_measure = Sacado::createDynRankView(coordVec_h,"weighted_measure",1,nqp);
+  auto physGrad = Sacado::createDynRankView(coordVec_h,"physical_triangle_gradients",1,3,nqp,2);
 
   // Both mesh types are reduced to the same local P1 triangle here.
   double dt = unsteady ? workset.time_step : *dt_ptr;
@@ -251,13 +269,13 @@ void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData work
     RealType source[3];
     for (int i=0;i<3;++i) {
       const int n=parentNode[i];
-      x[i][0]=coordVec(cell,n,0);
-      x[i][1]=coordVec(cell,n,1);
-      H[i]=Hdiff(cell,n)+H0(cell,n);
-      Hdot[i]=unsteady ? dHdt(cell,n) : ScalarT(Hdiff(cell,n)/dt);
-      source[i]=forcing(cell,n)/1000; //convert to [km/yr]
+      x[i][0]=coordVec_h(cell,n,0);
+      x[i][1]=coordVec_h(cell,n,1);
+      H[i]=Hdiff_h(cell,n)+H0_h(cell,n);
+      Hdot[i]=unsteady ? dHdt_h(cell,n) : ScalarT(Hdiff_h(cell,n)/dt);
+      source[i]=forcing_h(cell,n)/1000; //convert to [km/yr]
       for (int d=0;d<2;++d) {
-        velocity[i][d]=(cellDim==2 ? ScalarT(V_cell(cell,n,d)) : V_side(entity,i,d))/1000.0;  //convert to [km/yr]
+        velocity[i][d]=(cellDim==2 ? ScalarT(V_cell_h(cell,n,d)) : V_side_h(entity,i,d))/1000.0;  //convert to [km/yr]
       }
     }
 
@@ -267,8 +285,8 @@ void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData work
     for (int i=0; i<3; ++i)
       for (int d=0; d<2; ++d)
         xyCell(0,i,d)=x[i][d];
-    using CT=Intrepid2::CellTools<PHX::Device>;
-    using FST=Intrepid2::FunctionSpaceTools<PHX::Device>;
+    using CT=Intrepid2::CellTools<HostDevice>;
+    using FST=Intrepid2::FunctionSpaceTools<HostDevice>;
     CT::setJacobian(jac,xyCell,triRefGrad);
     CT::setJacobianDet(jacDet,jac);
     const MeshScalarT signedDet=jacDet(0,0);  //For P1, jacobian is constant
@@ -422,7 +440,8 @@ void ThicknessResid<EvalT,Traits>::evaluateFields(typename Traits::EvalData work
       }
     }
     for (int i=0;i<3;++i) 
-      Residual(cell,parentNode[i])+=r[i];
+      Residual_h(cell,parentNode[i])+=r[i];
   }
+  Kokkos::deep_copy(Residual.get_view(),Residual_h);
 }
 } // namespace LandIce
