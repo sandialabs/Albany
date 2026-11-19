@@ -21,7 +21,7 @@ template< bool B, class T = void >
 using enable_if_t = typename std::enable_if<B,T>::type;
 
 template<typename T>
-Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T> array) {
+Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T, pybind11::array::c_style | pybind11::array::forcecast> array) {
 
     int size = array.shape(0);
     Teuchos::ArrayView< T > av(array.mutable_data(0), size);
@@ -229,7 +229,9 @@ RCP_PyCrsMatrix createRCPPyCrsMatrixFromFile(RCP_PyMap &map, const std::string& 
   return reader_type::readSparseFile (filename, map, colMap, domainMap, rangeMap);
 }
 
-pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_GO> globalIndexes)
+// Take a C-contiguous array here (pybind11 copies non-contiguous input), so that the data
+// viewed by globalIndexes_av stays alive for the whole function.
+pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_GO, pybind11::array::c_style | pybind11::array::forcecast> globalIndexes)
 {
     auto globalIndexes_av = convert_np_to_ArrayView(globalIndexes);
 
@@ -276,7 +278,7 @@ void pyalbany_map(pybind11::module &m) {
         .def("isSameAs", &PyMap::isSameAs)
         .def("locallySameAs", &PyMap::locallySameAs)
         .def("getComm", &PyMap::getComm)
-        .def("getRemoteIndexList", [](Teuchos::RCP<PyMap> &m, py::array_t<Tpetra_GO> globalIndexes) {
+        .def("getRemoteIndexList", [](Teuchos::RCP<PyMap> &m, py::array_t<Tpetra_GO, py::array::c_style | py::array::forcecast> globalIndexes) {
             return getRemoteIndexList(m, globalIndexes);
         });
 }
