@@ -108,8 +108,7 @@ include(FetchContent)
 FetchContent_Declare(
 	pybind11
 	GIT_REPOSITORY https://github.com/pybind/pybind11.git
-	GIT_TAG        v2.10.4
-	GIT_SHALLOW    TRUE
+	GIT_TAG        5b0a6fc2017fcc176545afe3e09c9f9885283242 # v2.10.4 (tags can be moved: pin the commit)
 	SYSTEM
 )
 

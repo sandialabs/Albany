@@ -69,6 +69,7 @@ RUN apt-get update &&       \
 ARG ROCM_VERSION=6.2.4
 RUN mkdir -p /etc/apt/keyrings && \
     wget -q -O /etc/apt/keyrings/rocm.asc https://repo.radeon.com/rocm/rocm.gpg.key && \
+    echo "2de99e2354646a90d9903e2a669fc4e36b02c1bbff7075c481e12d7edab2c88b  /etc/apt/keyrings/rocm.asc" | sha256sum -c - && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.asc] https://repo.radeon.com/rocm/apt/${ROCM_VERSION} noble main" \
         > /etc/apt/sources.list.d/rocm.list && \
     printf 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600\n' \
