@@ -158,8 +158,8 @@ evaluateFields(typename Traits::EvalData workset)
     const bool useRhoCp = haverhoCp;
     const auto conv = convection;
     const auto gradT = TGrad.get_static_view();
-    // Note: rhoCp is bound to field data only if haverhoCp==true (otherwise it's an empty view)
-    const auto rho_cp = rhoCp.get_static_view();
+    // rhoCp is bound to field data only if haverhoCp==true
+    const auto rho_cp = haverhoCp ? rhoCp.get_static_view() : decltype(rhoCp.get_static_view())();
 
     Kokkos::parallel_for("HeatEqResid: convection", Policy({0,0},{numCells,nqp}),
                          KOKKOS_LAMBDA(const int cell, const int qp) {

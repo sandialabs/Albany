@@ -584,8 +584,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       Kokkos::parallel_for("Neumann: accumulate", Policy3({0,0,0},{numCells_,nNodes,nDOFs}),
                            KOKKOS_LAMBDA(const int iCell, const int node, const int dim) {
         const int cell = cellVec(iCell);
+        ScalarT contrib = 0;
         for (int qp=0; qp < numQPsSide; ++qp)
-          nm(cell, node, dim) += d(iCell, qp, dim) * wtb(iCell, node, qp);
+          contrib += d(iCell, qp, dim) * wtb(iCell, node, qp);
+        nm(cell, node, dim) += contrib;
       });
     }
   }
