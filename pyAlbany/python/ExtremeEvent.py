@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import warnings
 import scipy.sparse.linalg as slinalg
 import scipy.linalg as linalg
 from PyAlbany import Distributions as dist
@@ -482,7 +483,8 @@ def evaluateThetaStar_QPM(QoI, problem, n_params, alpha=5e0, response_id=0, F_id
                 para_view = para.getLocalView()
                 theta_star[i, j] = para_view[0]
 
-        problem.performSolve()
+        if problem.performSolve():
+            warnings.warn("ExtremeEvent: the solve at theta* (lambda index " + str(i) + ") did not converge; I* and the QoI may be inaccurate.")
 
         I_star[i] = problem.getCumulativeResponseContribution(0, response_id)
         sdF_star[i] = problem.getCumulativeResponseContribution(0, F_id)
@@ -524,7 +526,8 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
                 para_view = para.getLocalView()
                 theta_star[i, j] = para_view[0]
 
-        problem.performSolve()
+        if problem.performSolve():
+            warnings.warn("ExtremeEvent: the solve at theta* (lambda index " + str(i) + ") did not converge; I* and the QoI may be inaccurate.")
 
         I_star[i] = problem.getCumulativeResponseContribution(0, response_id)
         F_star[i] = problem.getCumulativeResponseContribution(0, F_id)
@@ -537,6 +540,17 @@ def evaluateThetaStar(l, problem, n_params, response_id=0, F_id=1, params_in_vec
 ## Functions associated to the computation of the prefactor C_0(z) of equation (1.5) of [1]:
 
 # Importance sampling approach based on (3.8) of [1].
+# Importance-sampling estimate from the samples whose solve converged: the sum of the weights is
+# divided by the number of converged samples (instead of the total), the skipped samples being dropped.
+def renormalizedProbability(P_star_i, weights_sum, n_converged, n_samples, i):
+    if n_converged < n_samples:
+        warnings.warn("ExtremeEvent: " + str(n_samples - n_converged) + " of " + str(n_samples) +
+                      " samples skipped for lambda index " + str(i) + " (solve not converged).")
+    if n_converged == 0:
+        return np.nan
+    return P_star_i * weights_sum / n_converged
+
+
 def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_0, problem, F_id=1, params_in_vector=True, return_QoI=False):
     invC = np.linalg.inv(C)
     n_l = len(F_star)
@@ -547,6 +561,7 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
     # Loop over the lambdas
     for i in range(0, n_l):
         if P_star[i] > 0.:
+            n_converged = 0
             # Loop over the samples
             for j in range(0, n_samples):
                 sample = samples_0[j,:] + theta_star[i,:] - theta_0
@@ -566,13 +581,18 @@ def importanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, samples_
                         para_view[0] = sample[k]
                         parameter.setLocalView(para_view)
                         problem.setParameter(k, parameter)
-                problem.performSolve()
+                if problem.performSolve():
+                    # Skip the samples whose solve did not converge, and renormalize by the converged ones
+                    warnings.warn("ExtremeEvent: the solve for sample " + str(j) + " (lambda index " + str(i) + ") did not converge; skipping the sample.")
+                    QoI[i, j] = np.nan
+                    continue
+                n_converged += 1
 
                 QoI[i, j] = problem.getCumulativeResponseContribution(0, F_id)
 
                 if QoI[i, j] > F_star[i]:
                     P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
-            P[i] = P_star[i] * P[i] / n_samples
+            P[i] = renormalizedProbability(P_star[i], P[i], n_converged, n_samples, i)
     if return_QoI:
         return P, QoI
     else:
@@ -611,7 +631,10 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
                     parameter.setLocalView(para_view)
                     problem.setParameter(k, parameter)
 
-            problem.performSolve()
+            if problem.performSolve():
+                warnings.warn("ExtremeEvent: the solve at theta* (lambda index " + str(i) + ") did not converge; cannot compute the probability for this lambda.")
+                P[i] = np.nan
+                continue
             if params_in_vector:
                 n_theta_star = -problem.getSensitivity(0, 0).getLocalView()[:,0]  
             else:
@@ -620,6 +643,7 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
             norm = np.linalg.norm(n_theta_star)
             n_theta_star /= norm
 
+            n_converged = 0
             # Loop over the samples
             for j in range(0, n_samples):
 
@@ -651,11 +675,15 @@ def mixedImportanceSamplingEstimator(theta_0, C, theta_star, F_star, P_star, sam
                             para_view[0] = sample[k]
                             parameter.setLocalView(para_view)
                             problem.setParameter(k, parameter)
-                    problem.performSolve()
+                    if problem.performSolve():
+                        # Skip the samples whose solve did not converge, and renormalize by the converged ones
+                        warnings.warn("ExtremeEvent: the solve for sample " + str(j) + " (lambda index " + str(i) + ") did not converge; skipping the sample.")
+                        continue
                     current_F_above = problem.getCumulativeResponseContribution(0, F_id) > F_star[i]
+                n_converged += 1
                 if current_F_above:
                     P[i] += np.exp(-invC.dot(theta_star[i,:]-theta_0).dot(sample-theta_star[i,:]))
-            P[i] = P_star[i] * P[i] / n_samples
+            P[i] = renormalizedProbability(P_star[i], P[i], n_converged, n_samples, i)
     return P
 
 def arctan2(y, x):
@@ -721,7 +749,8 @@ class HessianOperator(slinalg.LinearOperator):
         direction.setLocalView(direction_view)
 
         self.problem.setDirections(self.parameter_id, direction)
-        self.problem.performSolve()
+        if self.problem.performSolve():
+            warnings.warn("ExtremeEvent: the solve for the Hessian-vector product did not converge; the result may be inaccurate.")
         hessian = self.problem.getReducedHessian(self.response_id, self.parameter_id)
         return hessian[0,:]
 
@@ -767,7 +796,8 @@ class RotatedHessianOperator(slinalg.LinearOperator):
         direction.setLocalView(direction_view)
 
         self.problem.setDirections(self.parameter_id, direction)
-        self.problem.performSolve()
+        if self.problem.performSolve():
+            warnings.warn("ExtremeEvent: the solve for the Hessian-vector product did not converge; the result may be inaccurate.")
         hessian = self.problem.getReducedHessian(self.response_id, self.parameter_id)
 
         tmp2 = hessian.getLocalView()[:,0]
