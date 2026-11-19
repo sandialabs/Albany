@@ -90,9 +90,15 @@ void FlowRate<EvalT, Traits, TempST>::evaluateFields (typename Traits::EvalData 
       break;
 
     case TEMPERATURE_BASED: {
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = (temperature(cell) < switchingT) ? arrmll / std::exp (actenl / gascon / temperature(cell))
-                                                   : arrmlh / std::exp (actenh / gascon / temperature(cell));
+      for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+        // Clamp temperature from below at 150 K in the low-T Arrhenius branch
+        // (same guard as ViscosityFO::flowRate) to avoid exp() overflow for
+        // unphysically cold ice.
+        const TempST T = temperature(cell);
+        const TempST T_clamped = (T > TempST(150)) ? T : TempST(150);
+        flowRate(cell) = (T < switchingT) ? arrmll / std::exp (actenl / gascon / T_clamped)
+                                          : arrmlh / std::exp (actenh / gascon / T);
+      }
       break;
     }
 
