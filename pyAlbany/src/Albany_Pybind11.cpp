@@ -59,8 +59,18 @@ PYBIND11_MODULE(AlbanyInterface, m) {
         .def("getCumulativeResponseContribution", &PyAlbany::PyProblem::getCumulativeResponseContribution)
         .def("updateCumulativeResponseContributionWeigth", &PyAlbany::PyProblem::updateCumulativeResponseContributionWeigth)
         .def("updateCumulativeResponseContributionTargetAndExponent", &PyAlbany::PyProblem::updateCumulativeResponseContributionTargetAndExponent)
-        .def("getCovarianceMatrix", &PyAlbany::PyProblem::getCovarianceMatrix)
-        .def("setCovarianceMatrix", &PyAlbany::PyProblem::setCovarianceMatrix)
+        .def("getCovarianceMatrix", [](PyAlbany::PyProblem &self, py::array C) {
+            // C is an output argument: it must be filled in place (no converted copy)
+            if (C.ndim() != 2 || !C.dtype().is(py::dtype::of<double>()) ||
+                !(C.flags() & py::array::c_style) || !C.writeable())
+              throw py::value_error("getCovarianceMatrix: C must be a writeable, C-contiguous 2-D float64 array");
+            self.getCovarianceMatrix(static_cast<double*>(C.mutable_data()), C.shape(0), C.shape(1));
+        })
+        .def("setCovarianceMatrix", [](PyAlbany::PyProblem &self, py::array_t<double, py::array::c_style | py::array::forcecast> C) {
+            auto buf = C.request();
+            if (buf.ndim != 2) throw py::value_error("setCovarianceMatrix: array must be 2-D");
+            self.setCovarianceMatrix(static_cast<double*>(buf.ptr), buf.shape[0], buf.shape[1]);
+        })
         .def("getStackedTimer", &PyAlbany::PyProblem::getStackedTimer);
 
     m.def("getRankZeroMap", &PyAlbany::getRankZeroMap, "A function which return a map where all the entries are owned by the rank 0");
