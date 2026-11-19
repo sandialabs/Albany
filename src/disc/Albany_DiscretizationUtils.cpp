@@ -148,11 +148,32 @@ readScalarFileSerial (const std::string& fname,
         "[readScalarFileSerial] Error! Unable to open the file.\n"
         "  - file name: " << fname << "\n");
 
-  GO numNodes;
+  // The header line is "N" or "N 1" (number of nodes, and number of components), with the
+  // values on the following lines. Legacy files may have the values on the header line too
+  // ("N v0 v1 ..."). Parse the header tokens strictly, and never silently skip a value.
   std::string line;
   std::getline(ifile, line);
   std::istringstream iss(line);
-  iss >> numNodes;
+  std::vector<std::string> header;
+  for (std::string tok; iss >> tok; ) {
+    header.push_back(tok);
+  }
+  auto parse_int = [](const std::string& str, GO& val) {
+    std::size_t pos = 0;
+    try { val = std::stoll(str,&pos); } catch (...) { return false; }
+    return pos==str.size();
+  };
+  auto parse_double = [](const std::string& str, double& val) {
+    std::size_t pos = 0;
+    try { val = std::stod(str,&pos); } catch (...) { return false; }
+    return pos==str.size();
+  };
+
+  GO numNodes = -1;
+  TEUCHOS_TEST_FOR_EXCEPTION (header.empty() || !parse_int(header[0],numNodes),
+      Teuchos::Exceptions::InvalidParameterValue,
+      "[readScalarFileSerial] Error! The first line of the file should start with the number of nodes.\n"
+      "  - file name: " << fname << "\n");
   TEUCHOS_TEST_FOR_EXCEPTION (numNodes != nonConstData.size(),
       Teuchos::Exceptions::InvalidParameterValue,
       "[readScalarFileSerial] Error! Unexpected number of nodes.\n"
@@ -160,18 +181,31 @@ readScalarFileSerial (const std::string& fname,
       "  - number of nodes in file: " << numNodes << "\n"
       "  - expected number of nodes: " << nonConstData.size() << "\n");
 
-  // If number of components is available, it needs to be 1 for scalar fields
-  int numComponents;
-  if(iss >> numComponents)
-    TEUCHOS_TEST_FOR_EXCEPTION (numComponents != 1,
+  // Values found on the header line (legacy one-line format)
+  std::vector<std::string> header_values;
+  if (header.size()==2) {
+    // If number of components is available, it needs to be 1 for scalar fields
+    GO numComponents = -1;
+    TEUCHOS_TEST_FOR_EXCEPTION (!parse_int(header[1],numComponents) || numComponents != 1,
       Teuchos::Exceptions::InvalidParameterValue,
       "[readScalarFileSerial] Error! Unexpected number of components.\n"
       "  - file name: " << fname << "\n"
-      "  - number of components: " << numComponents << "\n"
+      "  - number of components: " << header[1] << "\n"
       "  - expected number of components: 1\n");
+  } else if (header.size()>2) {
+    header_values.assign(header.begin()+1,header.end());
+  }
 
   for (GO i = 0; i < numNodes; i++) {
-    ifile >> nonConstData[i];
+    double val = 0;
+    const bool ok = static_cast<std::size_t>(i)<header_values.size()
+                  ? parse_double(header_values[i],val)
+                  : static_cast<bool>(ifile >> val);
+    TEUCHOS_TEST_FOR_EXCEPTION (!ok, std::runtime_error,
+        "[readScalarFileSerial] Error! Failed to read data value from file.\n"
+        "  - file name  : " << fname << "\n"
+        "  - node index : " << i << "\n");
+    nonConstData[i] = val;
   }
 
   ifile.close();
