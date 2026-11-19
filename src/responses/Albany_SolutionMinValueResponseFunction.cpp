@@ -64,16 +64,21 @@ evaluateTangent(const double /* alpha */,
 		const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   if (!gx.is_null() || !gp.is_null()) {
-    evaluateGradient(current_time, x, xdot, xdotdot, p, parameter_index, g, gx, Teuchos::null, Teuchos::null, gp);
-  }
+    // gx = dg/dx^T Vx. Note: gx lives in the response space, so it cannot be used to
+    // store dg/dx (a vector in the solution space): compute dg/dx in a temporary.
+    Teuchos::RCP<Thyra_MultiVector> dg_dx;
+    if (!gx.is_null() && !Vx.is_null()) {
+      dg_dx = Thyra::createMembers(x->space(),1);
+    }
+    evaluateGradient(current_time, x, xdot, xdotdot, p, parameter_index, g, dg_dx, Teuchos::null, Teuchos::null, gp);
 
-  if (!gx.is_null() && !Vx.is_null()) {
-    // compute gx = gx' * Vx.
-    // Note: to avoid overwrite gx, we need to copy gx
-    Teuchos::RCP<Thyra_MultiVector> gx_copy = gx->clone_mv();
-    for (int i=0; i<Vx->domain()->dim(); ++i) {
-      for (int j=0; j<Vx->domain()->dim(); ++j) {
-        gx->col(i)->assign(gx_copy->col(i)->dot(*Vx->col(j)));
+    if (!gx.is_null()) {
+      if (Vx.is_null()) {
+        gx->assign(0.0);
+      } else {
+        for (int j=0; j<Vx->domain()->dim(); ++j) {
+          gx->col(j)->assign(dg_dx->col(0)->dot(*Vx->col(j)));
+        }
       }
     }
   }
