@@ -246,12 +246,14 @@ void NeumannBase<EvalT, Traits>::
 gather_fields_offsets (const Albany::DOFManager& dof_mgr) {
   // Do this only once
   if (fields_offsets.size()==0) {
+    // Indexed by global equation (not by position in this BC's offset array),
+    // so the inner vectors must hold all fields, not just the numDOFsSet set by this BC
+    const int neq = dof_mgr.getNumFields();
     fields_offsets.resize(this->numNodes);
     for (auto& o : fields_offsets) {
-      o.resize(this->numDOFsSet);
+      o.resize(neq);
     }
 
-    const int neq = dof_mgr.getNumFields();
     for (int eq=0; eq<neq; ++eq){
       const auto& offsets = dof_mgr.getGIDFieldOffsets(eq);
       for (int i=0; i<this->numNodes; ++i) {
