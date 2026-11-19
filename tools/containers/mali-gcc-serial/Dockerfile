@@ -1,11 +1,8 @@
 # syntax=docker/dockerfile:1.4
 ARG BASE_IMAGE=ghcr.io/sandialabs/albany:gcc-12-serial
 FROM ${BASE_IMAGE}
-# Global TLS switch for restrictive networks.
-# WARNING: when true, TLS cert verification is disabled for git/wget/conda in this Docker build.
-ARG ALLOW_INSECURE_CERTS=false
-ENV ALLOW_INSECURE_CERTS=${ALLOW_INSECURE_CERTS}
-ENV GIT_SSL_NO_VERIFY=${ALLOW_INSECURE_CERTS}
+# TLS certificates are always verified (git, wget, conda). Behind a TLS-intercepting proxy,
+# see tools/containers/README.md.
 
 # Albany
 ARG ALBANY_COMMIT=origin/HEAD
@@ -122,23 +119,14 @@ RUN if [ "${TARGETARCH}" = "amd64" ]; then MINIFORGE_ARCH="x86_64"; \
     echo "uname -m=$(uname -m)" && \
     echo "MINIFORGE_ARCH=${MINIFORGE_ARCH}" && \
     echo "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" && \
-    if [ "${ALLOW_INSECURE_CERTS}" = "true" ]; then \
-        wget --no-check-certificate --tries=5 --retry-connrefused --waitretry=2 \
-        "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" -O /home/runner/Miniforge3.sh; \
-    else \
-        wget --tries=5 --retry-connrefused --waitretry=2 \
+    wget --tries=5 --retry-connrefused --waitretry=2 \
         --ca-certificate=/etc/ssl/certs/ca-certificates.crt \
-        "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" -O /home/runner/Miniforge3.sh; \
-    fi
+        "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" -O /home/runner/Miniforge3.sh
 
 RUN bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
     rm -f /home/runner/Miniforge3.sh
 
-RUN if [ "${ALLOW_INSECURE_CERTS}" = "true" ]; then \
-        /home/runner/miniforge/bin/conda config --system --set ssl_verify false; \
-    else \
-        /home/runner/miniforge/bin/conda config --system --set ssl_verify /etc/ssl/certs/ca-certificates.crt; \
-    fi
+RUN /home/runner/miniforge/bin/conda config --system --set ssl_verify /etc/ssl/certs/ca-certificates.crt
 
 ENV PATH="/home/runner/miniforge/bin:${PATH}"
 
@@ -154,19 +142,12 @@ RUN git clone --filter=blob:none https://github.com/${COMPASS_ORG}/compass /home
 # This performs a development installation of compass from /home/runner/compass.
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
             cd /home/runner/compass && \
-            if [ "${ALLOW_INSECURE_CERTS}" = "true" ]; then CONDA_SSL_VERIFY=false; else CONDA_SSL_VERIFY=/etc/ssl/certs/ca-certificates.crt; fi && \
             /bin/bash -lc 'export CFLAGS="-O2 -fno-lto" && \
             export CXXFLAGS="-O2 -fno-lto" && \
             export LDFLAGS="-fno-lto" && \
-            export CONDA_SSL_VERIFY="'"${CONDA_SSL_VERIFY}"'" && \
+            export CONDA_SSL_VERIFY=/etc/ssl/certs/ca-certificates.crt && \
             source /home/runner/miniforge/etc/profile.d/conda.sh && \
-            if [ "'"${ALLOW_INSECURE_CERTS}"'" = "true" ]; then \
-                unset REQUESTS_CA_BUNDLE SSL_CERT_FILE CURL_CA_BUNDLE && \
-                export SSL_NO_VERIFY=1 && \
-                conda config --set ssl_verify false; \
-            else \
-                conda config --set ssl_verify /etc/ssl/certs/ca-certificates.crt; \
-            fi && \
+            conda config --set ssl_verify /etc/ssl/certs/ca-certificates.crt && \
             ./conda/configure_compass_env.py --conda /home/runner/miniforge --env_only'; \
         else \
             echo "Skipping Compass developer env setup on $(uname -m): required deps are not available for linux-aarch64."; \

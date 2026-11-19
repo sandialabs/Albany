@@ -8,4 +8,4 @@ export https_proxy=http://proxy.sandia.gov:80
 spack config add config:connect_timeout:300
 #spack compiler find
 #cp ../config.yaml etc/spack/defaults/config.yaml
-spack --insecure install --dirty --keep-stage albany@develop%gcc@14.2.0+mpas~py+unit_tests >& spack_albany.out
+spack install --dirty --keep-stage albany@develop%gcc@14.2.0+mpas~py+unit_tests >& spack_albany.out
