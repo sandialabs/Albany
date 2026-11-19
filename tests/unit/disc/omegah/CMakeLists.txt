@@ -33,9 +33,7 @@ create_unit_test (NAME    OmegahDiscretization
                   SOURCES OmegahDiscretization.cpp
                   LABELS  Omega_h)
 
-if (NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
-  create_unit_test (NAME    OmegahGhost
-                    PREFIX  ${testNameRoot}
-                    SOURCES OmegahGhost.cpp
-                    LABELS  Omega_h)
-endif()
+create_unit_test (NAME    OmegahGhost
+                  PREFIX  ${testNameRoot}
+                  SOURCES OmegahGhost.cpp
+                  LABELS  Omega_h)
