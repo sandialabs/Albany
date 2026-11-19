@@ -72,7 +72,7 @@ HydrologyResidualCavitiesEqn (const Teuchos::ParameterList& p,
   }
   if (englacial_phi>0 && unsteady) {
     has_p_dot = true;
-    rho_w = physical_params.get<double>("Water Density");
+    rho_w = physical_params.get<double>("Fresh Water Density", 1000.0); // subglacial (fresh) water; "Water Density" is the seawater one
     g = physical_params.get<double>("Gravity Acceleration");
   } else {
     has_p_dot = false;
