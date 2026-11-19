@@ -172,27 +172,36 @@ namespace PHAL
             const auto amplitude = mdf_amplitude.get_view();
             const auto radius = mdf_radius.get_view();
             const int numQPs = x.extent_int(1);
+            // Compute the Gaussian coefficients once per call, on device (where the
+            // amplitude/radius parameters live): coeffs(0)=factor, coeffs(1)=2*radius^2.
+            // NOTE: doing this per thread in the main kernel raises register pressure on GPUs.
+            if (m_coeffs.size() == 0)
+                m_coeffs = Sacado::createDynRankView(source.get_view(), "Gaussian coefficients", 2);
+            const auto coeffs = m_coeffs;
+            Kokkos::parallel_for("Gaussian Source: coefficients",
+                                 Kokkos::RangePolicy<PHX::Device::execution_space>(0, 1),
+                                 KOKKOS_LAMBDA(const int) {
+                const ScalarT amp = amplitude(0);
+                const ScalarT rad = radius(0);
+                const ScalarT sigma_pi = 1.0 / (rad * sqrt_2pi);
+                coeffs(1) = 2.0 * std::pow(rad, 2);
+                if (nsd == 1)
+                    coeffs(0) = scaling * amp * sigma_pi;
+                else if (nsd == 2)
+                    coeffs(0) = scaling * amp * std::pow(sigma_pi, 2);
+                else
+                    coeffs(0) = scaling * amp * std::pow(sigma_pi, 3);
+            });
+
             Kokkos::parallel_for("Gaussian Source",
                                  Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>({0, 0}, {numCells, numQPs}),
                                  KOKKOS_LAMBDA(const int cell, const int qp) {
                 // NOTE: no runtime-indexed local array (it may end up in scratch memory on GPUs)
                 auto cc = [&](const int i) -> double { return i == 0 ? c0 : (i == 1 ? c1 : c2); };
-                const ScalarT amp = amplitude(0);
-                const ScalarT rad = radius(0);
-                const ScalarT sigma_pi = 1.0 / (rad * sqrt_2pi);
-                const ScalarT denom = 2.0 * std::pow(rad, 2);
-                ScalarT factor(0.0);
-                if (nsd == 1)
-                    factor = scaling * amp * sigma_pi;
-                else if (nsd == 2)
-                    factor = scaling * amp * std::pow(sigma_pi, 2);
-                else
-                    factor = scaling * amp * std::pow(sigma_pi, 3);
-                ScalarT exponent = 0;
+                MeshScalarT dist2 = 0;
                 for (int i = 0; i < nsd; ++i)
-                    exponent += (cc(i) - x(cell, qp, i)) * (cc(i) - x(cell, qp, i));
-                exponent /= denom;
-                f(cell, qp) += factor * std::exp(-exponent);
+                    dist2 += (cc(i) - x(cell, qp, i)) * (cc(i) - x(cell, qp, i));
+                f(cell, qp) += coeffs(0) * std::exp(-dist2 / coeffs(1));
             });
         }
 
