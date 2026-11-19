@@ -163,7 +163,9 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
     Kokkos::parallel_for(this->getName(),RangePolicy(0,1),
                          AddScalarComponents<decltype(global),decltype(sums),ncomp>{global,sums});
   } else {
-    // Dynamically sized or nested AD types: fall back to atomics
+    // Dynamically sized (e.g., SLFad) or nested (HessianVec) AD types: Sacado provides no
+    // Kokkos reduction for these, so fall back to atomics. Note: these are contended (all
+    // cells add to the same entry), and the summation order is not deterministic.
     Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
                          KOKKOS_LAMBDA(const int& cell) {
       KU::atomic_add<ExecutionSpace>(&(global(0)), local(cell,0));

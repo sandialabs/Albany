@@ -175,7 +175,8 @@ namespace PHAL
             Kokkos::parallel_for("Gaussian Source",
                                  Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>({0, 0}, {numCells, numQPs}),
                                  KOKKOS_LAMBDA(const int cell, const int qp) {
-                const double cc[3] = {c0, c1, c2};
+                // NOTE: no runtime-indexed local array (it may end up in scratch memory on GPUs)
+                auto cc = [&](const int i) -> double { return i == 0 ? c0 : (i == 1 ? c1 : c2); };
                 const ScalarT amp = amplitude(0);
                 const ScalarT rad = radius(0);
                 const ScalarT sigma_pi = 1.0 / (rad * sqrt_2pi);
@@ -189,7 +190,7 @@ namespace PHAL
                     factor = scaling * amp * std::pow(sigma_pi, 3);
                 ScalarT exponent = 0;
                 for (int i = 0; i < nsd; ++i)
-                    exponent += (cc[i] - x(cell, qp, i)) * (cc[i] - x(cell, qp, i));
+                    exponent += (cc(i) - x(cell, qp, i)) * (cc(i) - x(cell, qp, i));
                 exponent /= denom;
                 f(cell, qp) += factor * std::exp(-exponent);
             });
