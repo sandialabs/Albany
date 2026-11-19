@@ -1247,7 +1247,7 @@ void
 
   // Value to scale Jacobian/Residual by to possibly improve conditioning
   double scale;
-  double scaleBCdofs;
+  bool scaleBCdofs = false;
   // Scaling types
   enum SCALETYPE
   {
