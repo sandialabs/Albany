@@ -66,6 +66,8 @@ namespace PHAL
             PHX::MDField<const ScalarT> mdf_radius;
             int m_num;
             Teuchos::Array<double> m_centroid;
+            // Device buffer for the Gaussian coefficients (factor, 2*radius^2)
+            Kokkos::DynRankView<ScalarT, PHX::Device> m_coeffs;
             virtual ScalarT &getValue(const std::string &n);
         };
 
