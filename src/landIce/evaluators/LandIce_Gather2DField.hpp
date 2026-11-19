@@ -9,6 +9,8 @@
 
 #include "Albany_Layouts.hpp"
 
+#include <utility>
+
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "Phalanx_config.hpp"
@@ -52,12 +54,19 @@ protected:
   // derivatives. Used by the Residual and DistParamDeriv evaluation types.
   void gatherValues (typename Traits::EvalData workset);
 
-  using ScalarT = typename EvalT::ScalarT;
-  using ref_t   = typename PHAL::Ref<ScalarT>::type;
+  void copyToHost (const bool with_dot);
+  void copyToDevice (const bool with_dot);
+
+  using ScalarT     = typename EvalT::ScalarT;
+  using host_view_t = decltype(Kokkos::create_mirror_view(std::declval<PHX::MDField<ScalarT,Cell,Node>>().get_view()));
+  using ref_t       = typename host_view_t::reference_type;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>  field2D;
   PHX::MDField<ScalarT,Cell,Node>  field2D_dot;
+
+  host_view_t field2D_h;
+  host_view_t field2D_dot_h;
 
   int offset; // Offset of first DOF being gathered
   int numNodes;

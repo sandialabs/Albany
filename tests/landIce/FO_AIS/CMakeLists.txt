@@ -51,6 +51,7 @@ if(ALBANY_MUELU)
   else()
     set_tests_properties(${testNameRoot}_MueLuKokkos PROPERTIES LABELS "LandIce;Forward")
   endif()
+  albany_tests_require_static_fad(${testNameRoot}_MueLuKokkos)
 endif()
 
 if(ALBANY_MUELU)
@@ -65,6 +66,11 @@ if(ALBANY_MUELU)
                      FIXTURES_REQUIRED antarcticaMeshSetup)
   else()
     set_tests_properties(${testNameRoot}_MueLu PROPERTIES LABELS "LandIce;Forward")
+  endif()
+  # This MueLu setup uses host-only factories and smoothers; the MueLuKokkos
+  # test covers GPU backends.
+  if (ALBANY_GPU_BACKEND)
+    set_tests_properties(${testNameRoot}_MueLu PROPERTIES DISABLED TRUE)
   endif()
 endif()
 

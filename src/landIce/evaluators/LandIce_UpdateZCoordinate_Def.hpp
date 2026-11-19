@@ -21,6 +21,54 @@
 
 namespace LandIce {
 
+namespace {
+
+// Sigma level of each node of the workset cells, indexed by (cell,node)
+template<typename WorksetT>
+Kokkos::View<double**,PHX::Device>
+nodeSigmaLevels (const WorksetT& workset, const int numNodes)
+{
+  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
+      "Error! No layered numbering in the mesh.\n");
+
+  const auto& dz_ref = layers_data.dz_ref;
+  const int   numLayers = layers_data.cell.lid->numLayers;
+  const int   bot = layers_data.bot_side_pos;
+  const int   top = layers_data.top_side_pos;
+  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+
+  std::vector<double> sigmaLevel(numLayers+1);
+  sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
+  for(int i=1; i<numLayers; ++i) {
+    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
+  }
+
+  // We use this dof mgr to figure out which local node in the cell is on the
+  // top or bottom side.
+  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+
+  Kokkos::View<double**,PHX::Device> sigma("sigma",workset.numCells,numNodes);
+  auto sigma_h = Kokkos::create_mirror_view(sigma);
+  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
+    const int ilayer = layers_data.cell.lid->getLayerId(elem_lids(cell));
+    for (const int pos : {bot,top}) {
+      const int ilevel = pos==bot ? ilayer : ilayer+1;
+      for (auto node : node_dof_mgr->getGIDFieldOffsetsSide(0,pos)) {
+        sigma_h(cell,node) = sigmaLevel[ilevel];
+      }
+    }
+  }
+  Kokkos::deep_copy(sigma,sigma_h);
+  return sigma;
+}
+
+using CellNodePolicy = Kokkos::MDRangePolicy<PHX::ExecutionSpace, Kokkos::Rank<2>>;
+
+} // anonymous namespace
+
+
 //**********************************************************************
 template<typename EvalT, typename Traits, typename ScalarT>
 UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
@@ -87,65 +135,48 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void UpdateZCoordinateMovingTopBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // Mesh data
-  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const auto sigma = nodeSigmaLevels(workset,numNodes);
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
-      "Error! No layered numbering in the mesh.\n");
+  const auto coordIn   = coordVecIn.get_static_view();
+  const auto bed_v     = bedTopo.get_static_view();
+  const auto H_v       = H.get_static_view();
+  const auto H0_v      = H0.get_static_view();
+  const auto dH_v      = dH.get_static_view();
+  const auto topSurf_v = topSurface.get_static_view();
+  const auto coordOut  = coordVecOut.get_static_view();
+  const auto HOut_v    = HOut.get_static_view();
 
-  const auto& dz_ref = layers_data.dz_ref;
-  const int   numLayers = layers_data.cell.lid->numLayers;
-  const int   bot = layers_data.bot_side_pos;
-  const int   top = layers_data.top_side_pos;
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const bool haveDiff = haveThicknessDiff;
+  const bool haveH    = haveThickness;
+  const double min_H = minH, rhoi = rho_i, rhow = rho_w;
+  const int dims = numDims;
 
-  Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
-  sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
-  for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
-  }
+  Kokkos::parallel_for(this->getName(),
+      CellNodePolicy({0,0},{static_cast<int>(workset.numCells),numNodes}),
+      KOKKOS_LAMBDA(const int cell, const int node) {
+    ScalarOutT h;
+    if(!haveDiff) {
+      h = H_v(cell,node) > min_H ? ScalarT(H_v(cell,node)) : ScalarT(min_H);
+    } else {
+      h = H0_v(cell,node) + dH_v(cell,node);
+      if (h < min_H)
+        h = ScalarT(min_H);
+      if (haveH)
+        HOut_v(cell,node) = h;
+    }
+    ScalarOutT bed = Albany::convertScalar<const ScalarOutT>(bed_v(cell,node));
+    bool floating = (rhoi*h + rhow*bed) < 0.0;// && (h+bed > 0.0);
 
-  // We use this dof mgr to figure out which local node in the cell is on the
-  // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+    ScalarOutT lowSurf = floating ? ScalarOutT(-h*rhoi/rhow) : bed;
 
-  for (std::size_t cell=0; cell<workset.numCells; ++cell) {
-    const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
+    topSurf_v(cell,node) = lowSurf+h;
 
-    const auto f = [&](const int pos) {
-      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
-      const int ilevel = pos==bot ? ilayer : ilayer+1;
-      for (auto node : nodes) {
-        ScalarOutT h;
-        if(!haveThicknessDiff) {
-          h = std::max(H(cell,node), ScalarT(minH));
-        } else {
-         h = std::max(H0(cell,node) + dH(cell,node), ScalarT(minH));
-          if (haveThickness)
-            HOut(cell,node) = h;
-        }
-        ScalarOutT bed = Albany::convertScalar<const ScalarOutT>(bedTopo(cell,node));
-        bool floating = (rho_i*h + rho_w*bed) < 0.0;// && (h+bed > 0.0);
-
-        ScalarOutT lowSurf = floating ? -h*rho_i/rho_w : bed;
-
-        typename PHAL::Ref<ScalarOutT>::type vals = topSurface(cell,node);
-        vals = lowSurf+h; 
-        
-        ScalarOutT zcoord = lowSurf + sigmaLevel[ ilevel]*h; 
-        for(int icomp=0; icomp< numDims; icomp++) {
-          typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
-          val = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
-                           : coordVecIn(cell,node,icomp);
-        }
-      }
-    };
-
-    // Run lambda on both top and bottom nodes of the element.
-    f(bot);
-    f(top);
-  }
+    ScalarOutT zcoord = lowSurf + sigma(cell,node)*h;
+    for(int icomp=0; icomp< dims; icomp++) {
+      coordOut(cell,node,icomp) = (icomp==2) ? Albany::convertScalar<MeshScalarT>(zcoord)
+                                             : coordIn(cell,node,icomp);
+    }
+  });
 }
 
 //**********************************************************************
@@ -192,72 +223,47 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& /
 }
 
 //**********************************************************************
-//Kokkos functors
-
-//**********************************************************************
 template<typename EvalT, typename Traits>
 void UpdateZCoordinateMovingBed<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  using ref_t = typename PHAL::Ref<ScalarOutT>::type;
+  const auto sigma = nodeSigmaLevels(workset,numNodes);
 
-  // Mesh data
-  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const auto coordIn    = coordVecIn.get_static_view();
+  const auto bed_v      = bedTopo.get_static_view();
+  const auto topSurf_v  = topSurface.get_static_view();
+  const auto H_v        = H.get_static_view();
+  const auto coordOut   = coordVecOut.get_static_view();
+  const auto topSurfOut = topSurfaceOut.get_static_view();
+  const auto bedOut     = bedTopoOut.get_static_view();
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
-      "Error! No layered numbering in the mesh.\n");
+  const double rhoi = rho_i, rhow = rho_w;
+  const int dims = numDims;
 
-  const auto& dz_ref = layers_data.dz_ref;
-  const int   numLayers = layers_data.cell.lid->numLayers;
-  const int   bot = layers_data.bot_side_pos;
-  const int   top = layers_data.top_side_pos;
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  Kokkos::parallel_for(this->getName(),
+      CellNodePolicy({0,0},{static_cast<int>(workset.numCells),numNodes}),
+      KOKKOS_LAMBDA(const int cell, const int node) {
+    ScalarOutT h = H_v(cell,node);
+    ScalarOutT top = topSurf_v(cell,node);
+    ScalarOutT bed = bed_v(cell,node);
 
-  Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
-  sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
-  for(int i=1; i<numLayers; ++i)
-    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
+    //floating when the floating condition is met with the old bed
+    // or with the new (top-h) bed.
+    const ScalarOutT newBed = top-h;
+    auto floating = (rhoi*h + rhow*(bed < newBed ? bed : newBed)) < 0.0;
 
-  // We use this dof mgr to figure out which local node in the cell is on the
-  // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+    top = floating ? ScalarOutT(h*(1.0 - rhoi/rhow)) : top; //adjust surface when floating
+    topSurfOut(cell,node) = top;
+    const ScalarOutT floatBed = -rhoi/rhow*h;
+    bed = floating ? (bed < floatBed ? bed : floatBed) : ScalarOutT(top - h);
+    bedOut(cell,node) = bed;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
-
-    const auto f = [&](const int pos) {
-      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
-      const int ilevel = pos==bot ? ilayer : ilayer+1;
-      for (auto node : nodes) {
-        ScalarOutT h = H(cell,node);
-        ScalarOutT top = topSurface(cell,node);
-        ref_t vals = topSurfaceOut(cell,node);
-        ref_t valb = bedTopoOut(cell,node);
-        ScalarOutT bed = bedTopo(cell,node);
-
-        //floating when the floating condition is met with the old bed
-        // or with the new (top-h) bed.
-        auto floating = (rho_i*h + rho_w*std::min(bed, ScalarOutT(top-h))) < 0.0;
-
-        top = floating ? h*(1.0 - rho_i/rho_w) : top; //adjust surface when floating
-        vals = top;
-        bed = floating ? std::min(bed, ScalarOutT(-rho_i/rho_w*h)) : top - h;
-        valb = bed;
-
-        for(int icomp=0; icomp<numDims; ++icomp) {
-          ref_t val = coordVecOut(cell,node,icomp);
-          val = (icomp==2) ?
-              ScalarOutT(top - (1.0- sigmaLevel[ ilevel])*h)
-             : ScalarOutT(coordVecIn(cell,node,icomp));
-        }
-      }
-    };
-
-    // Run lambda on both top and bottom nodes of the element.
-    f(bot);
-    f(top);
-  }
+    for(int icomp=0; icomp<dims; ++icomp) {
+      coordOut(cell,node,icomp) = (icomp==2) ?
+          ScalarOutT(top - (1.0- sigma(cell,node))*h)
+         : ScalarOutT(coordIn(cell,node,icomp));
+    }
+  });
 }
 
 //****************************************************************************
@@ -319,68 +325,46 @@ template<typename EvalT, typename Traits>
 void UpdateZCoordinateGivenTopAndBedSurfaces<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  using ref_t = typename PHAL::Ref<MeshScalarT>::type;
+  const auto sigma = nodeSigmaLevels(workset,numNodes);
 
-  // Mesh data
-  const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
+  const auto coordIn    = coordVecIn.get_static_view();
+  const auto topSurfIn_v = topSurfIn.get_static_view();
+  const auto bedTopoIn_v = bedTopoIn.get_static_view();
+  const auto H_v        = H.get_static_view();
+  const auto coordOut   = coordVecOut.get_static_view();
+  const auto bed_v      = bedTopo.get_static_view();
+  const auto topSurf_v  = topSurf.get_static_view();
 
-  TEUCHOS_TEST_FOR_EXCEPTION (layers_data.cell.lid.is_null(), std::runtime_error,
-      "Error! No layered numbering in the mesh.\n");
+  const bool topIsParam = isTopSurfParam, bedIsParam = isBedTopoParam;
+  const double min_H = minH, rhoi = rho_i, rhow = rho_w;
+  const int dims = numDims;
 
-  const auto& dz_ref = layers_data.dz_ref;
-  const int   numLayers = layers_data.cell.lid->numLayers;
-  const int   bot = layers_data.bot_side_pos;
-  const int   top = layers_data.top_side_pos;
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  Kokkos::parallel_for(this->getName(),
+      CellNodePolicy({0,0},{static_cast<int>(workset.numCells),numNodes}),
+      KOKKOS_LAMBDA(const int cell, const int node) {
+    if(topIsParam) {
+      if(!bedIsParam) {
+        MeshScalarT minTopSurf = bed_v(cell,node) + min_H;
+        topSurf_v(cell,node) = topSurfIn_v(cell,node) > minTopSurf ? MeshScalarT(topSurfIn_v(cell,node)) : minTopSurf;
+      } else
+        topSurf_v(cell,node) = topSurfIn_v(cell,node);
+    }
+    if(bedIsParam) {
+      MeshScalarT maxBedTopo = topSurf_v(cell,node) - min_H;
+      bed_v(cell,node) = bedTopoIn_v(cell,node) < maxBedTopo ? MeshScalarT(bedTopoIn_v(cell,node)) : maxBedTopo;
+    }
 
-  Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
-  sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
-  for(int i=1; i<numLayers; ++i) {
-    sigmaLevel[i] = sigmaLevel[i-1] + dz_ref[i-1];
-  }
+    MeshScalarT h = topSurf_v(cell,node), bed = bed_v(cell,node);
+    auto floating = (rhoi*h + (rhow-rhoi)*bed) < 0.0;
+    MeshScalarT lowSurf = floating ? MeshScalarT(-h*rhoi/(rhow-rhoi)) : bed;
 
-  // We use this dof mgr to figure out which local node in the cell is on the
-  // top or bottom side.
-  const auto& node_dof_mgr = workset.disc->getNodeDOFManager();
+    H_v(cell,node) = h-lowSurf;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const int elem_LID = elem_lids(cell);
-    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
-
-    const auto f = [&](const int pos) {
-      const auto& nodes = node_dof_mgr->getGIDFieldOffsetsSide(0,pos);
-      const int ilevel = pos==bot ? ilayer : ilayer+1;
-      for (auto node : nodes) {
-        if(isTopSurfParam) {
-          if(!isBedTopoParam) {
-            MeshScalarT minTopSurf = bedTopo(cell,node) + minH;
-            topSurf(cell,node) = std::max(topSurfIn(cell,node),minTopSurf);
-          } else
-            topSurf(cell,node) = topSurfIn(cell,node);
-        }
-        if(isBedTopoParam) {
-          MeshScalarT maxBedTopo = topSurf(cell,node) - minH;
-          bedTopo(cell,node) = std::min(bedTopoIn(cell,node),maxBedTopo);
-        }
-
-        MeshScalarT h = topSurf(cell,node), bed = bedTopo(cell,node);
-        auto floating = (rho_i*h + (rho_w-rho_i)*bed) < 0.0;
-        MeshScalarT lowSurf = floating ? -h*rho_i/(rho_w-rho_i) : bed;
-
-        H(cell,node) = h-lowSurf;
-
-        for(int icomp=0; icomp<numDims; ++icomp) {
-          ref_t val = coordVecOut(cell,node,icomp);
-          val = (icomp==2) ? MeshScalarT(lowSurf + sigmaLevel[ ilevel]*H(cell,node))
-                           : coordVecIn(cell,node,icomp);
-        }
-      }
-    };
-
-    // Run lambda on both top and bottom nodes of the element.
-    f(bot);
-    f(top);
-  }
+    for(int icomp=0; icomp<dims; ++icomp) {
+      coordOut(cell,node,icomp) = (icomp==2) ? MeshScalarT(lowSurf + sigma(cell,node)*H_v(cell,node))
+                                             : coordIn(cell,node,icomp);
+    }
+  });
 }
 
 }  // namespace LandIce

@@ -14,6 +14,7 @@ if (ALBANY_IFPACK2)
 
   add_test(${testNameRoot} ${Albany.exe} input.yaml)
   set_tests_properties(${testNameRoot} PROPERTIES LABELS "Basic;Forward")
+  albany_tests_require_static_fad(${testNameRoot})
 endif ()
 
 ####################################
@@ -34,6 +35,7 @@ IF (NOT ALBANY_PARALLEL_ONLY)
 
     add_test(${testName} ${SerialAlbany.exe} input_10x10x10_ascii.yaml)
     set_tests_properties(${testName} PROPERTIES LABELS "Basic;Forward")
+    albany_tests_require_static_fad(${testName})
   endif ()
 ENDIF ()
 

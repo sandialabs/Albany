@@ -135,11 +135,14 @@ void ThermalConductivity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (is_constant) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-         thermalCond(cell,qp) = constant_value;
-      }
-    }
+    const auto tc = thermalCond.get_static_view();
+    const ScalarT value = constant_value;
+    using policy_t = Kokkos::MDRangePolicy<PHX::ExecutionSpace, Kokkos::Rank<2>>;
+    Kokkos::parallel_for("ThermalConductivity",
+        policy_t({0,0},{static_cast<int>(workset.numCells),static_cast<int>(numQPs)}),
+        KOKKOS_LAMBDA(const int cell, const int qp) {
+      tc(cell,qp) = value;
+    });
   }
 }
 

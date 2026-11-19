@@ -481,19 +481,19 @@ Quadratic<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Quadratic Source Term
-  if (m_constant) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = m_factor;
-    }
-  } 
-  else {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = 
-	  m_factor * m_baseField(cell,iqp) * m_baseField(cell,iqp);
-    }
-  }
+  const auto source    = m_source.get_static_view();
+  const auto baseField = m_baseField.get_static_view();
+  const ScalarT factor = m_factor;
+  const bool is_constant = m_constant;
+  using policy_t = Kokkos::MDRangePolicy<PHX::ExecutionSpace, Kokkos::Rank<2>>;
+  Kokkos::parallel_for("Source::Quadratic",
+      policy_t({0,0},{static_cast<int>(workset.numCells),static_cast<int>(m_num_qp)}),
+      KOKKOS_LAMBDA(const int cell, const int iqp) {
+    if (is_constant)
+      source(cell, iqp) = factor;
+    else
+      source(cell, iqp) = factor * baseField(cell,iqp) * baseField(cell,iqp);
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////

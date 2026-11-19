@@ -17,6 +17,7 @@ if (ALBANY_IFPACK2)
 
   add_test(${testName}_SERIAL ${SerialAlbany.exe} input.yaml)
   set_tests_properties(${testName}_SERIAL PROPERTIES LABELS "Basic;Forward")
+  albany_tests_require_static_fad(${testName}_SERIAL)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_RegressFail.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_RegressFail.yaml COPYONLY)
@@ -24,7 +25,7 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}_RegressFail PROPERTIES WILL_FAIL TRUE)
   set_tests_properties(${testName}_RegressFail PROPERTIES LABELS "Basic;Forward;RegressFail")
 
-  if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
+  if (ALBANY_OMEGAH)
     # Copy Input file from source to binary dir
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_Omega_h.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_Omega_h.yaml COPYONLY)
