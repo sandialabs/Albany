@@ -259,7 +259,7 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
 
   setLayersRefData();
-  int_states["ordering"] = layers_data.cell.lid->layerOrd ? 0 : 1;
+  int_states["ordering"] = layers_data.cell.gid->layerOrd ? 0 : 1;
   int_states["num_layers"] = num_elem_layers;
 
   m_bulk_data_set = true;
