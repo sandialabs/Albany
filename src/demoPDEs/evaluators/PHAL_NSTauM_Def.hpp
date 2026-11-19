@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
             normGc(cell,qp) += Gc(cell,qp,i,j)*Gc(cell,qp,i,j);          
           }
         }
-        TauM(cell,qp) += 12.*mu(cell,qp)*mu(cell,qp)*std::sqrt(normGc(cell,qp));
+        TauM(cell,qp) += 12.*mu(cell,qp)*mu(cell,qp)*normGc(cell,qp);
         TauM(cell,qp) = 1./std::sqrt(TauM(cell,qp));
       }
     }

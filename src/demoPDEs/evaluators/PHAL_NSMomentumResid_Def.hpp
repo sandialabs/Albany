@@ -125,8 +125,8 @@ evaluateFields(typename Traits::EvalData workset)
 	for (std::size_t i=0; i<numDims; i++) {
 	  for (std::size_t qp=0; qp < numQPs; ++qp) {           
 	    for (std::size_t j=0; j < numDims; ++j) { 
-	      MResidual(cell,node,i) += 
-		rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,j)*V(cell,qp,j)*wGradBF(cell,node,qp,j);
+	      MResidual(cell,node,i) +=
+		rho(cell,qp)*TauM(cell,qp)*Rm(cell,qp,i)*V(cell,qp,j)*wGradBF(cell,node,qp,j);
 	    }  
 	  }
 	}
