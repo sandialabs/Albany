@@ -224,9 +224,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     }
   } else if (solutionMethod == "Transient") {
     solMethod = Transient;
-  } else if (
-      solutionMethod == "Transient") {
-    solMethod = Transient;
 
     // Add NOX pre-post-operator for debugging.
     bool const have_piro = params->isSublist("Piro");
@@ -235,7 +232,9 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
     Teuchos::ParameterList& piro_params = params->sublist("Piro");
 
-    bool const have_dbcs = problemParams->isSublist("Dirichlet BCs");
+    // An empty 'Dirichlet BCs' sublist means no Dirichlet BCs as well
+    bool const have_dbcs = problemParams->isSublist("Dirichlet BCs") &&
+                           problemParams->sublist("Dirichlet BCs").numParams() > 0;
 
     if (have_dbcs == false) no_dir_bcs_ = true;
 
@@ -325,8 +324,8 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Solution Method must be Steady, Transient, Transient, "
-            << "Continuation, not : "
+        "Solution Method must be Steady, Transient, "
+            << "or Continuation, not : "
             << solutionMethod);
   }
 
@@ -493,16 +492,6 @@ Application::buildProblem()
         "with them!\n");
   }
 
-  if ((no_dir_bcs_ == true) && (scaleBCdofs == true)) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error in Albany::Application: you are attempting "
-        "to set 'Scale DOF BCs = true' for a problem with no  "
-        "Dirichlet BCs!  Scaling will do nothing.  Re-run "
-        "with 'Scale DOF BCs = false'\n");
-  }
-
   neq               = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
 
@@ -600,6 +589,17 @@ Application::setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params)
   }
 
   if (scale == 1.0) scaleBCdofs = false;
+
+  // This check must come after scaleBCdofs is read (it used to be in buildProblem, before setScaling)
+  if ((no_dir_bcs_ == true) && (scaleBCdofs == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are attempting "
+        "to set 'Scale BC Dofs = true' for a problem with no "
+        "Dirichlet BCs!  Scaling will do nothing.  Re-run "
+        "with 'Scale BC Dofs = false'\n");
+  }
 
   if ((scale != 1.0) && (problem->useSDBCs() == true)) {
     TEUCHOS_TEST_FOR_EXCEPTION(
