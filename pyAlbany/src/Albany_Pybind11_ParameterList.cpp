@@ -42,67 +42,109 @@ pybind11::array_t<T> copyTeuchosArrayToNumPy(Teuchos::Array< T > & tArray) {
     return array;
 }
 
+[[noreturn]] void throwUnsupportedType(const std::string& name, py::handle value, const std::string& details = "")
+{
+  throw py::type_error("Error! Cannot set parameter '" + name + "' from a python object of type '" +
+                       std::string(Py_TYPE(value.ptr())->tp_name) + "'" +
+                       (details.empty() ? std::string(".") : ": " + details + "."));
+}
+
+// numpy scalars and 0-d arrays are converted to the corresponding python scalar,
+// 1-d numpy arrays to a python list. Other objects are returned as they are.
+py::object normalizeNumPy(const std::string& name, py::handle value)
+{
+  if (py::hasattr(value,"dtype") && py::hasattr(value,"ndim")) {
+    const int ndim = value.attr("ndim").cast<int>();
+    if (ndim==0) return value.attr("item")();
+    if (ndim==1) return value.attr("tolist")();
+    throwUnsupportedType(name, value, "only 1-d arrays are supported");
+  }
+  return py::reinterpret_borrow<py::object>(value);
+}
+
 // Implementation based on:
 // https://github.com/trilinos/Trilinos/tree/master/packages/PyTrilinos/src/PyTrilinos_Teuchos_Util.cpp
-bool setPythonParameter(Teuchos::RCP<Teuchos::ParameterList> plist,
+// Throws a python TypeError if the type of value is not supported, rather than silently not setting it.
+void setPythonParameter(Teuchos::RCP<Teuchos::ParameterList> plist,
 			const std::string      & name,
 			py::object             value)
 {
-  py::handle h = value;
+  value = normalizeNumPy(name, value);
+  PyObject* obj = value.ptr();
 
-  // Boolean values
-  if (PyBool_Check(value.ptr ()))
+  // Boolean values (check before integers, since bool is a subclass of int)
+  if (PyBool_Check(obj))
   {
-    if (value.ptr() == Py_True) plist->set(name,true );
-    else                  plist->set(name,false);
+    plist->set(name, obj == Py_True);
   }
 
   // Integer values
-  else if (PyInt_Check(value.ptr ()))
+  else if (PyLong_Check(obj))
   {
-    plist->set(name, h.cast<int>());
+    plist->set(name, value.cast<int>());
   }
 
   // Floating point values
-  else if (PyFloat_Check(value.ptr ()))
+  else if (PyFloat_Check(obj))
   {
-    plist->set(name, h.cast<double>());
+    plist->set(name, value.cast<double>());
   }
 
-  // Unicode values
-  else if (PyUnicode_Check(value.ptr ()))
+  // String values (unicode strings are stored utf-8 encoded)
+  else if (PyUnicode_Check(obj) || PyBytes_Check(obj))
   {
-    PyObject * pyBytes = PyUnicode_AsASCIIString(value.ptr ());
-    if (!pyBytes) return false;
-    plist->set(name, std::string(PyBytes_AsString(pyBytes)));
-    Py_DECREF(pyBytes);
+    plist->set(name, value.cast<std::string>());
   }
 
-  // String values
-  else if (PyString_Check(value.ptr ()))
+  // Dictionaries are stored as sublists
+  else if (PyDict_Check(obj))
   {
-    plist->set(name, h.cast<std::string>());
+    auto sub = Teuchos::sublist(plist, name);
+    for (auto item : py::reinterpret_borrow<py::dict>(value)) {
+      if (!PyUnicode_Check(item.first.ptr()))
+        throwUnsupportedType(name, value, "the dictionary keys must be strings");
+      setPythonParameter(sub, item.first.cast<std::string>(), py::reinterpret_borrow<py::object>(item.second));
+    }
   }
 
-  // None object not allowed: this is a python type not usable by
-  // Trilinos solver packages, so we reserve it for the
-  // getPythonParameter() function to indicate that the requested
-  // parameter does not exist in the given Teuchos::ParameterList.
-  // For logic reasons, this check must come before the check for
-  // Teuchos::ParameterList
-  else if (value.ptr () == Py_None)
+  // Lists and tuples (and 1-d numpy arrays) are stored as Teuchos::Array of int, double, or std::string
+  else if (PyList_Check(obj) || PyTuple_Check(obj))
   {
-    return false;
+    std::vector<py::object> items;
+    bool all_int = true, all_num = true, all_str = true;
+    for (auto item : value) {
+      items.push_back(normalizeNumPy(name, item));
+      PyObject* p = items.back().ptr();
+      const bool is_int = PyLong_Check(p) && !PyBool_Check(p);
+      all_int = all_int && is_int;
+      all_num = all_num && (is_int || PyFloat_Check(p));
+      all_str = all_str && PyUnicode_Check(p);
+    }
+    if (items.empty())
+      throwUnsupportedType(name, value, "cannot deduce the type of the entries of an empty sequence");
+
+    if (all_int) {
+      Teuchos::Array<int> a;
+      for (const auto& item : items) a.push_back(item.cast<int>());
+      plist->set(name, a);
+    } else if (all_num) {
+      Teuchos::Array<double> a;
+      for (const auto& item : items) a.push_back(item.cast<double>());
+      plist->set(name, a);
+    } else if (all_str) {
+      Teuchos::Array<std::string> a;
+      for (const auto& item : items) a.push_back(item.cast<std::string>());
+      plist->set(name, a);
+    } else {
+      throwUnsupportedType(name, value, "the entries must be all integers, all numbers, or all strings");
+    }
   }
 
-  // All other value types are unsupported
+  // All other value types (including None) are unsupported
   else
   {
-    return false;
+    throwUnsupportedType(name, value);
   }
-
-  // Successful type conversion
-  return true;
 }    // setPythonParameter
 
 
@@ -116,6 +158,7 @@ py::object getPythonParameter(Teuchos::RCP<Teuchos::ParameterList> plist,
   // objects so that I can query the Teuchos::ParameterList without setting
   // the "used" flag to true.
   const Teuchos::ParameterEntry * entry = plist->getEntryPtr(name);
+  if (entry == nullptr) return py::none();
   // Boolean parameter values
   if (entry->isType< bool >())
   {
@@ -181,7 +224,18 @@ py::object getPythonParameter(Teuchos::RCP<Teuchos::ParameterList> plist,
           }
           catch(Teuchos::bad_any_cast &e)
           {
-            return py::none();
+            try
+            {
+              Teuchos::Array< std::string > tArray =
+                Teuchos::any_cast< Teuchos::Array< std::string > >(entry->getAny(false));
+              py::list list;
+              for (const auto& str : tArray) list.append(py::str(str));
+              return list;
+            }
+            catch(Teuchos::bad_any_cast &e)
+            {
+              return py::none();
+            }
           }
         }
       }
@@ -218,7 +272,7 @@ template <typename T>
 void def_ParameterList_member_functions(T cl) {
   cl.def("__setitem__", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name, Teuchos::ParameterList value) { m->set(name,value);  });
   cl.def("set", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name, Teuchos::ParameterList value) { m->set(name,value);  });
-  cl.def("sublist", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name) { if (m->isSublist(name)) { return pybind11::cast(sublist(m, name)); } return pybind11::cast("Invalid sublist name"); }, pybind11::return_value_policy::reference);
+  cl.def("sublist", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name) { return pybind11::cast(Teuchos::sublist(m, name)); }, pybind11::return_value_policy::reference);
   cl.def("__setitem__", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name, pybind11::object value) { setPythonParameter(m,name,value);  });
   cl.def("__getitem__", [](Teuchos::RCP<Teuchos::ParameterList> &m, const std::string &name) {
     // Sublist
