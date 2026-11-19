@@ -109,7 +109,7 @@ void AdvDiffResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   using ExecutionSpace = PHX::Device::execution_space;
-  using Policy = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<2>>;
+  using Policy = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>;
 
   // Copy all the data needed in the kernel to local variables, so it can be captured by value
   TEUCHOS_TEST_FOR_EXCEPTION (numDims>3, std::logic_error,
@@ -121,8 +121,6 @@ evaluateFields(typename Traits::EvalData workset)
   const int nqp   = numQPs;
   const int ndims = numDims;
   const int vdim  = vecDim;
-  TEUCHOS_TEST_FOR_EXCEPTION (vecDim>4, std::logic_error,
-      "Error! AdvDiffResid supports at most 4 components per node.\n");
   // 0: standard form; 1,2: augmented form type 1,2
   const int form = useAugForm ? formType : 0;
 
@@ -135,59 +133,61 @@ evaluateFields(typename Traits::EvalData workset)
 
   const int numCells = workset.numCells;
   const int nnodes = numNodes;
-  Kokkos::parallel_for(this->getName(), Policy({0,0},{numCells,nnodes}),
-                       KOKKOS_LAMBDA(const int cell, const int node) {
-    // NOTE: avoid local arrays indexed with runtime indices, since they may be
-    //       placed in (slow) scratch memory on GPUs, rather than in registers
+  // NOTE: each thread computes one residual component with a single AD accumulator.
+  //       Keeping several AD accumulators (or a local array of them) alive in the same
+  //       thread raises register pressure, causing spills to scratch memory on GPUs.
+  Kokkos::parallel_for(this->getName(), Policy({0,0,0},{numCells,nnodes,vdim}),
+                       KOKKOS_LAMBDA(const int cell, const int node, const int i) {
     auto bt = [&](const int idim) -> double {
       return idim==0 ? b0 : (idim==1 ? b1 : b2);
     };
 
-    // Accumulate in local variables, and write to the residual only once
-    ScalarT r0 = 0, r1 = 0, r2 = 0, r3 = 0;
-
+    ScalarT r = 0;
     if (form==0) { //standard form of advection-diffusion equation
-      for (int qp=0; qp < nqp; ++qp) {
-        //du/dt + beta*grad(u) - mu*delta(u) = 0
-        r0 += udot(cell,qp,0)*w_bf(cell,node,qp);
-        for (int idim=0; idim<ndims; ++idim) {
-          r0 += bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
-                visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+      if (i==0) {
+        for (int qp=0; qp < nqp; ++qp) {
+          //du/dt + beta*grad(u) - mu*delta(u) = 0
+          r += udot(cell,qp,0)*w_bf(cell,node,qp);
+          for (int idim=0; idim<ndims; ++idim) {
+            r += bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
+                 visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+          }
         }
       }
     } else if (form==1) { //augmented form of advection diffusion equation, type 1
-      for (int qp=0; qp < nqp; ++qp) {
-        //du/dt + beta*q - mu*div(q) = 0
-        r0 += udot(cell,qp,0)*w_bf(cell,node,qp);
-        for (int idim=0; idim<ndims; ++idim) {
-          r0 += bt(idim)*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
-                visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
+      if (i==0) {
+        for (int qp=0; qp < nqp; ++qp) {
+          //du/dt + beta*q - mu*div(q) = 0
+          r += udot(cell,qp,0)*w_bf(cell,node,qp);
+          for (int idim=0; idim<ndims; ++idim) {
+            r += bt(idim)*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
+                 visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
+          }
         }
+      } else if (i<=2) {
         //q - grad(u) = 0
-        r1 += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
-        r2 += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
+        for (int qp=0; qp < nqp; ++qp) {
+          r += u(cell,qp,i)*w_bf(cell,node,qp) - ugrad(cell,qp,0,i-1)*w_bf(cell,node,qp);
+        }
       }
     } else { //augmented form of advection diffusion equation, type 2
-      //q - beta*grad(u) + mu*delta(u) = 0
-      auto q_term = [&](const int qp, const int idim) -> ScalarT {
-        return u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
-             - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
-      };
-      for (int qp=0; qp < nqp; ++qp) {
+      if (i==0) {
         //du/dt + q = 0
-        r0 += udot(cell,qp,0)*w_bf(cell,node,qp) +
-              u(cell,qp,1)*w_bf(cell,node,qp) +
-              u(cell,qp,2)*w_bf(cell,node,qp);
-        if (ndims>0) r1 += q_term(qp,0);
-        if (ndims>1) r2 += q_term(qp,1);
-        if (ndims>2) r3 += q_term(qp,2);
+        for (int qp=0; qp < nqp; ++qp) {
+          r += udot(cell,qp,0)*w_bf(cell,node,qp) +
+               u(cell,qp,1)*w_bf(cell,node,qp) +
+               u(cell,qp,2)*w_bf(cell,node,qp);
+        }
+      } else if (i<=ndims) {
+        //q - beta*grad(u) + mu*delta(u) = 0
+        const int idim = i-1;
+        for (int qp=0; qp < nqp; ++qp) {
+          r += u(cell,qp,i)*w_bf(cell,node,qp) - bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
+             - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+        }
       }
     }
-
-    res(cell,node,0) = r0;
-    if (vdim>1) res(cell,node,1) = r1;
-    if (vdim>2) res(cell,node,2) = r2;
-    if (vdim>3) res(cell,node,3) = r3;
+    res(cell,node,i) = r;
   });
 }
 
