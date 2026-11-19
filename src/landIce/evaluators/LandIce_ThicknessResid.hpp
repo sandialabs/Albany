@@ -58,16 +58,18 @@ private:
   bool supg = false, graph_viscosity = false, edge_stabilization = false;
   RealType inflowThickness = 0.0;
 
+  using HostDevice = Kokkos::Device<Kokkos::DefaultHostExecutionSpace,Kokkos::HostSpace>;
+
   // Reference-element integration: built just once per evaluator instance.
-  Kokkos::DynRankView<RealType,PHX::Device> triBasisValues;
-  Kokkos::DynRankView<RealType,PHX::Device> triWeights;
+  Kokkos::DynRankView<RealType,HostDevice> triBasisValues;
+  Kokkos::DynRankView<RealType,HostDevice> triWeights;
   // Intrepid2 reference P1 triangle gradients and values are computed once.
   // Shape of triRefGrad: (3 basis functions, nqp, 2 reference dimensions).
-  Kokkos::DynRankView<RealType, PHX::Device> triRefGrad;
+  Kokkos::DynRankView<RealType, HostDevice> triRefGrad;
 
   // Triangle basis evaluated at line cubature mapped to each reference edge.
-  Kokkos::DynRankView<RealType,PHX::Device> edgesBasisValues;
-  Kokkos::DynRankView<RealType,PHX::Device> edgeWeights;
+  Kokkos::DynRankView<RealType,HostDevice> edgesBasisValues;
+  Kokkos::DynRankView<RealType,HostDevice> edgeWeights;
 
   // Precomputed for wedge topology.  Entries are parent-cell edge ordinals.
   std::vector<std::vector<int>> edgeSharedByFaces;

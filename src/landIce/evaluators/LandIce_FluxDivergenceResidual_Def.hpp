@@ -88,10 +88,18 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
   // Mesh data
   const auto& layers_data = workset.disc->getMeshStruct()->layers_data;
-  const auto& dz_ref = layers_data.dz_ref;
+  const auto  layerOrd = layers_data.cell.lid->layerOrd;
+  const auto  numHorizEntities = layers_data.cell.lid->numHorizEntities;
   const int   numLayers = layers_data.cell.lid->numLayers;
   const int   lastLayer = numLayers-1;
-  const auto& elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
+  const auto  elem_lids = Kokkos::subview(workset.disc->getWsElementLIDs().dev(),workset.wsIndex,Kokkos::ALL());
+
+  Kokkos::View<double*,PHX::Device> dz_ref("dz_ref",numLayers);
+  const auto dz_ref_h = Kokkos::create_mirror_view(dz_ref);
+  for (int ilayer=0; ilayer<numLayers; ++ilayer) {
+    dz_ref_h(ilayer) = layers_data.dz_ref[ilayer];
+  }
+  Kokkos::deep_copy(dz_ref,dz_ref_h);
 
   const auto top = layers_data.top_side_pos;
   const auto bot = layers_data.bot_side_pos;
@@ -106,18 +114,28 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
   // NOTE: for both Hexa and Wedge, the top/bot sides have their corresponding nodes
   //       lying one on top of the other: nodes_top[i] lies on top of nodes_bot[i]
-  int node0 = nodes_bot[0];
-  int node1 = nodes_bot[1];
-  int node2 = nodes_bot[2];
-  int node0p1 = nodes_top[0];
-  int node1p1 = nodes_top[1];
-  int node2p1 = nodes_top[2];
+  const int node0 = nodes_bot[0];
+  const int node1 = nodes_bot[1];
+  const int node2 = nodes_bot[2];
+  const int node0p1 = nodes_top[0];
+  const int node1p1 = nodes_top[1];
+  const int node2p1 = nodes_top[2];
 
-  for (unsigned int cell=0; cell<workset.numCells; ++cell) {
+  const auto coords   = this->coords.get_view();
+  const auto H        = this->H.get_view();
+  const auto vel      = this->vel.get_view();
+  const auto flux_div = this->flux_div.get_view();
+  const auto residual = this->residual.get_view();
+  const bool upwindStabilization = this->upwindStabilization;
+  const double c0 = c_bot, c1 = c_top;
+
+  Kokkos::parallel_for(this->getName(),
+                       Kokkos::RangePolicy<PHX::Device::execution_space>(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int cell) {
     const LO elem_LID = elem_lids(cell);
-    const int ilayer = layers_data.cell.lid->getLayerId(elem_LID);
+    const int ilayer = layerOrd ? elem_LID / numHorizEntities : elem_LID % numLayers;
 
-    auto dz = dz_ref[ilayer];
+    const double dz = dz_ref(ilayer);
 
     //computing coordinates of the vertices of the triangle at the base of the prism
     MeshScalarT x0 = coords(cell, node0, 0);
@@ -153,7 +171,9 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
     MeshScalarT lmbd0_c = 1.0-lmbd1_c - lmbd2_c;
 
     double eps=1e-12;
-    ALBANY_ASSERT(lmbd0_c>eps && lmbd1_c>eps && lmbd2_c>eps, "This evaluator works only for acute triangles");
+    if (!(lmbd0_c>eps && lmbd1_c>eps && lmbd2_c>eps)) {
+      Kokkos::abort("This evaluator works only for acute triangles");
+    }
 
     //distance between the triangle edges and the circumcenter
     //(this is the parts of the edges of the Voronoi cell belonging to this triangle)
@@ -179,8 +199,6 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
 
     //computing thickness of the layer at the triangle nodes
     ThicknessScalarT H0 = H(cell,node0)*dz, H1 = H(cell,node1)*dz, H2 = H(cell,node2)*dz;
-
-    const double c0 = c_bot, c1 = c_top;
 
     //computing the vertically averaged velocity at the triangles nodes
     ScalarT vel0[2] = {c0*vel(cell, node0, 0)+c1*vel(cell, node0p1, 0), c0*vel(cell, node0, 1)+c1*vel(cell, node0p1, 1)},
@@ -243,7 +261,7 @@ void LandIce::LayeredFluxDivergenceResidual<EvalT, Traits, ThicknessScalarT>::ev
       residual(cell,node2p1) = A2 * flux_div(cell, node2p1);
     }
 
-  }
+  });
 }
 
 /**********************************************************************

@@ -132,7 +132,7 @@ if (ALBANY_IFPACK2)
                        FIXTURES_SETUP ${testName}_extruded)
   albany_tests_require_static_fad(${testName}_extruded)
 
-  if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
+  if (ALBANY_OMEGAH)
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)

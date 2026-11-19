@@ -48,10 +48,12 @@ namespace LandIce {
     PHX::MDField<const ScalarT,Side,Node>          solution;
     PHX::MDField<const MeshScalarT,Side,QuadPoint> w_side_measure;
 
-    ScalarT p_reg, reg;
     double scaling;
     int offset;
 
+  public:
+    using ExecutionSpace = typename PHX::ExecutionSpace;
+    using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
   };
 
 } // Namespace LandIce

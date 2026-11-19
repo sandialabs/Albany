@@ -78,21 +78,32 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename TempST>
 void FlowRate<EvalT, Traits, TempST>::evaluateFields (typename Traits::EvalData workset)
 {
+  const auto flowRate_v = flowRate.get_static_view();
+  const int numCells = workset.numCells;
   switch (flowRate_type) {
-    case UNIFORM:
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = A;
+    case UNIFORM: {
+      const double A_v = A;
+      Kokkos::parallel_for(this->getName(), numCells, KOKKOS_LAMBDA(const int cell) {
+        flowRate_v(cell) = A_v;
+      });
       break;
+    }
 
-    case GIVEN_FIELD:
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = given_flow_rate(cell);
+    case GIVEN_FIELD: {
+      const auto given_v = given_flow_rate.get_static_view();
+      Kokkos::parallel_for(this->getName(), numCells, KOKKOS_LAMBDA(const int cell) {
+        flowRate_v(cell) = given_v(cell);
+      });
       break;
+    }
 
     case TEMPERATURE_BASED: {
-      for (unsigned int cell=0; cell<workset.numCells; ++cell)
-        flowRate(cell) = (temperature(cell) < switchingT) ? arrmll / std::exp (actenl / gascon / temperature(cell))
-                                                   : arrmlh / std::exp (actenh / gascon / temperature(cell));
+      const auto temperature_v = temperature.get_static_view();
+      const double sT = switchingT, ll = arrmll, lh = arrmlh, el = actenl, eh = actenh, gc = gascon;
+      Kokkos::parallel_for(this->getName(), numCells, KOKKOS_LAMBDA(const int cell) {
+        flowRate_v(cell) = (temperature_v(cell) < sT) ? TempST(ll / std::exp (el / gc / temperature_v(cell)))
+                                                      : TempST(lh / std::exp (eh / gc / temperature_v(cell)));
+      });
       break;
     }
 
