@@ -119,6 +119,6 @@ ANONYMOUS:
               'fact: drop tolerance': 0.0
               'fact: ilut level-of-fill': 1.0
   Regression For Response 0:
-    Test Value: 7.268852698083e+01
+    Test Value: 7.061550790068e+01
     Relative Tolerance: 1.0e-06
 ...
