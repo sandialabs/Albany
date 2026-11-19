@@ -104,56 +104,70 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
   // Zero out local response
   Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
-  switch(fieldDim)
-  {
-    case 0:
-      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
-                           KOKKOS_CLASS_LAMBDA(const int& cell) {
-        ScalarT sum = 0;
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          ScalarT sq = 0;
-          // Computing squared difference at qp
-          sq += std::pow(sourceField(cell,qp)-(target_value ? target_value_val : targetField(cell,qp)),2);
-          sum += sq * w_measure(cell,qp);
-        }
-        this->local_response_eval(cell, 0) = sum*scaling;
-        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
-      });
-      break;
-    case 1:
-      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
-                           KOKKOS_CLASS_LAMBDA(const int& cell) {
-        ScalarT sum = 0;
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          ScalarT sq = 0;
-          // Computing squared difference at qp
-          for (int j=0; j<dims_2; ++j)
-            sq += std::pow(sourceField(cell,qp,j)-(target_value ? target_value_val : targetField(cell,qp,j)),2);
-          sum += sq * w_measure(cell,qp);
-        }
-        this->local_response_eval(cell, 0) = sum*scaling;
-        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
-      });
-      break;
-    case 2:
-      Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
-                           KOKKOS_CLASS_LAMBDA(const int& cell) {
-        ScalarT sum = 0;
-        for (int qp=0; qp<numQPs; ++qp)
-        {
-          ScalarT sq = 0;
-          // Computing squared difference at qp
-          for (int j=0; j<dims_2; ++j)
-            for (int k=0; k<dims_3; ++k)
-              sq += std::pow(sourceField(cell,qp,j,k)-(target_value ? target_value_val : targetField(cell,qp,j,k)),2);
-          sum += sq * w_measure(cell,qp);
-        }
-        this->local_response_eval(cell, 0) = sum*scaling;
-        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), sum*scaling);
-      });
-      break;
+  // Capture only device-copyable data in the kernel (not the whole evaluator)
+  const auto local    = this->local_response_eval.get_view();
+  const auto source   = sourceField.get_view();
+  const auto target   = targetField.get_view();
+  const auto measure  = w_measure.get_static_view();
+  const bool use_target_value = target_value;
+  const TargetScalarT target_val = target_value_val;
+  const RealType scale = scaling;
+  const int nqp   = numQPs;
+  const int fdim  = fieldDim;
+  const int ndim2 = dims_2;
+  const int ndim3 = dims_3;
+
+  // Compute the contribution of each cell
+  Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int& cell) {
+    ScalarT sum = 0;
+    for (int qp=0; qp<nqp; ++qp)
+    {
+      ScalarT sq = 0;
+      // Computing squared difference at qp
+      switch (fdim) {
+        case 0:
+          sq += std::pow(source(cell,qp)-(use_target_value ? target_val : target(cell,qp)),2);
+          break;
+        case 1:
+          for (int j=0; j<ndim2; ++j)
+            sq += std::pow(source(cell,qp,j)-(use_target_value ? target_val : target(cell,qp,j)),2);
+          break;
+        case 2:
+          for (int j=0; j<ndim2; ++j)
+            for (int k=0; k<ndim3; ++k)
+              sq += std::pow(source(cell,qp,j,k)-(use_target_value ? target_val : target(cell,qp,j,k)),2);
+          break;
+      }
+      sum += sq * measure(cell,qp);
+    }
+    local(cell, 0) = sum*scale;
+  });
+
+  // Sum the cell contributions into the global response
+  const auto global = this->global_response_eval.get_view();
+  constexpr bool fixed_size =
+      Sacado::IsStaticallySized<ScalarT>::value &&
+      std::is_same<typename Sacado::ScalarType<ScalarT>::type,
+                   typename Sacado::ValueType<ScalarT>::type>::value;
+  if constexpr (fixed_size) {
+    // Value and derivatives are reduced as an array of doubles: this avoids
+    // contended (and non-deterministic) atomics on the same entry.
+    constexpr int ncomp = Sacado::StaticSize<ScalarT>::value + 1;
+    if (m_sums.extent_int(0)!=ncomp) {
+      m_sums = Kokkos::View<RealType*, PHX::Device>("sums",ncomp);
+    }
+    const auto sums = m_sums;
+    Kokkos::parallel_reduce(this->getName(),RangePolicy(0,workset.numCells),
+                            SumScalarComponents<decltype(local),ncomp>{local},sums);
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,1),
+                         AddScalarComponents<decltype(global),decltype(sums),ncomp>{global,sums});
+  } else {
+    // Dynamically sized or nested AD types: fall back to atomics
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,workset.numCells),
+                         KOKKOS_LAMBDA(const int& cell) {
+      KU::atomic_add<ExecutionSpace>(&(global(0)), local(cell,0));
+    });
   }
 
   // Do any local-scattering necessary

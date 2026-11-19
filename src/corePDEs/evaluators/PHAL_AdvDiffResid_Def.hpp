@@ -122,6 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
   const int nqp   = numQPs;
   const int ndims = numDims;
   const int vdim  = vecDim;
+  TEUCHOS_TEST_FOR_EXCEPTION (vecDim>4, std::logic_error,
+      "Error! AdvDiffResid supports at most 4 components per node.\n");
   // 0: standard form; 1,2: augmented form type 1,2
   const int form = useAugForm ? formType : 0;
 
@@ -137,43 +139,45 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for(this->getName(), Policy({0,0},{numCells,nnodes}),
                        KOKKOS_LAMBDA(const int cell, const int node) {
     const double bt[3] = {b0, b1, b2};
-    for (int i=0; i<vdim; i++)
-      res(cell,node,i) = 0.0;
+    // Accumulate in local variables, and write to the residual only once
+    ScalarT r[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (form==0) { //standard form of advection-diffusion equation
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + beta*grad(u) - mu*delta(u) = 0
-        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp);
+        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp);
         for (int idim=0; idim<ndims; ++idim) {
-          res(cell,node,0) += bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
-                              visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+          r[0] += bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
+                  visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
         }
       }
     } else if (form==1) { //augmented form of advection diffusion equation, type 1
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + beta*q - mu*div(q) = 0
-        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp);
+        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp);
         for (int idim=0; idim<ndims; ++idim) {
-          res(cell,node,0) += bt[idim]*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
-                              visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
+          r[0] += bt[idim]*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
+                  visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
         }
         //q - grad(u) = 0
-        res(cell,node,1) += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
-        res(cell,node,2) += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
+        r[1] += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
+        r[2] += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
       }
     } else { //augmented form of advection diffusion equation, type 2
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + q = 0
-        res(cell,node,0) += udot(cell,qp,0)*w_bf(cell,node,qp) +
-                            u(cell,qp,1)*w_bf(cell,node,qp) +
-                            u(cell,qp,2)*w_bf(cell,node,qp);
+        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp) +
+                u(cell,qp,1)*w_bf(cell,node,qp) +
+                u(cell,qp,2)*w_bf(cell,node,qp);
         //q - beta*grad(u) + mu*delta(u) = 0
         for (int idim=0; idim<ndims; ++idim) {
-          res(cell,node,idim+1) += u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
-                                 - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+          r[idim+1] += u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
+                       - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
         }
       }
     }
+    for (int i=0; i<vdim; i++)
+      res(cell,node,i) = r[i];
   });
 }
 

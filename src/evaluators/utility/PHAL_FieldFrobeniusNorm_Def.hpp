@@ -199,7 +199,7 @@ operator() (const Dim2_Tag&, const int& sideSet_idx) const {
   {
     norm += std::pow(field(sideSet_idx,dim),2);
   }
-  field_norm(sideSet_idx) = std::sqrt(norm + regularization);
+  field_norm(sideSet_idx) = std::sqrt(norm + get_regularization());
 
 }
 
@@ -208,6 +208,7 @@ KOKKOS_INLINE_FUNCTION
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::
 operator() (const Dim3_Tag&, const int& sideSet_idx) const {
 
+  const ScalarT reg = get_regularization();
   ScalarT norm;
   for (unsigned int i(0); i<dimsArray[1]; ++i)
   {
@@ -216,7 +217,7 @@ operator() (const Dim3_Tag&, const int& sideSet_idx) const {
     {
       norm += std::pow(field(sideSet_idx,i,dim),2);
     }
-    field_norm(sideSet_idx,i) = std::sqrt(norm + regularization);
+    field_norm(sideSet_idx,i) = std::sqrt(norm + reg);
   }
 
 }
@@ -225,17 +226,7 @@ operator() (const Dim3_Tag&, const int& sideSet_idx) const {
 template<typename EvalT, typename Traits, typename ScalarT>
 void FieldFrobeniusNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL) {
-    // The parameter field lives in device memory: copy it to host before reading it
-    auto regularizationParam_h = Kokkos::create_mirror_view(regularizationParam.get_static_view());
-    Kokkos::deep_copy(regularizationParam_h, regularizationParam.get_static_view());
-    const EScalarT param_val = regularizationParam_h(0);
-    const ScalarT param = Albany::convertScalar<ScalarT>(param_val);
-    if (regularization_type==GIVEN_PARAMETER)
-      regularization = param;
-    else
-      regularization = pow(10.0, -10.0*param);
-  }
+  // NOTE: if the regularization is a parameter, it is read (on device) by get_regularization()
 
 #ifdef OUTPUT_TO_SCREEN
   if (regularization_type!=NONE)

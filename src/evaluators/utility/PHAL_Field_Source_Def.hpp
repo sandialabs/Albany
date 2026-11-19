@@ -153,31 +153,13 @@ namespace PHAL
                         const PHX::MDField<ScalarT, Cell, Point> &source,
                         const int numCells, const RealType scaling)
         {
-            const double pi = 3.1415926535897932385;
-
-            // The parameters are stored in device memory: copy them to host
-            auto amplitude_h = Kokkos::create_mirror_view(mdf_amplitude.get_view());
-            auto radius_h = Kokkos::create_mirror_view(mdf_radius.get_view());
-            Kokkos::deep_copy(amplitude_h, mdf_amplitude.get_view());
-            Kokkos::deep_copy(radius_h, mdf_radius.get_view());
-            m_amplitude = amplitude_h(0);
-            m_radius = radius_h(0);
+            const double sqrt_2pi = std::sqrt(2 * 3.1415926535897932385);
 
             const int nsd = coords.extent_int(2);
             TEUCHOS_TEST_FOR_EXCEPTION(nsd < 1 || nsd > 3, std::logic_error,
                                        "Error! Gaussian source only supports 1, 2 or 3 spatial dimensions.\n");
             TEUCHOS_TEST_FOR_EXCEPTION(static_cast<int>(m_centroid.size()) < nsd, std::logic_error,
                                        "Error! Gaussian source center has fewer than " << nsd << " components.\n");
-
-            const ScalarT sigma_pi = 1.0 / (m_radius * std::sqrt(2 * pi));
-            const ScalarT denom = 2.0 * std::pow(m_radius, 2);
-            ScalarT factor(0.0);
-            if (nsd == 1)
-                factor = scaling * m_amplitude * sigma_pi;
-            else if (nsd == 2)
-                factor = scaling * m_amplitude * std::pow(sigma_pi, 2);
-            else
-                factor = scaling * m_amplitude * std::pow(sigma_pi, 3);
 
             double c[3] = {0.0, 0.0, 0.0};
             for (int i = 0; i < nsd; ++i)
@@ -186,11 +168,25 @@ namespace PHAL
 
             const auto x = coords.get_static_view();
             const auto f = source.get_static_view();
+            // The amplitude/radius parameters live in device memory: read them in the kernel
+            const auto amplitude = mdf_amplitude.get_view();
+            const auto radius = mdf_radius.get_view();
             const int numQPs = x.extent_int(1);
             Kokkos::parallel_for("Gaussian Source",
                                  Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>({0, 0}, {numCells, numQPs}),
                                  KOKKOS_LAMBDA(const int cell, const int qp) {
                 const double cc[3] = {c0, c1, c2};
+                const ScalarT amp = amplitude(0);
+                const ScalarT rad = radius(0);
+                const ScalarT sigma_pi = 1.0 / (rad * sqrt_2pi);
+                const ScalarT denom = 2.0 * std::pow(rad, 2);
+                ScalarT factor(0.0);
+                if (nsd == 1)
+                    factor = scaling * amp * sigma_pi;
+                else if (nsd == 2)
+                    factor = scaling * amp * std::pow(sigma_pi, 2);
+                else
+                    factor = scaling * amp * std::pow(sigma_pi, 3);
                 ScalarT exponent = 0;
                 for (int i = 0; i < nsd; ++i)
                     exponent += (cc[i] - x(cell, qp, i)) * (cc[i] - x(cell, qp, i));
