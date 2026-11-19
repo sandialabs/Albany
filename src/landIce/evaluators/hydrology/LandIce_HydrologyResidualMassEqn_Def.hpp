@@ -48,7 +48,7 @@ HydrologyResidualMassEqn (const Teuchos::ParameterList& p,
   auto& mass_eqn_params = hydro_params.sublist("Mass Equation");
   auto& physical_params = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_w       = physical_params.get<double>("Water Density", 1028.0);
+  rho_w       = physical_params.get<double>("Fresh Water Density", 1000.0); // subglacial (fresh) water; "Water Density" is the seawater one
   use_melting = mass_eqn_params.get<bool>("Use Melting", false);
 
   unsteady = p.get<bool>("Unsteady");

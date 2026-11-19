@@ -46,7 +46,7 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
   // Setting parameters
   Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_w = physics.get<double>("Water Density",1000);
+  rho_w = physics.get<double>("Fresh Water Density",1000.0); // subglacial (fresh) water; "Water Density" is the seawater one
   g     = physics.get<double>("Gravity Acceleration",9.8);
 
   this->setName("BasalGravitationalWaterPotential"+PHX::print<EvalT>());

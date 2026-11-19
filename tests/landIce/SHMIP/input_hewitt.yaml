@@ -30,6 +30,7 @@ ANONYMOUS:
         Nominal Value: 0.0
     LandIce Physical Parameters: 
       Water Density:             1000.0        # [ kg m^-3 ]
+      Fresh Water Density:       1000.0        # [ kg m^-3 ], subglacial water
       Ice Density:               900.0         # [ kg m^-3 ]
       Ice Latent Heat Of Fusion: 3.0e+05       # [ J kg^-1 ]
       Ice Viscosity:             1.0e13        # [ Pa s ]
