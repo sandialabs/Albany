@@ -133,6 +133,17 @@ namespace OmegahGhost {
     return ownedCoords_d;
   }
 
+  // Returns coordinates of owned vertices only, in the same order as
+  // getOwnedEntityGids(..., 0) = collect_marked(mesh.owned(0)).
+  Omega_h::Reals getOwnedVtxCoords(const Omega_h::Mesh& cmesh) {
+    auto mesh = const_cast<Omega_h::Mesh&>(cmesh);
+    auto isOwned = mesh.owned(Omega_h::VERT);
+    auto coords_d = mesh.coords();
+    auto keptIndicies_d = Omega_h::collect_marked(isOwned);
+    auto ownedCoords_d = Omega_h::unmap(keptIndicies_d, coords_d, mesh.dim());
+    return ownedCoords_d;
+  }
+
   //returns downward entity indexing in the unfiltered/ghosted mesh that can be used to access
   // tags/arrays on the ghosted mesh.
   //The implicit element indices are in the filtered/unghosted mesh (i.e., ghost
