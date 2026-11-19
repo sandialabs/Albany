@@ -678,7 +678,7 @@ STKDiscretization::writeSolutionToMeshDatabase(
     auto P = overlapped ? ov_projectors.at(it.first) : projectors.at(it.first);
     P->apply(Thyra::NOTRANS, soln, ss_soln.ptr(), 1.0, 0.0);
     P->apply(Thyra::NOTRANS, soln_dot, ss_soln_dot.ptr(), 1.0, 0.0);
-    P->apply(Thyra::NOTRANS, soln_dotdot, ss_soln_dot.ptr(), 1.0, 0.0);
+    P->apply(Thyra::NOTRANS, soln_dotdot, ss_soln_dotdot.ptr(), 1.0, 0.0);
     Teuchos::RCP<Thyra_MultiVector> ss_soln_dxdp;
     if (not soln_dxdp.is_null()) {
       auto dim = soln_dxdp->domain()->dim();
