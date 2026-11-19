@@ -390,72 +390,67 @@ endif()
 ###    Coupled Thickness tests   ###
 ####################################
 
-IF(NOT Kokkos_ENABLE_CUDA)
-  #IKT, 3/14/19: the following tests need to be debugged in CUDA build and turned back on; 
-  #see issue #420. 
-  set (testName ${testNameRoot}_CoupledThickness)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
+set (testName ${testNameRoot}_CoupledThickness)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.yaml)
 
-  add_test(${testName} ${Albany.exe} input_fo_gis_coupled.yaml)
-  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward")
+add_test(${testName} ${Albany.exe} input_fo_gis_coupled.yaml)
+set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward")
 
-  if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
-    set (testName ${testNameRoot}_Humboldt_Transient_Sensitivities)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_sensitivities.yaml
-    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_sensitivities.yaml)
+if (ALBANY_MESH_DEPENDS_ON_SOLUTION)
+  set (testName ${testNameRoot}_Humboldt_Transient_Sensitivities)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_sensitivities.yaml
+  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_sensitivities.yaml)
 
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_sensitivities.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
-  
-  else()
-    set (testName ${testNameRoot}_Humboldt_Transient_STK3D)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk3d.yaml
-                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk3d.yaml)
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk3d.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
-  endif()
-
-  set (testName ${testNameRoot}_Humboldt_Transient_STK)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
-  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_sensitivities.yaml)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
-  set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
-                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
-  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
+else()
+  set (testName ${testNameRoot}_Humboldt_Transient_STK3D)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk3d.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk3d.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk3d.yaml)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+endif()
 
-  if (ALBANY_OMEGAH)
-    # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
-    set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
-    # add_test (NAME ${testName}_CreateHumboldtOsh
-    #       COMMAND ${OMEGAH_EXO2OSH} humboldt_contiguous_2d.exo humboldt_contiguous_2d.osh
-    #       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
-    # set_tests_properties (${testName}_CreateHumboldtOsh PROPERTIES
-    #     LABELS "LandIce;Forward;Omega_h"
-    #     FIXTURES_SETUP CreateHumboldtOshMesh)
+set (testName ${testNameRoot}_Humboldt_Transient_STK)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
+add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
+set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah.yaml
-                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah.yaml)
-    add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_omegah.yaml)
+set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
+add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
+set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
+
+if (ALBANY_OMEGAH)
+  # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
+  set (testName ${testNameRoot}_Humboldt_Transient_Omega_h)
+  # add_test (NAME ${testName}_CreateHumboldtOsh
+  #       COMMAND ${OMEGAH_EXO2OSH} humboldt_contiguous_2d.exo humboldt_contiguous_2d.osh
+  #       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/Humboldt)
+  # set_tests_properties (${testName}_CreateHumboldtOsh PROPERTIES
+  #     LABELS "LandIce;Forward;Omega_h"
+  #     FIXTURES_SETUP CreateHumboldtOshMesh)
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah.yaml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah.yaml)
+  add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_omegah.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h")
+  # set_tests_properties(${testName}  PROPERTIES
+  #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
+
+  if (ALBANY_MESHFIELDS)
+    # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
+    set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_3t)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml
+                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+    add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_3t.yaml)
     set_tests_properties(${testName}  PROPERTIES
-      LABELS "LandIce;Forward;Omega_h")
-    # set_tests_properties(${testName}  PROPERTIES
-    #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
-
-    if (ALBANY_MESHFIELDS)
-      # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
-      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_3t)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml
-                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml)
-      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_3t.yaml)
-      set_tests_properties(${testName}  PROPERTIES
-        LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
-    endif()
-
+      LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
   endif()
 
 endif()

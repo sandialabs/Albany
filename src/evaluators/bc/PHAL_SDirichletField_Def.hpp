@@ -42,8 +42,9 @@ preEvaluate(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   *out << "SDirichletField preEvaluate " << PHX::print<EvalT>() << "\n";
 #endif
-  Teuchos::RCP<const Thyra_Vector> x = dirichlet_workset.x;
-  Teuchos::ArrayRCP<ST> x_view = Teuchos::arcp_const_cast<ST>(Albany::getLocalData(x));
+  // A nonconst view marks the host data as modified, so the values are synced to device
+  Teuchos::RCP<Thyra_Vector> x = Teuchos::rcp_const_cast<Thyra_Vector>(dirichlet_workset.x);
+  Teuchos::ArrayRCP<ST> x_view = Albany::getNonconstLocalData(x);
 
   const auto& p_dof_mgr = dirichlet_workset.disc->getDOFManager(this->field_name);
   const auto& sol_dof_mgr   = dirichlet_workset.disc->getDOFManager();
