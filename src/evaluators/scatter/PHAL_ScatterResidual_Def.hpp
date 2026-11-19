@@ -670,7 +670,7 @@ evaluateFields(typename Traits::EvalData workset)
       if (f_xx_is_active || f_xp_is_active) {
         for (int eq=0; eq<numFields; ++eq) {
           const int row = dof_lids(fields_offsets(node,eq+eq_offset));
-          const auto& dx = value.dx(fields_offsets(node,eq)).dx(0);
+          const auto& dx = value.dx(fields_offsets(node,eq+eq_offset)).dx(0);
           if (f_xx_is_active)
             KU::atomic_add<ExecutionSpace>(&(hess_vec_prod_f_xx_data(row,0)), dx);
           if (f_xp_is_active)
