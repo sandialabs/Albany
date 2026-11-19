@@ -171,7 +171,7 @@ copySTKField(const FieldType& source,
   for (auto it : bv) {
     const stk::mesh::Bucket& bucket = *it;
     const int num_nodes_in_bucket = bucket.size();
-    const int num_source_components = stk::mesh::field_scalars_per_entity(target, bucket);
+    const int num_source_components = stk::mesh::field_scalars_per_entity(source, bucket);
     const int num_target_components = stk::mesh::field_scalars_per_entity(target, bucket);
 
     const int uneven_downsampling = num_source_components % num_target_components;
