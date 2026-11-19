@@ -185,7 +185,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
           const int idim = eq % numDim;
           for (int inode=0; inode<numNodes; ++inode) {
             const double* X = coords[ws][ielem][inode];
-            soln_data[dof_lids[offsets[inode]]] += X[idim];
+            soln_data[dof_lids[offsets[inode]]] = X[idim];
         }}
       }
     }
