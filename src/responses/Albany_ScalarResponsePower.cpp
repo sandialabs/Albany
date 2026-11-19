@@ -143,7 +143,7 @@ evaluateTangent(const double alpha,
 
   // Copy results into combined result
   if (!g.is_null()) {
-    g->assign(*g_i);
+    g->assign(pow(Thyra::get_ele(*g_i,0)-scalar_target, exponent));
   }
   if (!gx.is_null()) {
     gx->update(a, *gx_i);
@@ -220,7 +220,7 @@ evaluateGradient(const double current_time,
 
   // Copy results into combined result
   if (!g.is_null()) {
-    g->assign(*g_i);
+    g->assign(pow(Thyra::get_ele(*g_i,0)-scalar_target, exponent));
   }
   if (!dg_dx.is_null()) {
     dg_dx->update(a, *dg_dx_i);
