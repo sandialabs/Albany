@@ -92,7 +92,8 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
     if (melt_pl.get("Use Geothermal Melt",false)) {
       if (melt_pl.isParameter("Given Geothermal Flux")) {
         G_given = true;
-        G_value = melt_pl.get<double>("Given Geothermal Flux");
+        // Given in W/m^2, like the geothermal flux field: convert to kPa m/yr (see above)
+        G_value = scaling_G*melt_pl.get<double>("Given Geothermal Flux");
       } else {
         G = decltype(G)(p.get<std::string> ("Geothermal Heat Source Variable Name"), layout);
         this->addDependentField(G);
