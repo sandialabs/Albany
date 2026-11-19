@@ -125,9 +125,14 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
-    for (size_t i =0; i< Source.extent(0); i++)
-     for (size_t j =0; j< Source.extent(1); j++)
-       neg_source(i,j) = Source(i,j) * -1.0;
+    const auto source = Source.get_static_view();
+    const auto neg = neg_source;
+    using policy_t = Kokkos::MDRangePolicy<PHX::ExecutionSpace, Kokkos::Rank<2>>;
+    Kokkos::parallel_for("HeatEqResid::neg_source",
+        policy_t({0,0},{static_cast<int>(source.extent(0)),static_cast<int>(source.extent(1))}),
+        KOKKOS_LAMBDA(const int i, const int j) {
+      neg(i,j) = source(i,j) * -1.0;
+    });
     FST::integrate(TResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
   }
 
