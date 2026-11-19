@@ -59,14 +59,11 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void Absorption<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+evaluateFields(typename Traits::EvalData /* workset */)
 {
   if (is_constant) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-	absorption(cell,qp) = constant_value;
-      }
-    }
+    // Fill the whole (device) field; extra cells past workset.numCells are unused
+    absorption.deep_copy(constant_value);
   }
   /*else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

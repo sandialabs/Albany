@@ -45,55 +45,61 @@ postRegistrationSetup(typename Traits::SetupData /* d */,
 template<typename EvalT, typename Traits, typename InputType, typename OutputType>
 void ConvertFieldType<EvalT, Traits, InputType, OutputType>::
 evaluateFields(typename Traits::EvalData /* workset */) {
+  using ExecutionSpace = PHX::Device::execution_space;
+  using Policy2 = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<2>>;
+  using Policy3 = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<3>>;
+  using Policy4 = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<4>>;
+  using Policy5 = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<5>>;
+  using Policy6 = Kokkos::MDRangePolicy<ExecutionSpace, Kokkos::Rank<6>>;
+
   std::vector<int> dims;
   in_field.dimensions(dims);
   int size = dims.size();
+
+  // The fields live in device memory: do the copy (with type conversion) in a kernel
+  const auto in  = in_field.get_view();
+  const auto out = out_field.get_view();
+  const std::string name = this->getName();
   switch (size) {
   case 1:
-    for (int i = 0; i < dims[0]; ++i)
-      out_field(i) = in_field(i);
+    Kokkos::parallel_for(name, Kokkos::RangePolicy<ExecutionSpace>(0,dims[0]),
+                         KOKKOS_LAMBDA(const int i) {
+      out(i) = in(i);
+    });
     break;
   case 2:
-    for (int i = 0; i < dims[0]; ++i)
-      for (int j = 0; j < dims[1]; ++j)
-        out_field(i, j) = in_field(i, j);
+    Kokkos::parallel_for(name, Policy2({0,0},{dims[0],dims[1]}),
+                         KOKKOS_LAMBDA(const int i, const int j) {
+      out(i, j) = in(i, j);
+    });
     break;
   case 3:
-    for (int i = 0; i < dims[0]; ++i)
-      for (int j = 0; j < dims[1]; ++j)
-        for (int k = 0; k < dims[2]; ++k)
-          out_field(i, j, k) = in_field(i, j, k);
+    Kokkos::parallel_for(name, Policy3({0,0,0},{dims[0],dims[1],dims[2]}),
+                         KOKKOS_LAMBDA(const int i, const int j, const int k) {
+      out(i, j, k) = in(i, j, k);
+    });
     break;
   case 4:
-    for (int i = 0; i < dims[0]; ++i)
-      for (int j = 0; j < dims[1]; ++j)
-        for (int k = 0; k < dims[2]; ++k)
-          for (int l = 0; l < dims[3]; ++l)
-            out_field(i, j, k, l) = in_field(i, j, k, l);
+    Kokkos::parallel_for(name, Policy4({0,0,0,0},{dims[0],dims[1],dims[2],dims[3]}),
+                         KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
+      out(i, j, k, l) = in(i, j, k, l);
+    });
     break;
   case 5:
-    for (int i = 0; i < dims[0]; ++i)
-      for (int j = 0; j < dims[1]; ++j)
-        for (int k = 0; k < dims[2]; ++k)
-          for (int l = 0; l < dims[3]; ++l)
-            for (int m = 0; m < dims[4]; ++m)
-              out_field(i, j, k, l, m) = in_field(i, j, k, l, m);
+    Kokkos::parallel_for(name, Policy5({0,0,0,0,0},{dims[0],dims[1],dims[2],dims[3],dims[4]}),
+                         KOKKOS_LAMBDA(const int i, const int j, const int k, const int l, const int m) {
+      out(i, j, k, l, m) = in(i, j, k, l, m);
+    });
     break;
   case 6:
-    for (int i = 0; i < dims[0]; ++i)
-      for (int j = 0; j < dims[1]; ++j)
-        for (int k = 0; k < dims[2]; ++k)
-          for (int l = 0; l < dims[3]; ++l)
-            for (int m = 0; m < dims[4]; ++m)
-              for (int n = 0; n < dims[5]; ++n)
-              out_field(i, j, k, l, m, n) = in_field(i, j, k, l, m, n);
+    Kokkos::parallel_for(name, Policy6({0,0,0,0,0,0},{dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]}),
+                         KOKKOS_LAMBDA(const int i, const int j, const int k, const int l, const int m, const int n) {
+      out(i, j, k, l, m, n) = in(i, j, k, l, m, n);
+    });
     break;
   default:
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Implemented only up to 6 dimensions in data layout.\n");
   }
-
-//  all the switch above might be substituted in the future with the simple line:
-//  Kokkos::deep_copy(out_field.get_view(),in_field.get_view());
 }
 //**********************************************************************
 

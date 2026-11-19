@@ -148,30 +148,61 @@ namespace PHAL
         }
 
         template <typename EvalT, typename Traits>
-        typename EvalT::ScalarT Gaussian<EvalT, Traits>::
-            evaluateFields(const std::vector<typename EvalT::MeshScalarT> &coords)
+        void Gaussian<EvalT, Traits>::
+            addToSource(const PHX::MDField<const MeshScalarT, Cell, Point, Dim> &coords,
+                        const PHX::MDField<ScalarT, Cell, Point> &source,
+                        const int numCells, const RealType scaling)
         {
-            ScalarT exponent = 0;
-            const double pi = 3.1415926535897932385;
+            const double sqrt_2pi = std::sqrt(2 * 3.1415926535897932385);
 
-            m_amplitude = mdf_amplitude(0);
-            m_radius = mdf_radius(0);
+            const int nsd = coords.extent_int(2);
+            TEUCHOS_TEST_FOR_EXCEPTION(nsd < 1 || nsd > 3, std::logic_error,
+                                       "Error! Gaussian source only supports 1, 2 or 3 spatial dimensions.\n");
+            TEUCHOS_TEST_FOR_EXCEPTION(static_cast<int>(m_centroid.size()) < nsd, std::logic_error,
+                                       "Error! Gaussian source center has fewer than " << nsd << " components.\n");
 
-            ScalarT sigma_pi = 1.0 / (m_radius * std::sqrt(2 * pi));
-            const std::size_t nsd = coords.size();
-            for (std::size_t i = 0; i < nsd; ++i)
-            {
-                exponent += std::pow(m_centroid[i] - coords[i], 2);
-            }
-            exponent /= (2.0 * std::pow(m_radius, 2));
-            ScalarT x(0.0);
-            if (nsd == 1)
-                x = m_amplitude * sigma_pi * std::exp(-exponent);
-            else if (nsd == 2)
-                x = m_amplitude * std::pow(sigma_pi, 2) * std::exp(-exponent);
-            else if (nsd == 3)
-                x = m_amplitude * std::pow(sigma_pi, 3) * std::exp(-exponent);
-            return x;
+            double c[3] = {0.0, 0.0, 0.0};
+            for (int i = 0; i < nsd; ++i)
+                c[i] = m_centroid[i];
+            const double c0 = c[0], c1 = c[1], c2 = c[2];
+
+            const auto x = coords.get_static_view();
+            const auto f = source.get_static_view();
+            // The amplitude/radius parameters live in device memory: read them in the kernel
+            const auto amplitude = mdf_amplitude.get_view();
+            const auto radius = mdf_radius.get_view();
+            const int numQPs = x.extent_int(1);
+            // Compute the Gaussian coefficients once per call, on device (where the
+            // amplitude/radius parameters live): coeffs(0)=factor, coeffs(1)=2*radius^2.
+            // NOTE: doing this per thread in the main kernel raises register pressure on GPUs.
+            if (m_coeffs.size() == 0)
+                m_coeffs = Sacado::createDynRankView(source.get_view(), "Gaussian coefficients", 2);
+            const auto coeffs = m_coeffs;
+            Kokkos::parallel_for("Gaussian Source: coefficients",
+                                 Kokkos::RangePolicy<PHX::Device::execution_space>(0, 1),
+                                 KOKKOS_LAMBDA(const int) {
+                const ScalarT amp = amplitude(0);
+                const ScalarT rad = radius(0);
+                const ScalarT sigma_pi = 1.0 / (rad * sqrt_2pi);
+                coeffs(1) = 2.0 * std::pow(rad, 2);
+                if (nsd == 1)
+                    coeffs(0) = scaling * amp * sigma_pi;
+                else if (nsd == 2)
+                    coeffs(0) = scaling * amp * std::pow(sigma_pi, 2);
+                else
+                    coeffs(0) = scaling * amp * std::pow(sigma_pi, 3);
+            });
+
+            Kokkos::parallel_for("Gaussian Source",
+                                 Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<2>>({0, 0}, {numCells, numQPs}),
+                                 KOKKOS_LAMBDA(const int cell, const int qp) {
+                // NOTE: no runtime-indexed local array (it may end up in scratch memory on GPUs)
+                auto cc = [&](const int i) -> double { return i == 0 ? c0 : (i == 1 ? c1 : c2); };
+                MeshScalarT dist2 = 0;
+                for (int i = 0; i < nsd; ++i)
+                    dist2 += (cc(i) - x(cell, qp, i)) * (cc(i) - x(cell, qp, i));
+                f(cell, qp) += coeffs(0) * std::exp(-dist2 / coeffs(1));
+            });
         }
 
     } // namespace Source_Functions

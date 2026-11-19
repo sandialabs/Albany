@@ -8,6 +8,7 @@
 #define PHAL_RESPONSE_SQUARED_L2_DIFFERENCE_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 namespace PHAL {
 /**
@@ -39,6 +40,8 @@ private:
   int numQPs;
   int fieldDim;
   std::vector<PHX::ExecutionSpace::size_type> dims;
+  int dims_2;
+  int dims_3;
 
   bool target_value;
   TargetScalarT target_value_val;
@@ -49,6 +52,61 @@ private:
 
   PHX::MDField<const MeshScalarT,Cell,QuadPoint>   w_measure;
 
+  // Device buffer for the reduction of the cell contributions
+  Kokkos::View<RealType*, PHX::Device> m_sums;
+
+public:
+  using ExecutionSpace = typename PHX::ExecutionSpace;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
+
+  // Sums the value and derivatives of local(:,0) as an array of NComp doubles
+  // (NComp = 1 + number of derivatives of a statically sized, first-order AD type)
+  template<typename LocalView, int NComp>
+  struct SumScalarComponents {
+    using value_type = RealType[];
+    using size_type  = int;
+    LocalView local;
+    int value_count = NComp;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const int cell, value_type sum) const {
+      const auto& x = local(cell,0);
+      if constexpr (NComp==1) {
+        sum[0] += x;
+      } else {
+        sum[0] += x.val();
+        for (int k=1; k<NComp; ++k)
+          sum[k] += x.fastAccessDx(k-1);
+      }
+    }
+    KOKKOS_INLINE_FUNCTION
+    void init (value_type sum) const {
+      for (int k=0; k<NComp; ++k) sum[k] = 0;
+    }
+    KOKKOS_INLINE_FUNCTION
+    void join (value_type dst, const value_type src) const {
+      for (int k=0; k<NComp; ++k) dst[k] += src[k];
+    }
+  };
+
+  // Adds the NComp doubles in sums (value and derivatives) to global(0)
+  template<typename GlobalView, typename SumsView, int NComp>
+  struct AddScalarComponents {
+    GlobalView global;
+    SumsView   sums;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const int) const {
+      auto&& g = global(0);
+      if constexpr (NComp==1) {
+        g += sums(0);
+      } else {
+        g.val() += sums(0);
+        for (int k=1; k<NComp; ++k)
+          g.fastAccessDx(k-1) += sums(k);
+      }
+    }
+  };
 };
 
 // Some shortcut names

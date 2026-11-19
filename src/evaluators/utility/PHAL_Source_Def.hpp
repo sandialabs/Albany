@@ -27,6 +27,25 @@ namespace PHAL {
 namespace Source_Functions {
 const double pi = 3.1415926535897932385;
 
+// Policy over <Cell,QuadPoint> used by the source kernels
+using SourceExecSpace = PHX::Device::execution_space;
+using SourcePolicy    = Kokkos::MDRangePolicy<SourceExecSpace, Kokkos::Rank<2>>;
+
+inline SourcePolicy source_policy (const int numCells, const int numQPs) {
+  return SourcePolicy({0,0},{numCells,numQPs});
+}
+
+// Fill the source field with a single value
+template<typename SourceView, typename ScalarT>
+void source_fill (const std::string& name, const SourceView& source,
+                  const int numCells, const int numQPs, const ScalarT& value)
+{
+  Kokkos::parallel_for(name, source_policy(numCells,numQPs),
+                       KOKKOS_LAMBDA(const int cell, const int qp) {
+    source(cell,qp) = value;
+  });
+}
+
 template <typename EvalT, typename Traits>
 class Source_Base {
 public :
@@ -120,10 +139,7 @@ Constant<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Constant Source Term
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-      m_source(cell, iqp) = m_constant;
-  }
+  source_fill("Constant Source", m_source.get_static_view(), workset.numCells, m_num_qp, m_constant);
 }
 
 
@@ -274,10 +290,7 @@ evaluateFields(typename Traits::EvalData workset){
   }
 
   // Loop over cells, quad points: compute Table Source Term
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-      m_source(cell, iqp) = m_constant;
-  }
+  source_fill("Table Source", m_source.get_static_view(), workset.numCells, m_num_qp, m_constant);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -374,21 +387,18 @@ Trigonometric<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Trigonometric Source Term
+  const auto source = m_source.get_static_view();
   if (m_num_dim == 2) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
-        //MeshScalarT *X = &coordVec(cell,iqp,0); 
-        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*coordVec(cell,iqp,0))*cos(2.0*pi*coordVec(cell,iqp,1));
-      }
-    }
+    const auto coords = coordVec.get_static_view();
+    const double PI = pi;
+    Kokkos::parallel_for("Trigonometric Source", source_policy(workset.numCells,m_num_qp),
+                         KOKKOS_LAMBDA(const int cell, const int iqp) {
+      source(cell, iqp) = 8.0*PI*PI*sin(2.0*PI*coords(cell,iqp,0))*cos(2.0*PI*coords(cell,iqp,1));
+    });
   }
   else {
     std::cout << "Trigonometric source implemented only for 2D; setting f = 1 constant source." << std::endl; 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
-        m_source(cell, iqp) = m_constant;
-      }
-    }
+    source_fill("Trigonometric Source", source, workset.numCells, m_num_qp, m_constant);
   }
 }
 
@@ -481,18 +491,17 @@ Quadratic<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset){
 
   // Loop over cells, quad points: compute Quadratic Source Term
+  const auto source = m_source.get_static_view();
   if (m_constant) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = m_factor;
-    }
+    source_fill("Quadratic Source", source, workset.numCells, m_num_qp, m_factor);
   } 
   else {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = 
-	  m_factor * m_baseField(cell,iqp) * m_baseField(cell,iqp);
-    }
+    const auto baseField = m_baseField.get_static_view();
+    const ScalarT factor = m_factor;
+    Kokkos::parallel_for("Quadratic Source", source_policy(workset.numCells,m_num_qp),
+                         KOKKOS_LAMBDA(const int cell, const int iqp) {
+      source(cell, iqp) = factor * baseField(cell,iqp) * baseField(cell,iqp);
+    });
   }
 }
 
@@ -551,10 +560,14 @@ public :
   }
 
   virtual void evaluateFields (typename Traits::EvalData workset) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-      for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-        m_source(cell, iqp) = 
-	  m_phi(cell,iqp) * m_sigma_f(cell,iqp) * m_E_f(cell,iqp);
+    const auto source  = m_source.get_static_view();
+    const auto phi     = m_phi.get_static_view();
+    const auto sigma_f = m_sigma_f.get_static_view();
+    const auto E_f     = m_E_f.get_static_view();
+    Kokkos::parallel_for("Neutron Fission Source", source_policy(workset.numCells,m_num_qp),
+                         KOKKOS_LAMBDA(const int cell, const int iqp) {
+      source(cell, iqp) = phi(cell,iqp) * sigma_f(cell,iqp) * E_f(cell,iqp);
+    });
   }
 
 private :
@@ -645,10 +658,12 @@ void MVQuadratic<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset
   a /= static_cast<double>(m_factor.size());
 
   // Loop over cells, quad points: compute MVQuadratic Source Term
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-      m_source(cell, iqp) = a * m_baseField(cell,iqp) * m_baseField(cell,iqp);
-  }
+  const auto source    = m_source.get_static_view();
+  const auto baseField = m_baseField.get_static_view();
+  Kokkos::parallel_for("MVQuadratic Source", source_policy(workset.numCells,m_num_qp),
+                       KOKKOS_LAMBDA(const int cell, const int iqp) {
+    source(cell, iqp) = a * baseField(cell,iqp) * baseField(cell,iqp);
+  });
 }
 
 template<typename EvalT,typename Traits>
@@ -739,10 +754,12 @@ void MVExponential<EvalT,Traits>::evaluateFields(typename Traits::EvalData works
   a /= static_cast<double>(m_factor.size());
 
   // Loop over cells, quad points: compute MVExponential Source Term
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t iqp=0; iqp<m_num_qp; iqp++)
-      m_source(cell, iqp) = a*std::exp(m_baseField(cell,iqp));
-  }
+  const auto source    = m_source.get_static_view();
+  const auto baseField = m_baseField.get_static_view();
+  Kokkos::parallel_for("MVExponential Source", source_policy(workset.numCells,m_num_qp),
+                       KOKKOS_LAMBDA(const int cell, const int iqp) {
+    source(cell, iqp) = a*std::exp(baseField(cell,iqp));
+  });
 }
 
 template<typename EvalT,typename Traits>
@@ -898,20 +915,11 @@ template<typename EvalT, typename Traits>
 void PointSource<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   const RealType time  = workset.current_time;
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
-      std::vector<MeshScalarT> coord;
-      for (std::size_t i=0; i<m_num_dim; ++i) {
-        const MeshScalarT  x  = coordVec(cell,iqp,i);
-        coord.push_back(x);
-      }
-      m_source(cell,iqp) = 0;
-      const RealType wavelet = m_wavelet->evaluateFields(time);
-      for (std::size_t i=0; i<m_spatials.size(); ++i) {
-        const ScalarT spatial = m_spatials[i]->evaluateFields(coord);
-        m_source(cell,iqp) += wavelet*spatial;
-      }
-    }
+  const RealType wavelet = m_wavelet->evaluateFields(time);
+
+  source_fill("Point Source", m_source.get_static_view(), workset.numCells, m_num_qp, ScalarT(0.0));
+  for (std::size_t i=0; i<m_spatials.size(); ++i) {
+    m_spatials[i]->addToSource(coordVec, m_source, workset.numCells, wavelet);
   }
 }
 

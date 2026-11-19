@@ -24,6 +24,7 @@
 
 #include <map>
 #include <set>
+#include <utility>
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields of equations
@@ -52,17 +53,23 @@ public:
 protected:
   using ScalarT = typename EvalT::ScalarT;
 
+  // NOTE: this function is called on host, and reads the host copies of the
+  //       residual fields (see copy_fields_to_host)
   ScalarT get_resid (const int side_idx, const int node, const int eq) const {
     switch (tensorRank) {
       case 0:
-        return val[eq](side_idx,node);
+        return val_h[eq](side_idx,node);
       case 1:
-        return valVec(side_idx,node,eq);
+        return valVec_h(side_idx,node,eq);
       case 2:
-        return valTensor(side_idx,node,eq/tensorDim,eq%tensorDim);
+        return valTensor_h(side_idx,node,eq/tensorDim,eq%tensorDim);
     }
     Kokkos::abort("Unsupported tensor rank");
   }
+
+  // The residual fields live on device, but the scatter is done on host.
+  // This method copies the residual fields into host views.
+  void copy_fields_to_host ();
 
   void gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc);
 
@@ -77,6 +84,12 @@ protected:
   std::vector< PHX::MDField<const ScalarT> > val;
   PHX::MDField<const ScalarT>  valVec;
   PHX::MDField<const ScalarT>  valTensor;
+
+  // Host copies of the fields above
+  using host_view_t = decltype(Kokkos::create_mirror_view(std::declval<typename PHX::MDField<const ScalarT>::array_type>()));
+  std::vector<host_view_t> val_h;
+  host_view_t valVec_h;
+  host_view_t valTensor_h;
 
   std::string             sideSetName;        // The side set where the equation(s) are defined
   std::vector<Albany::SideStruct> sideSet;
