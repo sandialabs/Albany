@@ -11,6 +11,8 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
 
+#include <algorithm>
+
 #include "Teuchos_Array.hpp" 
 #include "Albany_Utils.hpp"
 
@@ -41,10 +43,17 @@ selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const
   gatherAllV(source_dof_mgr->getAlbanyComm(),myGIDs(),allGIDs);
   std::sort(allGIDs.begin(), allGIDs.end());
 
-  Teuchos::Array<GO> target_gids(numValues_);
-  const int stride = 1 + (allGIDs.size() - 1) / numValues_;
-  for (int i = 0; i < numValues_; ++i) {
-    target_gids[i] = allGIDs[i * stride];
+  // Clamp numValues_ to the actual number of dofs so we never read past the end.
+  const int nvals = std::min(numValues_, (int)allGIDs.size());
+  Teuchos::Array<GO> target_gids(nvals);
+  if (nvals == 1) {
+    target_gids[0] = allGIDs[0];
+  } else {
+    for (int i = 0; i < nvals; ++i) {
+      // Evenly-spaced indices: i*(N-1)/(nvals-1) always stays in [0, N-1].
+      const int idx = (int)((long long)i * ((int)allGIDs.size() - 1) / (nvals - 1));
+      target_gids[i] = allGIDs[idx];
+    }
   }
   return target_gids;
 }
@@ -82,7 +91,7 @@ selectedGIDs (const Teuchos::RCP<const DOFManager>& source_dof_mgr) const
   // Gather gids on given nodeset on this rank
   Teuchos::Array<GO> mySelectedGIDs;
 
-  TEUCHOS_TEST_FOR_EXCEPTION (disc_->getNodeSets().count(nodeSetLabel_)==1, std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION (disc_->getNodeSets().count(nodeSetLabel_)==0, std::runtime_error,
       "Error! Nodeset '" << nodeSetLabel_ << "' not found in the mesh.\n");
   const auto& nodeset = disc_->getNodeSets().at(nodeSetLabel_);
     // typedef NodeSetList::mapped_type NodeSetEntryList;
