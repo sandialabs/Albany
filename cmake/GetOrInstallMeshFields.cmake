@@ -73,7 +73,8 @@ else ()
   FetchContent_Declare (
     MeshFields
     GIT_REPOSITORY git@github.com:SCOREC/meshFields
-    GIT_TAG        origin/main
+    # Pinned commit (update deliberately): main as of 2026-11-18
+    GIT_TAG        d760b7ec2ea732c4943fd13d3995d95adaa8e285
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )

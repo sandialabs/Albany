@@ -45,7 +45,8 @@ else ()
   FetchContent_Declare (
     Omega_h
     GIT_REPOSITORY git@github.com:SCOREC/omega_h
-    GIT_TAG        origin/master
+    # Pinned commit (update deliberately): master as of 2026-11-18
+    GIT_TAG        7647c8a52547a737f06de91d3f47952643ca5b64
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )

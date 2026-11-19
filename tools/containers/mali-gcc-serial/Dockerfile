@@ -67,9 +67,12 @@ RUN PNETCDF_INCLUDE_DIR="$(pnetcdf-config --includedir 2>/dev/null || echo /usr/
 ENV PNETCDF_ROOT=${SOFTWARE_ROOT}/pnetcdf
 
 # SCORPIO
+ARG SCORPIO_COMMIT=e6ab84391d7c945f891c7d0c9918252ff70858d8
 RUN cd $SOFTWARE_ROOT && \
     mkdir scorpio && cd scorpio && \
-    git clone --filter=blob:none https://github.com/e3sm-project/scorpio source
+    git clone --filter=blob:none https://github.com/e3sm-project/scorpio source && \
+    cd source && \
+    git checkout ${SCORPIO_COMMIT}
 
 RUN mkdir $SOFTWARE_ROOT/scorpio/build
 
@@ -112,16 +115,26 @@ ENV LD_LIBRARY_PATH=${TRILINOS_ROOT}/lib
 # set up conda
 USER runner
 ARG TARGETARCH
+# Pinned Miniforge release, with the installer checksums (update deliberately)
+ARG MINIFORGE_VERSION=26.9.4-2
+ARG MINIFORGE_SHA256_X86_64=bbaf16b3897da24c4be50315934ba74848f617b4495982841d6a0a60e0edbbdf
+ARG MINIFORGE_SHA256_AARCH64=1adf18b530e4ffb00886ce6d5bd2eb1fa6311d2f14709b13bd154d8cd98d94c8
 RUN if [ "${TARGETARCH}" = "amd64" ]; then MINIFORGE_ARCH="x86_64"; \
     elif [ "${TARGETARCH}" = "arm64" ]; then MINIFORGE_ARCH="aarch64"; \
+    elif [ -z "${TARGETARCH}" ]; then MINIFORGE_ARCH="$(uname -m)"; \
     else MINIFORGE_ARCH="${TARGETARCH}"; fi && \
+    if [ "${MINIFORGE_ARCH}" = "x86_64" ]; then MINIFORGE_SHA256="${MINIFORGE_SHA256_X86_64}"; \
+    elif [ "${MINIFORGE_ARCH}" = "aarch64" ]; then MINIFORGE_SHA256="${MINIFORGE_SHA256_AARCH64}"; \
+    else echo "No Miniforge checksum for architecture '${MINIFORGE_ARCH}'" && exit 1; fi && \
+    MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/${MINIFORGE_VERSION}/Miniforge3-${MINIFORGE_VERSION}-Linux-${MINIFORGE_ARCH}.sh" && \
     echo "TARGETARCH=${TARGETARCH}" && \
     echo "uname -m=$(uname -m)" && \
     echo "MINIFORGE_ARCH=${MINIFORGE_ARCH}" && \
-    echo "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" && \
+    echo "MINIFORGE_URL=${MINIFORGE_URL}" && \
     wget --tries=5 --retry-connrefused --waitretry=2 \
         --ca-certificate=/etc/ssl/certs/ca-certificates.crt \
-        "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-${MINIFORGE_ARCH}.sh" -O /home/runner/Miniforge3.sh
+        "${MINIFORGE_URL}" -O /home/runner/Miniforge3.sh && \
+    echo "${MINIFORGE_SHA256}  /home/runner/Miniforge3.sh" | sha256sum -c -
 
 RUN bash /home/runner/Miniforge3.sh -b -p /home/runner/miniforge && \
     rm -f /home/runner/Miniforge3.sh

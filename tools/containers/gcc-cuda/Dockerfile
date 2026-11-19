@@ -63,6 +63,7 @@ RUN apt-get update &&       \
 ARG CUDA_VERSION=12-9
 RUN cd /tmp && \
     wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
+    echo "d2a6b11c096396d868758b86dab1823b25e14d70333f1dfa74da5ddaf6a06dba  cuda-keyring_1.1-1_all.deb" | sha256sum -c - && \
     dpkg -i cuda-keyring_1.1-1_all.deb && \
     rm cuda-keyring_1.1-1_all.deb && \
     apt-get update && \
