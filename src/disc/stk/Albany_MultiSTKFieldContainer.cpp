@@ -67,7 +67,7 @@ setSolutionFieldsMetadata(const int neq_)
   sol_index.resize(num_time_deriv+1);
   
   strarr_t vec_names = {"Solution", "SolutionDot", "SolutionDotDot"};
-  for (int ider = 0; ider < num_time_deriv; ++ider) {
+  for (int ider = 0; ider <= num_time_deriv; ++ider) {
     auto comp_specs = params->get<strarr_t>(vec_names[ider] + " Vector Components", {});
     if (comp_specs.size()==0) {
       // Do the default solution vector
@@ -129,18 +129,17 @@ fillSolnVector(Thyra_Vector&        solution,
                const dof_mgr_ptr_t& solution_dof_mgr,
                const bool           overlapped)
 {
-  // Helper vector. Same as sol_index, but with extra entry=neq at the end,
-  // to make computing components idx easier
+  // Build an exclusive prefix sum of per-field component counts so that
+  // offsets[k] is the global component index where field k starts.
   std::vector<int> offsets (sol_index[0].size()+1,0);
-  for (int k=0; k<sol_index[0].size(); ++k) {
-    offsets[k] = sol_index[0][k];
+  for (int k=0; k<(int)sol_index[0].size(); ++k) {
+    offsets[k+1] = offsets[k] + sol_index[0][k];
   }
-  offsets.back() = this->neq;
 
-  for (int k=0; k<sol_index[0].size(); ++k) {
+  for (int k=0; k<(int)sol_index[0].size(); ++k) {
     // Compute components indices
     std::vector<int> components(offsets[k+1]-offsets[k]);
-    std::iota(components.begin(),components.end(),sol_index[0][k]);
+    std::iota(components.begin(),components.end(),offsets[k]);
 
     fillVectorImpl(solution, sol_vector_name[0][k], solution_dof_mgr, overlapped, components);
   }
@@ -153,18 +152,16 @@ fillSolnMultiVector (      Thyra_MultiVector& solution,
 {
   // Loop over time derivatives
   for (int ideriv=0; ideriv<solution.domain()->dim(); ++ideriv) {
-    // Helper vector. Same as sol_index, but with extra entry=neq at the end,
-    // to make computing components idx easier
-    std::vector<int> offsets (sol_index[0].size()+1,0);
-    for (int k=0; k<sol_index[ideriv].size(); ++k) {
-      offsets[k] = sol_index[ideriv][k];
+    // Build an exclusive prefix sum of per-field component counts.
+    std::vector<int> offsets (sol_index[ideriv].size()+1,0);
+    for (int k=0; k<(int)sol_index[ideriv].size(); ++k) {
+      offsets[k+1] = offsets[k] + sol_index[ideriv][k];
     }
-    offsets.back() = this->neq;
 
-    for (int k=0; k<sol_index[ideriv].size(); k++) {
+    for (int k=0; k<(int)sol_index[ideriv].size(); k++) {
       // Compute components indices
       std::vector<int> components(offsets[k+1]-offsets[k]);
-      std::iota(components.begin(),components.end(),sol_index[ideriv][k]);
+      std::iota(components.begin(),components.end(),offsets[k]);
 
       fillVectorImpl(*solution.col(ideriv), sol_vector_name[ideriv][k], solution_dof_mgr, overlapped, components);
     }
@@ -194,18 +191,17 @@ saveSolnVector (const Thyra_Vector& soln,
                 const dof_mgr_ptr_t& sol_dof_mgr,
                 const bool           overlapped)
 {
-  // Helper vector. Same as sol_index, but with extra entry=neq at the end,
-  // to make computing components idx easier
+  // Build an exclusive prefix sum of per-field component counts so that
+  // offsets[k] is the global component index where field k starts.
   std::vector<int> offsets (sol_index[0].size()+1,0);
-  for (int k=0; k<sol_index[0].size(); ++k) {
-    offsets[k] = sol_index[0][k];
+  for (int k=0; k<(int)sol_index[0].size(); ++k) {
+    offsets[k+1] = offsets[k] + sol_index[0][k];
   }
-  offsets.back() = this->neq;
 
-  for (int k=0; k<sol_index[0].size(); ++k) {
+  for (int k=0; k<(int)sol_index[0].size(); ++k) {
     // Compute components indices
     std::vector<int> components(offsets[k+1]-offsets[k]);
-    std::iota(components.begin(),components.end(),sol_index[0][k]);
+    std::iota(components.begin(),components.end(),offsets[k]);
 
     saveVectorImpl (soln, sol_vector_name[0][k], sol_dof_mgr, overlapped, components);
   }
@@ -269,18 +265,17 @@ saveResVector (const Thyra_Vector&  res,
                const dof_mgr_ptr_t& dof_mgr,
                const bool           overlapped)
 {
-  // Helper vector. Same as res_index, but with extra entry=neq at the end,
-  // to make computing components idx easier
+  // Build an exclusive prefix sum of per-field component counts so that
+  // offsets[k] is the global component index where residual field k starts.
   std::vector<int> offsets (res_index.size()+1,0);
-  for (int k=0; k<res_index.size(); ++k) {
-    offsets[k] = res_index[k];
+  for (int k=0; k<(int)res_index.size(); ++k) {
+    offsets[k+1] = offsets[k] + res_index[k];
   }
-  offsets.back() = this->neq;
 
-  for (int k=0; k<res_index.size(); ++k) {
+  for (int k=0; k<(int)res_index.size(); ++k) {
     // Compute components indices
     std::vector<int> components(offsets[k+1]-offsets[k]);
-    std::iota(components.begin(),components.end(),sol_index[0][k]);
+    std::iota(components.begin(),components.end(),offsets[k]);
 
     saveVectorImpl(res, res_vector_name[k], dof_mgr, overlapped, components);
   }
