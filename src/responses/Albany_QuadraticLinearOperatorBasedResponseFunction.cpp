@@ -98,28 +98,26 @@ evaluateTangent(const double /* alpha */,
     const Teuchos::RCP<Thyra_MultiVector>& gp)
 {
   if (!g.is_null()) {
-    if (g_.is_null()) {
-      Teuchos::RCP<const Thyra_Vector> field;
-      if(field_name_=="solution") 
-        field = x;
-      else 
-        field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
-        
-      twoAtDinvA_->setupFwdOp(field->space());
-      
-      // coeff p' A' inv(D) A p
-      if(target_name_ == "")
-        g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
-      else {
-        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
-        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
-        g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
-      }
+    Teuchos::RCP<const Thyra_Vector> field;
+    if(field_name_=="solution")
+      field = x;
+    else
+      field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
 
+    twoAtDinvA_->setupFwdOp(field->space());
+
+    // coeff p' A' inv(D) A p
+    if(target_name_ == "")
+      g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+    else {
+      Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+      diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+      g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
+    }
+
+    if (g_.is_null())
       g_ = Thyra::createMember(g->space());
-      g_->assign(*g);
-    } else
-      g->assign(*g_);
+    g_->assign(*g);
   }
 
   if (!gx.is_null()) {
@@ -146,30 +144,27 @@ evaluateGradient(const double /*current_time*/,
 		const Teuchos::RCP<Thyra_MultiVector>& dg_dp)
 {
   if (!g.is_null()) {
-    if (g_.is_null()) {
-      Teuchos::RCP<const Thyra_Vector> field;
-      if(field_name_=="solution") 
-        field = x;
-      else 
-        field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
-      twoAtDinvA_->setupFwdOp(field->space());
-      
-      //  coeff p' A' inv(D) A p
-      if(target_name_ == "")
-        g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
-      else {
-        Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
-        diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
-        g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
-      }
-      
+    Teuchos::RCP<const Thyra_Vector> field;
+    if(field_name_=="solution")
+      field = x;
+    else
+      field = app_->getDistributedParameterLibrary()->get(field_name_)->vector();
+    twoAtDinvA_->setupFwdOp(field->space());
 
+    //  coeff p' A' inv(D) A p
+    if(target_name_ == "")
+      g->assign(0.5*twoAtDinvA_->quadraticForm(*field));
+    else {
+      Teuchos::RCP<Thyra_Vector> diff_field = field->clone_v();
+      diff_field->update(-1.0, *app_->getDistributedParameterLibrary()->get(target_name_)->vector());
+      g->assign(0.5*twoAtDinvA_->quadraticForm(*diff_field));
+    }
+
+    if (g_.is_null())
       g_ = Thyra::createMember(g->space());
-      g_->assign(*g);
-    } else
-      g->assign(*g_);
+    g_->assign(*g);
   }
-  
+
   // Evaluate dg/dx
   if (!dg_dx.is_null()) {
     if(field_name_ == "solution") {
