@@ -350,7 +350,7 @@ Teuchos::RCP<const DistributedParameter> ModelEvaluator::setDistParamVec(const s
     Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDisc();
     const Teuchos::ArrayRCP<double>& ov_coords = disc->getCoordinates();
     const int num_dims = app->getSpatialDimension();
-    const int num_nodes = disc->getVectorSpace()->dim();
+    const int num_nodes = distParam->vector()->space()->dim();
     /*const int num_dofs = ov_coords.size();
       std::cout << "IKT num_dims, num_dofs, num_nodes = " << num_dims << ", " << num_dofs
                 << ", " << num_nodes << "\n"; 
