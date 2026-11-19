@@ -1704,9 +1704,9 @@ Application::computeGlobalJacobianImpl(
         Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
     jac_scaled_lop->scaleLeft(*scaleVec_);
     // scale residual
-    /*IKTif (Teuchos::nonnull(f)) {
+    if (Teuchos::nonnull(f)) {
       Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
-    }*/
+    }
 #ifdef WRITE_TO_MATRIX_MARKET
     writeMatrixMarket(jac, "jacScaled", countScale);
     if (f != Teuchos::null) { writeMatrixMarket(f, "resScaled", countScale); }
