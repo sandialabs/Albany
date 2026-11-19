@@ -533,7 +533,8 @@ bool PyProblem::performAnalysis()
         p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
         u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
       }
-      Piro::PerformAnalysis(*solver, piroParams, p, observer, u_diff_at_samples, p_samples);
+      int status = Piro::PerformAnalysis(*solver, piroParams, p, observer, u_diff_at_samples, p_samples);
+      error = (status != ROL::EXITSTATUS_CONVERGED && status != ROL::EXITSTATUS_STEPTOL);
 #else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
           "Error! 'Analysis Package: HDSA' requested, but Albany was configured without HDSA support.\n"
@@ -546,11 +547,17 @@ bool PyProblem::performAnalysis()
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
-    size_t n_params_in = n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : n_params;
-    for (size_t l = 0; l < n_params_in; l++)
-    {
-        thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
-        albanyModel->setNominalValue(l, thyraParameter[l]);
+    if (Teuchos::nonnull(p_dpv)) {
+        size_t n_params_in = (size_t)n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : (size_t)n_params;
+        for (size_t l = 0; l < n_params_in; l++)
+        {
+            thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
+            albanyModel->setNominalValue(l, thyraParameter[l]);
+        }
+    } else if (Teuchos::nonnull(p) && n_params >= 1) {
+        // p is a plain (non-product) vector: single parameter block
+        thyraParameter[0] = p;
+        albanyModel->setNominalValue(0, thyraParameter[0]);
     }
 
     inverseHasBeenSolved = true;
