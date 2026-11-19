@@ -144,6 +144,11 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
       TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(ele_Ids.begin(), ele_Ids.end()), std::runtime_error,
           "The global element IDs need to be sorted");
 
+      for (int i = 0; i < NumElems; i++)
+        for (int j = 0; j < NumElemNodes; j++)
+          TEUCHOS_TEST_FOR_EXCEPTION(elems[i][j] < 1 || elems[i][j] > NumNodes, std::runtime_error,
+              "Error in AsciiSTKMesh2D: element " << i+1 << ", node slot " << j+1
+              << " has index " << elems[i][j] << " outside [1," << NumNodes << "].\n");
 
       for (int i = 0; i < NumBdEdges; i++)
       {
@@ -155,6 +160,12 @@ AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
       TEUCHOS_TEST_FOR_EXCEPTION (!std::is_sorted(be_Ids.begin(), be_Ids.end()), std::runtime_error,
           "The global edges IDs need to be sorted");
+
+      for (int i = 0; i < NumBdEdges; i++)
+        for (int j = 0; j < 2; j++)
+          TEUCHOS_TEST_FOR_EXCEPTION(bdEdges[i][j] < 1 || bdEdges[i][j] > NumNodes, std::runtime_error,
+              "Error in AsciiSTKMesh2D: boundary edge " << i+1 << ", node slot " << j+1
+              << " has index " << bdEdges[i][j] << " outside [1," << NumNodes << "].\n");
 
 
       ifile.close();
