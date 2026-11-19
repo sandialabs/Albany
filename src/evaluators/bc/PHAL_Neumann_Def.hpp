@@ -102,8 +102,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
     // is there a "(" in the string?
   else if((position = inputConditions.find_first_of("(")) != static_cast<int>(std::string::npos)){
 
-      if(inputConditions.find("t_x", position + 1)){
-        // User has specified conditions in base coords
+      if(inputConditions.find("t_x", position + 1) != std::string::npos){
+        // User has specified traction conditions
         bc_type = TRACTION;
       }
       else {
