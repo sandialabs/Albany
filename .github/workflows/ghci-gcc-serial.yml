@@ -37,6 +37,8 @@ jobs:
         uses: actions/checkout@v5
         with:
           path: albany/source
+      - name: Show Trilinos commit
+        run: sed -n 2p "${TRILINOS_ROOT}/TrilinosRepoVersion.txt" || echo "Unknown (no TrilinosRepoVersion.txt in ${TRILINOS_ROOT})"
       - name: Setup GIT
         run: |
           # This prevents ssh errors when Albany tries to pull Omega_h from github
@@ -94,6 +96,8 @@ jobs:
         uses: actions/checkout@v5
         with:
           path: albany/source
+      - name: Show Trilinos commit
+        run: sed -n 2p "${TRILINOS_ROOT}/TrilinosRepoVersion.txt" || echo "Unknown (no TrilinosRepoVersion.txt in ${TRILINOS_ROOT})"
       - name: Setup GIT
         run: |
           # This prevents ssh errors when Albany tries to pull Omega_h from github

@@ -95,12 +95,12 @@ RUN groupadd fanssie && \
     useradd -m -g fanssie -s /bin/bash runner && \
     echo "umask 002" >> /home/runner/.bashrc
 
-# Install sudo, set password for 'runner', and configure sudoers.
+# Install sudo and give 'runner' passwordless sudo (no shared password baked in the image).
 # This helps if we realize we need an extra pkg while running a container
 RUN apt-get update && \
     apt-get install -y --no-install-recommends sudo && \
-    echo "runner:fanssie" | chpasswd && \
-    echo "runner ALL=(ALL) ALL" >> /etc/sudoers && \
+    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner && \
+    chmod 0440 /etc/sudoers.d/runner && \
     rm -rf /var/lib/apt/lists/*
 
 ENV SOFTWARE_ROOT=/software

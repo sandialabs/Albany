@@ -10,7 +10,7 @@ on:
 
 permissions:
   contents: read  # Required to read repository contents
-  packages: write  # Required to read packages from the GitHub Container Registry
+  packages: write  # Required to push images to the GitHub Container Registry (via GITHUB_TOKEN)
 
 concurrency:
   # Two runs are in the same group if they are testing the same git ref
@@ -23,9 +23,6 @@ jobs:
   gcc-12-serial:
     runs-on:  [ubuntu-latest]
     steps:
-      - name: Login on ghcr
-        run: |
-          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -43,7 +40,10 @@ jobs:
           podman tag albany:gcc-12-serial ghcr.io/sandialabs/albany:gcc-12-serial
       - name: Push image
         run: |
+          # Log in only now, so no registry credential is around while building third-party code
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman push ghcr.io/sandialabs/albany:gcc-12-serial
+          podman logout ghcr.io
 
   gcc-cuda:
     runs-on:  [ubuntu-latest]
@@ -55,9 +55,6 @@ jobs:
           # The CUDA base image and the Trilinos CUDA build need a lot of disk
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
-      - name: Login on ghcr
-        run: |
-          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -75,7 +72,10 @@ jobs:
           podman tag albany:gcc-cuda ghcr.io/sandialabs/albany:gcc-cuda
       - name: Push image
         run: |
+          # Log in only now, so no registry credential is around while building third-party code
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman push ghcr.io/sandialabs/albany:gcc-cuda
+          podman logout ghcr.io
 
   gcc-hip:
     runs-on:  [ubuntu-latest]
@@ -87,9 +87,6 @@ jobs:
           # ROCm and the Trilinos HIP build need a lot of disk
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
-      - name: Login on ghcr
-        run: |
-          echo "${{ secrets.GHCR_PAT }}" | podman login ghcr.io -u bartgol --password-stdin
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -107,4 +104,7 @@ jobs:
           podman tag albany:gcc-hip ghcr.io/sandialabs/albany:gcc-hip
       - name: Push image
         run: |
+          # Log in only now, so no registry credential is around while building third-party code
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           podman push ghcr.io/sandialabs/albany:gcc-hip
+          podman logout ghcr.io
