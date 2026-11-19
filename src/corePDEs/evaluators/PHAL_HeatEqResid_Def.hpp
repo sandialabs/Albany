@@ -163,13 +163,14 @@ evaluateFields(typename Traits::EvalData workset)
 
     Kokkos::parallel_for("HeatEqResid: convection", Policy({0,0},{numCells,nqp}),
                          KOKKOS_LAMBDA(const int cell, const int qp) {
-      const double v[3] = {v0, v1, v2};
+      // NOTE: no runtime-indexed local array (it may end up in scratch memory on GPUs)
+      auto v = [&](const int i) -> double { return i==0 ? v0 : (i==1 ? v1 : v2); };
       conv(cell,qp) = 0.0;
       for (int i=0; i < ndims; ++i) {
         if (useRhoCp)
-          conv(cell,qp) += rho_cp(cell,qp) * v[i] * gradT(cell,qp,i);
+          conv(cell,qp) += rho_cp(cell,qp) * v(i) * gradT(cell,qp,i);
         else
-          conv(cell,qp) += v[i] * gradT(cell,qp,i);
+          conv(cell,qp) += v(i) * gradT(cell,qp,i);
       }
     });
 
