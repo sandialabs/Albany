@@ -6,6 +6,7 @@
 
 #include "LandIce_ResponseSMBMismatch.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_KokkosUtils.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -91,6 +92,13 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
+
+  p_resp = decltype(p_resp)("SMB Mismatch p_resp", global_response_layout);
+  p_reg  = decltype(p_reg)("SMB Mismatch p_reg", global_response_layout);
+  p_misH = decltype(p_misH)("SMB Mismatch p_misH", global_response_layout);
+  this->addEvaluatedField(p_resp);
+  this->addEvaluatedField(p_reg);
+  this->addEvaluatedField(p_misH);
   Base::setup(p, dl);
 }
 
@@ -110,6 +118,10 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(tangents, fm);
 
   Base::postRegistrationSetup(d, fm);
+
+  resp = Kokkos::create_mirror_view(p_resp.get_view());
+  reg  = Kokkos::create_mirror_view(p_reg.get_view());
+  misH = Kokkos::create_mirror_view(p_misH.get_view());
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields());
 }
 
@@ -119,8 +131,9 @@ void ResponseSMBMismatch<EvalT, Traits, ThicknessScalarType>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   Kokkos::deep_copy(this->global_response_eval.get_view(), 0.0);
-
-  p_resp = p_reg = p_misH =0;
+  Kokkos::deep_copy(p_resp.get_view(), 0.0);
+  Kokkos::deep_copy(p_reg.get_view(), 0.0);
+  Kokkos::deep_copy(p_misH.get_view(), 0.0);
 
   // Do global initialization
   Base::preEvaluate(workset);
@@ -135,15 +148,15 @@ evaluateFields(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  Kokkos::deep_copy(this->local_response_eval.get_view(), 0.0);
 
-  if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
+  if (workset.sideSetViews->find(basalSideName) != workset.sideSetViews->end())
   {
     sideSet = workset.sideSetViews->at(basalSideName);
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                         KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
       // Get the local data of cell
-      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
+      const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
 
       ScalarT t = 0;
       for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
@@ -151,18 +164,19 @@ evaluateFields(typename Traits::EvalData workset)
         t += val*val*w_measure_2d(sideSet_idx,qp);
       }
 
-      this->local_response_eval(cell, 0) += t*scaling*alphaSMB;
-      this->global_response_eval(0) += t*scaling*alphaSMB;
-      p_resp += t*scaling*alphaSMB;
-    }
+      ScalarT result = t*scaling*alphaSMB;
+      KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);
+      KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
+      KU::atomic_add<ExecutionSpace>(&(this->p_resp(0)), result);
+    });
 
     // --------------- Regularization term  ----------------- //
     if (alpha!=0 || alphaH !=0)
     {
-      for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-      {
+      Kokkos::parallel_for(this->getName(),RangePolicy(0,sideSet.size),
+                           KOKKOS_CLASS_LAMBDA(const int& sideSet_idx) {
         // Get the local data of cell
-        const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
+        const int cell = sideSet.ws_elem_idx.view_device()(sideSet_idx);
         ScalarT tr = 0, tH =0;
         for (unsigned int qp=0; qp<numBasalQPs; ++qp)
         {
@@ -175,15 +189,16 @@ evaluateFields(typename Traits::EvalData workset)
           for (unsigned int idim=0; idim<2; ++idim)
             sum += grad_thickness_tmp[idim] * grad_thickness_tmp[idim];
           tr += sum * w_measure_2d(sideSet_idx,qp);
-          ScalarT val = (obs_thickness(sideSet_idx,qp)-thickness(sideSet_idx,qp))/thicknessRMS(sideSet_idx,qp); 
+          ScalarT val = (obs_thickness(sideSet_idx,qp)-thickness(sideSet_idx,qp))/thicknessRMS(sideSet_idx,qp);
           tH += val*val*w_measure_2d(sideSet_idx,qp);
         }
 
-        this->local_response_eval(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
-        this->global_response_eval(0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
-        p_reg += tr*scaling*alpha;
-        p_misH += tH*scaling*alphaH;
-      }
+        ScalarT result = (tr*alpha + tH*alphaH)*scaling;
+        KU::atomic_add<ExecutionSpace>(&(this->local_response_eval(cell, 0)), result);
+        KU::atomic_add<ExecutionSpace>(&(this->global_response_eval(0)), result);
+        KU::atomic_add<ExecutionSpace>(&(this->p_reg(0)), ScalarT(tr*scaling*alpha));
+        KU::atomic_add<ExecutionSpace>(&(this->p_misH(0)), ScalarT(tH*scaling*alphaH));
+      });
     }
   }
 
@@ -215,19 +230,19 @@ postEvaluate(typename Traits::PostEvalData workset)
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response_eval);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
-  resp = p_resp;
+  Kokkos::deep_copy(resp, p_resp.get_static_view());
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
-  reg = p_reg;
+  Kokkos::deep_copy(reg, p_reg.get_static_view());
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_misH);
-  misH = p_misH;
+  Kokkos::deep_copy(misH, p_misH.get_static_view());
 #endif
 
 #ifdef OUTPUT_TO_SCREEN
   if(workset.comm->getRank()   ==0)
-//    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
-  std::cout << "SMB, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) <<
-    ", misH: " <<Sacado::ScalarValue<ScalarT>::eval(misH) <<
-    ", reg: " <<Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+//    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp(0)) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg(0)) <<std::endl;
+  std::cout << "SMB, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp(0)) <<
+    ", misH: " <<Sacado::ScalarValue<ScalarT>::eval(misH(0)) <<
+    ", reg: " <<Sacado::ScalarValue<ScalarT>::eval(reg(0)) <<std::endl;
 #endif
 
   if (rank(*workset.comm) == 0) {
@@ -235,19 +250,19 @@ postEvaluate(typename Traits::PostEvalData workset)
     ofile.open("smb_mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
       //ofile << sqrt(this->global_response[0]);
-      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(resp);
+      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(resp(0));
       ofile.close();
     }
     ofile.open("thickness_mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
       //ofile << sqrt(this->global_response[0]);
-      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(misH);
+      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(misH(0));
       ofile.close();
     }
     ofile.open("thickness_regularization");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
       //ofile << sqrt(this->global_response[0]);
-      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(reg);
+      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(reg(0));
       ofile.close();
     }
   }

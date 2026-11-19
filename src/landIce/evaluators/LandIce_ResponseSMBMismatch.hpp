@@ -63,8 +63,14 @@ private:
   PHX::MDField<const MeshScalarT,Side,QuadPoint>                 w_measure_2d;
   PHX::MDField<const MeshScalarT,Side,QuadPoint,Dim,Dim>         tangents;
 
-  ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
+  PHX::MDField<ScalarT> p_resp, p_reg, p_misH;
+  using scalar_view_host_mirror = typename PHX::MDField<ScalarT>::array_type::host_mirror_type;
+  scalar_view_host_mirror resp, reg, misH;
   double scaling, alpha, alphaH, alphaSMB;
+
+public:
+  using ExecutionSpace = typename PHX::ExecutionSpace;
+  using RangePolicy = Kokkos::RangePolicy<ExecutionSpace>;
 };
 
 } // namespace LandIce

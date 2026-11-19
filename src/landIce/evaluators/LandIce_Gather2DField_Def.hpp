@@ -90,6 +90,28 @@ check_topology (const shards::CellTopology& cell_topo) {
   }
 }
 
+template<typename EvalT, typename Traits>
+void Gather2DField<EvalT, Traits>::
+copyToHost (const bool with_dot)
+{
+  // Copy the device data too, since side set gathers only overwrite some entries
+  field2D_h = Kokkos::create_mirror_view(field2D.get_view());
+  Kokkos::deep_copy(field2D_h, field2D.get_view());
+  if (with_dot) {
+    field2D_dot_h = Kokkos::create_mirror_view(field2D_dot.get_view());
+    Kokkos::deep_copy(field2D_dot_h, field2D_dot.get_view());
+  }
+}
+
+template<typename EvalT, typename Traits>
+void Gather2DField<EvalT, Traits>::
+copyToDevice (const bool with_dot)
+{
+  Kokkos::deep_copy(field2D.get_view(), field2D_h);
+  if (with_dot)
+    Kokkos::deep_copy(field2D_dot.get_view(), field2D_dot_h);
+}
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Gather2DField<EvalT, Traits>::
@@ -113,6 +135,8 @@ gatherValues (typename Traits::EvalData workset)
   const auto top = layers_data.top_side_pos;
   const auto bot = layers_data.bot_side_pos;
 
+  copyToHost(gather_xdot);
+
   if (extruded) {
 #ifdef ALBANY_DEBUG
     check_topology(dof_mgr->get_topology());
@@ -130,9 +154,9 @@ gatherValues (typename Traits::EvalData workset)
         const int num_nodes = nodes.size();
         for (int inode=0; inode<num_nodes; ++inode) {
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
-          field2D(cell,nodes[inode]) = x_data[ldof];
+          field2D_h(cell,nodes[inode]) = x_data[ldof];
           if(gather_xdot)
-            field2D_dot(cell,nodes[inode]) = xdot_data[ldof];
+            field2D_dot_h(cell,nodes[inode]) = xdot_data[ldof];
         }
       };
 
@@ -160,12 +184,14 @@ gatherValues (typename Traits::EvalData workset)
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
-        field2D(cell,nodes[i]) = x_data[ldof];
+        field2D_h(cell,nodes[i]) = x_data[ldof];
         if(gather_xdot)
-          field2D_dot(cell,nodes[i]) = xdot_data[ldof];
+          field2D_dot_h(cell,nodes[i]) = xdot_data[ldof];
       }
     }
   }
+
+  copyToDevice(gather_xdot);
 }
 
 //**********************************************************************
@@ -217,6 +243,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
   const int   neq = dof_mgr->getNumFields();
 
+  copyToHost(gather_xdot);
+
   if (extruded) {
 #ifdef ALBANY_DEBUG
     check_topology(dof_mgr->get_topology());
@@ -235,12 +263,12 @@ evaluateFields (typename PHALTraits::EvalData workset)
           LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
           int firstunk = neq*nodes[inode] + offset;
 
-          ref_t val = field2D(cell,nodes[inode]);
+          ref_t val = field2D_h(cell,nodes[inode]);
           val = ScalarT(val.size(),x_data[ldof]);
           val.setUpdateValue(!workset.ignore_residual);
           val.fastAccessDx(firstunk) = workset.j_coeff;
           if(gather_xdot) {
-            ref_t valdot = field2D_dot(cell,nodes[inode]);
+            ref_t valdot = field2D_dot_h(cell,nodes[inode]);
             valdot = ScalarT(valdot.size(),xdot_data[ldof]);
             valdot.fastAccessDx(firstunk) = workset.m_coeff;
           }
@@ -273,17 +301,19 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
-        ref_t val = field2D(cell,nodes[i]);
+        ref_t val = field2D_h(cell,nodes[i]);
         val = ScalarT(val.size(), x_data[ldof]);
         val.fastAccessDx(nodes[i]*neq + offset) = workset.j_coeff;
         if(gather_xdot) {
-          ref_t valdot = field2D_dot(cell,nodes[i]);
+          ref_t valdot = field2D_dot_h(cell,nodes[i]);
           valdot = ScalarT(valdot.size(),xdot_data[ldof]);
           valdot.fastAccessDx(nodes[i]*neq + offset) = workset.m_coeff;
         }
       }
     }
   }
+
+  copyToDevice(gather_xdot);
 }
 
 
@@ -320,6 +350,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
   const auto& elem_dof_lids = dof_mgr->elem_dof_lids().host();
   const auto& node_dof_mgr  = workset.disc->getNodeDOFManager();
 
+  copyToHost(gather_xdot);
+
   if (extruded) {
 #ifdef ALBANY_DEBUG
     check_topology(dof_mgr->get_topology());
@@ -337,7 +369,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
         for (int inode=0; inode<num_nodes; ++inode) {
           LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
 
-          ref_t val = field2D(cell,nodes[inode]);   
+          ref_t val = field2D_h(cell,nodes[inode]);   
           if (gather_Vx) {
             val = TanFadType(val.size(),x_data[ldof]);
             for (int k=0; k<workset.num_cols_x; ++k)
@@ -347,7 +379,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
           }
 
           if(gather_xdot) {
-            ref_t valdot = field2D_dot(cell,nodes[inode]);
+            ref_t valdot = field2D_dot_h(cell,nodes[inode]);
             if (gather_Vxdot) {
               valdot = TanFadType(valdot.size(),xdot_data[ldof]);
               for (int k=0; k<workset.num_cols_x; ++k)
@@ -385,7 +417,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
-        ref_t val = field2D(cell,nodes[i]);
+        ref_t val = field2D_h(cell,nodes[i]);
 
         if (gather_Vx) {
           val = TanFadType(val.size(),x_data[ldof]);
@@ -396,7 +428,7 @@ evaluateFields (typename PHALTraits::EvalData workset)
         }
 
         if(gather_xdot) {
-          ref_t valdot = field2D_dot(cell,nodes[i]);
+          ref_t valdot = field2D_dot_h(cell,nodes[i]);
           if (gather_Vxdot) {
             valdot = TanFadType(valdot.size(),xdot_data[ldof]);
             for (int k=0; k<workset.num_cols_x; ++k)
@@ -408,6 +440,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       }
     }
   }
+
+  copyToDevice(gather_xdot);
 }
 
 //**********************************************************************
@@ -470,6 +504,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
 
   const int   neq = dof_mgr->getNumFields();
 
+  copyToHost(gather_xdot);
+
   if (extruded) {
 #ifdef ALBANY_DEBUG
     check_topology(dof_mgr->get_topology());
@@ -489,11 +525,11 @@ evaluateFields (typename PHALTraits::EvalData workset)
         const int num_nodes = nodes.size();
         for (int inode=0; inode<num_nodes; ++inode) {
           const LO ldof = elem_dof_lids(field_elem_LID,field_nodes[inode]);
-          ref_t val = field2D(cell,nodes[inode]);
+          ref_t val = field2D_h(cell,nodes[inode]);
           val = HessianVecFad(val.size(), x_data[ldof]);
 
           if(gather_xdot)
-            field2D_dot(cell,nodes[inode]) = xdot_data[ldof];
+            field2D_dot_h(cell,nodes[inode]) = xdot_data[ldof];
 
           if (is_x_active) {
             int firstunk = neq*nodes[inode] + offset;
@@ -535,11 +571,11 @@ evaluateFields (typename PHALTraits::EvalData workset)
       const int numSideNodes = nodes.size();
       for (int i=0; i<numSideNodes; ++i){
         const LO ldof = elem_dof_lids(elem_LID,offsets[i]);
-        ref_t val = field2D(cell,nodes[i]);
+        ref_t val = field2D_h(cell,nodes[i]);
         val = HessianVecFad(val.size(), x_data[ldof]);
         
         if(gather_xdot)
-          field2D_dot(cell,nodes[i]) = xdot_data[ldof];
+          field2D_dot_h(cell,nodes[i]) = xdot_data[ldof];
         
         // If we differentiate w.r.t. the solution, we have to set the first
         // derivative to workset.j_coeff
@@ -552,6 +588,8 @@ evaluateFields (typename PHALTraits::EvalData workset)
       }
     }
   }
+
+  copyToDevice(gather_xdot);
 }
 
 } // namespace LandIce

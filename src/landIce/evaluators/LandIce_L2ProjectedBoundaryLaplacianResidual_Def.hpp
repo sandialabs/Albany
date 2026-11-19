@@ -119,36 +119,58 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
+  const auto solution       = this->solution.get_view();
+  const auto field          = this->field.get_view();
+  const auto gradField      = this->gradField.get_view();
+  const auto gradBF         = this->gradBF.get_view();
+  const auto w_side_measure = this->w_side_measure.get_view();
+  const auto side_tangents  = this->side_tangents.get_view();
+  const auto res            = bdLaplacian_L2Projection_res.get_view();
+  const auto sideNodes_d    = sideNodes.view_device();
+
+  const int numNodes     = this->numNodes;
+  const int numSideNodes = this->numSideNodes;
+  const int numBasalQPs  = this->numBasalQPs;
+  const int sideDim      = this->sideDim;
+  const double laplacian_coeff = this->laplacian_coeff;
+  const double mass_coeff      = this->mass_coeff;
+
   // First initialize the residual on all the nodes (to guarantee a non-singular Jacobian),
   // then overwrite the residual at the sidesets nodes with the correct value.
   // Note, this initialization works for Wedges but not for Tetrahedrons,
   // because a Tetrahedron might share a node with a basal side without sharing the side,
   // which would cause the residual to not being overwritten at those nodes.
-  for (unsigned int cell=0; cell<workset.numCells; ++cell)
-    for (unsigned int inode=0; inode<numNodes; ++inode)
-      bdLaplacian_L2Projection_res(cell,inode) = solution(cell,inode);
+  Kokkos::parallel_for(this->getName()+"_init",
+                       Kokkos::RangePolicy<PHX::Device::execution_space>(0,workset.numCells),
+                       KOKKOS_LAMBDA(const int cell) {
+    for (int inode=0; inode<numNodes; ++inode)
+      res(cell,inode) = solution(cell,inode);
+  });
 
   if (workset.sideSets->find(sideName) != workset.sideSets->end())
   {
     sideSet = workset.sideSetViews->at(sideName);
-    
-    for (int sideSet_idx = 0; sideSet_idx < sideSet.size; ++sideSet_idx)
-    {
+    const auto ws_elem_idx = sideSet.ws_elem_idx.view_device();
+    const auto side_pos    = sideSet.side_pos.view_device();
+
+    Kokkos::parallel_for(this->getName(),
+                         Kokkos::RangePolicy<PHX::Device::execution_space>(0,sideSet.size),
+                         KOKKOS_LAMBDA(const int sideSet_idx) {
       // Get the local data of side and cell
-      const int cell = sideSet.ws_elem_idx.view_host()(sideSet_idx);
-      const int side = sideSet.side_pos.view_host()(sideSet_idx);
+      const int cell = ws_elem_idx(sideSet_idx);
+      const int side = side_pos(sideSet_idx);
 
       MeshScalarT trapezoid_weights= 0;
-      for (unsigned int qp=0; qp<numBasalQPs; ++qp)
+      for (int qp=0; qp<numBasalQPs; ++qp)
         trapezoid_weights += w_side_measure(sideSet_idx, qp);
       trapezoid_weights /= numSideNodes;
 
-      for (unsigned int inode=0; inode<numSideNodes; ++inode) {
+      for (int inode=0; inode<numSideNodes; ++inode) {
         ScalarT t = 0;
-        for (unsigned int qp=0; qp<numBasalQPs; ++qp) {
-          for (unsigned int icoor=0; icoor<sideDim; ++icoor) {
+        for (int qp=0; qp<numBasalQPs; ++qp) {
+          for (int icoor=0; icoor<sideDim; ++icoor) {
             ScalarT gradField_i(0.0), gradBF_i(0.0);
-            for (unsigned int itan=0; itan<sideDim; ++itan) {
+            for (int itan=0; itan<sideDim; ++itan) {
               gradField_i += side_tangents(sideSet_idx,qp,icoor,itan)*gradField(sideSet_idx,qp,itan);
               gradBF_i    += side_tangents(sideSet_idx,qp,icoor,itan)*gradBF(sideSet_idx,inode,qp,itan);
             }
@@ -158,11 +180,21 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
         }
 
         //using trapezoidal rule to get diagonal mass matrix
-        t += (solution(cell,sideNodes.view_host()(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
+        t += (solution(cell,sideNodes_d(side,inode))-mass_coeff*field(sideSet_idx,inode))* trapezoid_weights;
 
-        bdLaplacian_L2Projection_res(cell,sideNodes.view_host()(side,inode)) = t;
+        res(cell,sideNodes_d(side,inode)) = t;
       }
-    }
+    });
+
+    // The boundary edges contributions use host-only side set data, so work on host copies of the fields
+    const auto toHost = [](const auto& v) {
+      auto v_h = Kokkos::create_mirror_view(v);
+      Kokkos::deep_copy(v_h,v);
+      return v_h;
+    };
+    const auto field_h    = toHost(field);
+    const auto coordVec_h = toHost(coordVec.get_view());
+    const auto res_h      = toHost(res);
 
     const auto  ss_disc = workset.disc->getSideSetDiscretizations().at(sideName);
     const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
@@ -195,7 +227,7 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
             unsigned int cell2d_nodes[2] = {cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_pos,0),cell2dType.getNodeMap(sideDim-1,it_bdEdge.side_pos,1)};
 
             unsigned int side_nodes[2];
-            for(unsigned int side_node=0; side_node < numSideNodes; ++side_node) {
+            for(int side_node=0; side_node < numSideNodes; ++side_node) {
               unsigned int cell2d_node = static_cast<unsigned int>(node_map[side_node]);
               if(cell2d_node == cell2d_nodes[0])
                 side_nodes[0] = side_node;
@@ -204,16 +236,18 @@ void LandIce::L2ProjectedBoundaryLaplacianResidualBase<EvalT, Traits, FieldScala
             }
 
             int cell_nodes[2] = {sideNodes.view_host()(side,side_nodes[0]),sideNodes.view_host()(side,side_nodes[1])};
-            MeshScalarT bdEdge_measure_sqr = (coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))*(coordVec(cell,cell_nodes[1],0)-coordVec(cell,cell_nodes[0],0))+(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1))*(coordVec(cell,cell_nodes[1],1)-coordVec(cell,cell_nodes[0],1));
+            MeshScalarT bdEdge_measure_sqr = (coordVec_h(cell,cell_nodes[1],0)-coordVec_h(cell,cell_nodes[0],0))*(coordVec_h(cell,cell_nodes[1],0)-coordVec_h(cell,cell_nodes[0],0))+(coordVec_h(cell,cell_nodes[1],1)-coordVec_h(cell,cell_nodes[0],1))*(coordVec_h(cell,cell_nodes[1],1)-coordVec_h(cell,cell_nodes[0],1));
             MeshScalarT bdEdge_measure = 0.0; 
             if (bdEdge_measure_sqr > 0.0) 
               bdEdge_measure = std::sqrt(bdEdge_measure_sqr); 
             for(int i=0; i<2; ++i) {
-              bdLaplacian_L2Projection_res(cell,cell_nodes[i]) -= robin_coeff*field(sideSet_idx,side_nodes[i])*bdEdge_measure/2.0;
+              res_h(cell,cell_nodes[i]) -= robin_coeff*field_h(sideSet_idx,side_nodes[i])*bdEdge_measure/2.0;
             }
           }
         }
       }
     }
+
+    Kokkos::deep_copy(res,res_h);
   }
 }
