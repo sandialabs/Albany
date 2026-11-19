@@ -9,6 +9,8 @@
 #include "Albany_LinearOpWithSolveDecorators.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
+#include <sstream>
+
 // The implementation of the conversion from numpy array to Kokkos view 
 // in both directions is based on:
 // https://github.com/sandialabs/compadre/blob/master/pycompadre/pycompadre.cpp
@@ -29,10 +31,28 @@ Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T> array) {
 
 // conversion of numpy arrays to kokkos arrays
 
+// The numpy array must have exactly the extents of the destination view:
+// the copy loops below do not check bounds.
+template<typename ViewType>
+void check_np_shape(const pybind11::array& array, const ViewType& view) {
+    for (int d=0; d<static_cast<int>(ViewType::rank); ++d) {
+        if (static_cast<std::size_t>(array.shape(d)) != static_cast<std::size_t>(view.extent(d))) {
+            std::ostringstream msg;
+            msg << "Error! The numpy array has shape (";
+            for (int k=0; k<static_cast<int>(ViewType::rank); ++k) msg << (k>0 ? ", " : "") << array.shape(k);
+            msg << "), but the expected shape is (";
+            for (int k=0; k<static_cast<int>(ViewType::rank); ++k) msg << (k>0 ? ", " : "") << view.extent(k);
+            msg << ").";
+            throw pybind11::value_error(msg.str());
+        }
+    }
+}
+
 template<typename ViewType>
 void convert_np_to_kokkos_1d(pybind11::array_t<typename ViewType::non_const_value_type> array,  ViewType kokkos_array_device) {
 
     auto np_array = array.template unchecked<1>();
+    check_np_shape(array, kokkos_array_device);
 
     auto kokkos_array_host = Kokkos::create_mirror_view(kokkos_array_device);
     Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, array.shape(0)), [&](int i) {
@@ -46,6 +66,7 @@ template<typename ViewType>
 void convert_np_to_kokkos_2d(pybind11::array_t<typename ViewType::non_const_value_type> array,  ViewType kokkos_array_device) {
 
     auto np_array = array.template unchecked<2>();
+    check_np_shape(array, kokkos_array_device);
 
     auto kokkos_array_host = Kokkos::create_mirror_view(kokkos_array_device);
     Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, array.shape(0)), [&](int i) {
