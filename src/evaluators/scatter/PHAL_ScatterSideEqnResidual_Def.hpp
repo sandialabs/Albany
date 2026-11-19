@@ -176,8 +176,8 @@ gatherSideSetNodeGIDs (const Albany::AbstractDiscretization& disc)
         for (int eq = 0; eq < this->numFields; eq++) {
           const auto& offsets = dof_mgr->getGIDFieldOffsets(eq+this->offset);
           for (auto o : offsets) {
-            if (all_ss_eqns_lids.count(dof_lids[o]>0)) {
-              ss_eqns_dofs_lids[ws].insert(dof_lids[0]);
+            if (all_ss_eqns_lids.count(dof_lids[o])>0) {
+              ss_eqns_dofs_lids[ws].insert(dof_lids[o]);
             }
           }
         }
@@ -551,7 +551,7 @@ doEvaluateFields(typename Traits::EvalData workset,
     if (trans) {
       const int num_deriv = numNodes;
       for (int i=0; i<num_deriv; ++i) {
-        const LO row = p_elem_dof_lids(icell,i);
+        const LO row = p_elem_dof_lids(elem_LID,i);
         if (row<0) {
           continue;
         }
@@ -569,7 +569,7 @@ doEvaluateFields(typename Traits::EvalData workset,
         }
       }
     } else {
-      const int num_deriv = local_Vp.size();
+      const int num_deriv = local_Vp.extent(1);
 
       for (int inode=0; inode<numNodes; ++inode) {
         for (int eq=0; eq<this->numFields; ++eq) {
