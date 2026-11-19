@@ -113,7 +113,6 @@ setSolutionFieldsMetadata (int neq)
   if (save_solution_field) {
     solution_field.resize(num_time_deriv + 1);
     solution_field_dtk.resize(num_time_deriv + 1);
-    solution_field_dxdp.resize(num_params);
 
     for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
       const auto& name = params->get(sol_tag_name[num_vecs],sol_id_name[num_vecs]);
@@ -129,11 +128,14 @@ setSolutionFieldsMetadata (int neq)
 
   //Transient sensitivities output to Exodus
   if(output_sens_field) {
+    // For Adjoint, only one sensitivity field is registered (one parameter at a time);
+    // for Forward, one field per parameter.  Size the container to the number of
+    // fields that are actually added so that callers can safely iterate over it.
     const int num_sens = (sens_method == "Forward") ? num_params : 1;
+    solution_field_dxdp.resize(num_sens);
     for (int np = 0; np < num_sens; np++) {
       const auto sens_name = params->get(sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]);
       solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,ncmp,ncopies);
-
     }
   }
 }
@@ -209,13 +211,14 @@ saveSolnVector (const Thyra_Vector& soln,
   }
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
+    const int num_sens = static_cast<int>(solution_field_dxdp.size());
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
-      "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
-      "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << num_params << "\n");
+      soln_dxdp->domain()->dim() < num_sens, std::runtime_error,
+      "Error in saveSolnVector! Not enough vectors in soln_dxdp.\n"
+      "  - num vectors   : " << soln_dxdp->domain()->dim() << "\n"
+      "  - num sens fields: " << num_sens << "\n");
 
-    for (int np = 0; np < num_params; np++) {
+    for (int np = 0; np < num_sens; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }
@@ -259,13 +262,14 @@ saveSolnMultiVector (const Thyra_MultiVector& soln,
   }
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
+    const int num_sens = static_cast<int>(solution_field_dxdp.size());
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
-      "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
-      "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << num_params << "\n");
+      soln_dxdp->domain()->dim() < num_sens, std::runtime_error,
+      "Error in saveSolnMultiVector! Not enough vectors in soln_dxdp.\n"
+      "  - num vectors   : " << soln_dxdp->domain()->dim() << "\n"
+      "  - num sens fields: " << num_sens << "\n");
 
-    for (int np = 0; np < num_params; np++) {
+    for (int np = 0; np < num_sens; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }
