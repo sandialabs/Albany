@@ -55,9 +55,9 @@ observeSolution(double stamp,
   Teuchos::Ptr<const Thyra_Vector> x_dot,x_dotdot;
 
   int x_ncols = x.domain()->dim();
-  if (x_ncols==1) {
+  if (x_ncols==2) {
     x_dot = x.col(1).ptr();
-  } else if (x_ncols==2) {
+  } else if (x_ncols>=3) {
     x_dot = x.col(1).ptr();
     x_dotdot = x.col(2).ptr();
   }
