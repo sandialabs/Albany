@@ -192,14 +192,14 @@ operator() (const LandIce_3D_Tag&, const int& cell) const{
     MeshScalarT invh_y = y/2.0/R2;
 
     ScalarT strs00 = 2*mu*(Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1)); //epsilon_xx
-    ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1)); //epsilon_xy
+    ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_y*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_x*U(cell,qp,1)); //epsilon_xy
     ScalarT strs02 = mu*Ugrad(cell,qp,0,2); //epsilon_xz
     ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
     ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
 
     for (unsigned int node=0; node < numNodes; ++node) {
       ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
-      ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
+      ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
       ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
       ScalarT epsb11 = -invh_x*wBF(cell,node,qp); //epsilon_yy
       ScalarT epsb12 = 0;
@@ -211,7 +211,7 @@ operator() (const LandIce_3D_Tag&, const int& cell) const{
                                 (strs00+strs11)*(epsb00+epsb11)*h2;
 
       epsb00 = -invh_y*wBF(cell,node,qp); //epsilon_xx
-      epsb01 = (wGradBF(cell,node,qp,0)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
+      epsb01 = (wGradBF(cell,node,qp,0)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
       epsb02 = 0;
       epsb11 = wGradBF(cell,node,qp,1)/h; //epsilon_yy
       epsb12 = wGradBF(cell,node,qp,2)/2.0; //epsilon_yz
