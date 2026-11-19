@@ -114,10 +114,9 @@ evaluateFields(typename Traits::EvalData workset)
   // Copy all the data needed in the kernel to local variables, so it can be captured by value
   TEUCHOS_TEST_FOR_EXCEPTION (numDims>3, std::logic_error,
       "Error! AdvDiffResid only supports up to 3 spatial dimensions.\n");
-  double b[3] = {0.0, 0.0, 0.0};
-  for (std::size_t idim=0; idim<numDims; ++idim)
-    b[idim] = beta[idim];
-  const double b0 = b[0], b1 = b[1], b2 = b[2];
+  const double b0 = numDims>0 ? beta[0] : 0.0;
+  const double b1 = numDims>1 ? beta[1] : 0.0;
+  const double b2 = numDims>2 ? beta[2] : 0.0;
   const double visc = mu;
   const int nqp   = numQPs;
   const int ndims = numDims;
@@ -138,46 +137,57 @@ evaluateFields(typename Traits::EvalData workset)
   const int nnodes = numNodes;
   Kokkos::parallel_for(this->getName(), Policy({0,0},{numCells,nnodes}),
                        KOKKOS_LAMBDA(const int cell, const int node) {
-    const double bt[3] = {b0, b1, b2};
+    // NOTE: avoid local arrays indexed with runtime indices, since they may be
+    //       placed in (slow) scratch memory on GPUs, rather than in registers
+    auto bt = [&](const int idim) -> double {
+      return idim==0 ? b0 : (idim==1 ? b1 : b2);
+    };
+
     // Accumulate in local variables, and write to the residual only once
-    ScalarT r[4] = {0.0, 0.0, 0.0, 0.0};
+    ScalarT r0 = 0, r1 = 0, r2 = 0, r3 = 0;
 
     if (form==0) { //standard form of advection-diffusion equation
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + beta*grad(u) - mu*delta(u) = 0
-        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp);
+        r0 += udot(cell,qp,0)*w_bf(cell,node,qp);
         for (int idim=0; idim<ndims; ++idim) {
-          r[0] += bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
-                  visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+          r0 += bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp) +
+                visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
         }
       }
     } else if (form==1) { //augmented form of advection diffusion equation, type 1
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + beta*q - mu*div(q) = 0
-        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp);
+        r0 += udot(cell,qp,0)*w_bf(cell,node,qp);
         for (int idim=0; idim<ndims; ++idim) {
-          r[0] += bt[idim]*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
-                  visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
+          r0 += bt(idim)*u(cell,qp,idim+1)*w_bf(cell,node,qp) +
+                visc*u(cell,qp,idim+1)*w_gradbf(cell,node,qp,idim);
         }
         //q - grad(u) = 0
-        r[1] += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
-        r[2] += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
+        r1 += u(cell,qp,1)*w_bf(cell,node,qp) - ugrad(cell,qp,0,0)*w_bf(cell,node,qp);
+        r2 += u(cell,qp,2)*w_bf(cell,node,qp) - ugrad(cell,qp,0,1)*w_bf(cell,node,qp);
       }
     } else { //augmented form of advection diffusion equation, type 2
+      //q - beta*grad(u) + mu*delta(u) = 0
+      auto q_term = [&](const int qp, const int idim) -> ScalarT {
+        return u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt(idim)*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
+             - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
+      };
       for (int qp=0; qp < nqp; ++qp) {
         //du/dt + q = 0
-        r[0] += udot(cell,qp,0)*w_bf(cell,node,qp) +
-                u(cell,qp,1)*w_bf(cell,node,qp) +
-                u(cell,qp,2)*w_bf(cell,node,qp);
-        //q - beta*grad(u) + mu*delta(u) = 0
-        for (int idim=0; idim<ndims; ++idim) {
-          r[idim+1] += u(cell,qp,idim+1)*w_bf(cell,node,qp) - bt[idim]*ugrad(cell,qp,0,idim)*w_bf(cell,node,qp)
-                       - visc*ugrad(cell,qp,0,idim)*w_gradbf(cell,node,qp,idim);
-        }
+        r0 += udot(cell,qp,0)*w_bf(cell,node,qp) +
+              u(cell,qp,1)*w_bf(cell,node,qp) +
+              u(cell,qp,2)*w_bf(cell,node,qp);
+        if (ndims>0) r1 += q_term(qp,0);
+        if (ndims>1) r2 += q_term(qp,1);
+        if (ndims>2) r3 += q_term(qp,2);
       }
     }
-    for (int i=0; i<vdim; i++)
-      res(cell,node,i) = r[i];
+
+    res(cell,node,0) = r0;
+    if (vdim>1) res(cell,node,1) = r1;
+    if (vdim>2) res(cell,node,2) = r2;
+    if (vdim>3) res(cell,node,3) = r3;
   });
 }
 
