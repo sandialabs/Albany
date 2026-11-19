@@ -917,7 +917,13 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
         }
       }
 
-      copyCoordsToViews(m_coords_d, mdim, num_ents, x, y, z);
+      // vs is built from the owned vertices (getOwnedEntityGids), while m_coords_d holds the
+      // vertices in the closure of the owned elements, in a different order on multiple ranks:
+      // use the coordinates of the owned vertices, in the same order as vs.
+      auto owned_coords = OmegahGhost::getOwnedVtxCoords(*m_mesh);
+      TEUCHOS_TEST_FOR_EXCEPTION (owned_coords.size()!=mdim*num_ents, std::logic_error,
+          "Error! Unexpected number of owned vertex coordinates.\n");
+      copyCoordsToViews(owned_coords.view(), mdim, num_ents, x, y, z);
 
       field_mv = computeField (fname, fparams, x, y, z, vs, nodal, scalar, layered, out);
     } else {
