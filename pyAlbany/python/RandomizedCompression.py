@@ -280,12 +280,12 @@ def HODLR(Op, L, k, comm = utils.getDefaultComm()):
          z_view = z.getLocalView()
          for lvl in range(l):
              for j in range(2**lvl):
-                 VTomega = utils.innerMVector(Vs[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTomega)).getLocalView()
+                 VTqy = utils.innerMVector(Vs[lvl][j], qy)
+                 x_view[:, :] = utils.innerMVectorMat(Us[lvl][j], np.diag(Sigs[lvl][j]).dot(VTqy)).getLocalView()
                  z_view[:, :] = z_view[:, :] - x_view[:, :]
 
-                 UTomega = utils.innerMVector(Us[lvl][j], omega)
-                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTomega)).getLocalView()
+                 UTqy = utils.innerMVector(Us[lvl][j], qy)
+                 x_view[:, :] = utils.innerMVectorMat(Vs[lvl][j], np.diag(Sigs[lvl][j]).dot(UTqy)).getLocalView()
                  z_view[:, :] = z_view[:, :] - x_view[:, :]
          # zero out unneeded rows
          for j in range(0, numPartitions, 2):
