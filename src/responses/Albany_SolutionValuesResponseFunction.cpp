@@ -201,11 +201,11 @@ evaluateTangent(const double /*alpha*/,
 
   if (!gx.is_null()) {
     TEUCHOS_TEST_FOR_EXCEPT(Vx.is_null());
-    // Import the selected gids (only if not already done for the response)
-    if (g.is_null()) {
-      cas_manager->scatter(*x,*culledVec,CombineMode::INSERT);
-    }
+    // For each tangent direction i, scatter Vx->col(i) through the same
+    // CAS manager that selects the culled entries of x, giving
+    // gx->col(i) = beta * S * Vx->col(i)  (S is the selection operator).
     for (int i=0; i<Vx->domain()->dim(); ++i) {
+      cas_manager->scatter(*Vx->col(i),*culledVec,CombineMode::INSERT);
       getNonconstLocalData(gx->col(i)).deepCopy(getLocalData(culledVec.getConst())());
     }
     if (beta != 1.0) {
