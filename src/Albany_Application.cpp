@@ -3395,9 +3395,10 @@ Application::setScaleBCDofs(
     const auto& sol_dof_mgr   = disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
+    // ns_offsets[j] is the index of the j-th equation constrained on this nodeset
     std::vector<std::vector<int>> sol_offsets(ns_offsets.size());
     for (unsigned j=0; j<ns_offsets.size(); ++j) {
-      sol_offsets[j] = sol_dof_mgr->getGIDFieldOffsets(j);
+      sol_offsets[j] = sol_dof_mgr->getGIDFieldOffsets(ns_offsets[j]);
     }
     for (const auto& ep : ns_node_elem_pos) {
       const int ielem = ep.first;
@@ -3405,7 +3406,7 @@ Application::setScaleBCDofs(
       // std::cout << "IKTIKT ns, offsets size: " << ns << ", " <<
       // offsets_[ns].size() << "\n";
       for (unsigned j=0; j<ns_offsets.size(); ++j) {
-        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[ns_offsets[j]][pos]);
+        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[j][pos]);
         scaleVecLocalData[x_lid] = scale;
       }
     }
