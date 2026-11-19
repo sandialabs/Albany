@@ -388,12 +388,18 @@ namespace PyAlbany
         void getCovarianceMatrix(double* C, int n, int m)
         {
             auto responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
+            TEUCHOS_TEST_FOR_EXCEPTION (n!=m, std::invalid_argument,
+                "Error! The covariance matrix must be square (got " << n << "x" << m << ").\n");
             int total_dimension = n;
 
             Teuchos::TwoDArray<double> C_data(total_dimension, total_dimension, 0);
-            if (responseParams.isParameter("Covariance Matrix"))
+            if (responseParams.isParameter("Covariance Matrix")) {
                 C_data = responseParams.get<Teuchos::TwoDArray<double>>("Covariance Matrix");
-            else
+                TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(C_data.getNumRows())!=n ||
+                                            static_cast<int>(C_data.getNumCols())!=n, std::invalid_argument,
+                    "Error! The covariance matrix is " << C_data.getNumRows() << "x" << C_data.getNumCols()
+                    << ", but the output array is " << n << "x" << m << ".\n");
+            } else
                 for (int i=0; i<total_dimension; i++)
                     C_data(i,i) = 1.;
             for (int i=0; i<n; i++)
@@ -403,7 +409,9 @@ namespace PyAlbany
 
         void setCovarianceMatrix(double* C, int n, int m)
         {
-            auto responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
+            auto& responseParams = albanyApp->getAppPL()->sublist("Problem").sublist("Responses").sublist("Response 0").sublist("Response 0");
+            TEUCHOS_TEST_FOR_EXCEPTION (n!=m, std::invalid_argument,
+                "Error! The covariance matrix must be square (got " << n << "x" << m << ").\n");
             int total_dimension = n;
 
             Teuchos::TwoDArray<double> C_data(total_dimension, total_dimension, 0);
