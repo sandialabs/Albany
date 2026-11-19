@@ -15,6 +15,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Albany_SacadoTypes.hpp"
 
 namespace PHAL
 {
@@ -78,6 +79,19 @@ public:
 
   typedef Kokkos::RangePolicy<ExecutionSpace, Dim2_Tag> Dim2_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, Dim3_Tag> Dim3_Policy;
+
+  // The regularization: either a given value, or computed from the (device) parameter field
+  KOKKOS_INLINE_FUNCTION
+  ScalarT get_regularization () const {
+    if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL) {
+      const EScalarT param_val = regularizationParam(0);
+      const ScalarT param = Albany::convertScalar<ScalarT>(param_val);
+      if (regularization_type==GIVEN_PARAMETER)
+        return param;
+      return pow(10.0, -10.0*param);
+    }
+    return regularization;
+  }
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const Dim2_Tag& tag, const int& sideSet_idx) const;
