@@ -4,6 +4,7 @@
 #include "Albany_ThyraUtils.hpp"
 
 #include <algorithm>
+#include <limits>
 
 #include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
@@ -199,6 +200,11 @@ readVectorFileSerial (const std::string& fname,
     TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
         Teuchos::Exceptions::InvalidParameterValue,
         "[readVectorFileSerial] Error! First line of the file should cointain two integers.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (numComponents<=0,
+        Teuchos::Exceptions::InvalidParameterValue,
+        "[readVectorFileSerial] Error! Invalid number of components.\n"
+        "  - file name: " << fname << "\n"
+        "  - number of components in file: " << numComponents << "\n");
   }
 
   Teuchos::broadcast(*comm,0,1,&numComponents);
@@ -314,6 +320,13 @@ readLayeredVectorFileSerial (const std::string &fname,
     TEUCHOS_TEST_FOR_EXCEPTION (iss.fail(),
       Teuchos::Exceptions::InvalidParameterValue,
         "[readLayeredVectorFileSerial] Error! First line of the file should cointain three integers.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (numComponents<=0 || numLayers<=0 ||
+                                numComponents>std::numeric_limits<int>::max()/numLayers,
+        Teuchos::Exceptions::InvalidParameterValue,
+        "[readLayeredVectorFileSerial] Error! Invalid number of components or layers.\n"
+        "  - file name: " << fname << "\n"
+        "  - number of components in file: " << numComponents << "\n"
+        "  - number of layers in file: " << numLayers << "\n");
 
     numVectors = numLayers*numComponents;
   }

@@ -774,12 +774,19 @@ loadRequiredInputFields (const Teuchos::RCP<const Teuchos_Comm>& comm,
     stk::mesh::EntityId gid;
     LO lid;
     auto indexer = createGlobalLocalIndexer(vs);
+    const int num_components = field_mv_view.size();
     for (unsigned int i(0); i<entities.size(); ++i) {
       double* values = stk::mesh::field_data(*stk_field, entities[i]);
 
+      // The number of components comes from the input (e.g., a file header): it must fit the mesh field
+      const int field_size = stk::mesh::field_scalars_per_entity(*stk_field, entities[i]);
+      TEUCHOS_TEST_FOR_EXCEPTION (num_components>field_size, std::runtime_error,
+          "Error! Field '" << fname << "' was loaded with " << num_components << " components,\n"
+          "       but the mesh field only stores " << field_size << " values per entity.\n");
+
       gid = bulkData->identifier(entities[i]) - 1;
       lid = indexer->getLocalElement(GO(gid));
-      for (int iDim(0); iDim<field_mv_view.size(); ++iDim) {
+      for (int iDim(0); iDim<num_components; ++iDim) {
         values[iDim] = field_mv_view[iDim][lid];
       }
     }
