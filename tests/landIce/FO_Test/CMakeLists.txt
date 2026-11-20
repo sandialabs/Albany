@@ -230,9 +230,7 @@ ENDIF()
 
 # Adaptive-mesh MISMIP tests (Omega_h + SPR, indicator: effective strain rate).
 # The basal mesh is converted from the exodus file to an osh file.
-# TODO: these tests are DISABLED because they have never been run: once a first run
-#       confirms the SPR parameters and gives reference values (add a regression
-#       block to the yaml files), remove DISABLED.
+# TODO: add a regression block to the yaml files once reference values are available.
 if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   set (testNameMismipOsh ${testNameRoot}_MISMIP_CreateOsh)
   add_test (NAME ${testNameMismipOsh}
@@ -249,8 +247,7 @@ if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_EN
     add_test(${testName} ${SerialAlbany.exe} ${mismipAdaptInput}.yaml)
     set_tests_properties(${testName} PROPERTIES
           LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation"
-          FIXTURES_REQUIRED MismipOshMeshSetup
-          DISABLED TRUE)
+          FIXTURES_REQUIRED MismipOshMeshSetup)
   endforeach()
 endif()
 

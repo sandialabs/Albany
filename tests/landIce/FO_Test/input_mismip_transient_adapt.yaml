@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
-# MISMIP adaptive-mesh variant (Omega_h + SPR). UNVERIFIED: never run; SPR parameters
-# are guesses and the regression value must be generated from a first real run.
+# MISMIP adaptive-mesh variant (Omega_h + SPR). Smoke test: no regression value yet.
+# The SPR parameters are initial guesses; check the SPR error printed (Verbose) to tune them.
 ANONYMOUS:
   Debug Output:
           #Write Solution to MatrixMarket: -1
@@ -110,7 +110,7 @@ ANONYMOUS:
           Indicator Field Name: effective_strain_rate
           # NOTE: the values below are initial guesses (mesh units: km, base mesh h~1.9km)
           Adapt Ratio: 1.0
-          Error Threshold: 0.3
+          Error Threshold: 0.05
           Minimum Edge Length: 0.5
           Maximum Edge Length: 10.0
           Write VTK Files: false
