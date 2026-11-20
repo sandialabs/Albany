@@ -139,6 +139,31 @@ IF(NOT Kokkos_ENABLE_CUDA)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Explicit" FIXTURES_REQUIRED MismipMeshSetup2d)
 ENDIF()
 
+# Adaptive-mesh MISMIP tests (Omega_h + SPR, indicator: effective strain rate).
+# The basal mesh is converted from the exodus file to an osh file.
+# TODO: these tests are DISABLED until ExtrudedDiscretization supports mesh adaptation
+#       (currently throws NotYetImplemented), and regression values are generated.
+if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS)
+  set (testNameMismipOsh ${testNameRoot}_MISMIP_CreateOsh)
+  add_test (NAME ${testNameMismipOsh}
+        COMMAND ${OMEGAH_EXO2OSH} mismip_2d.exo mismip_2d.osh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP)
+  set_tests_properties (${testNameMismipOsh} PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;Adapt"
+        FIXTURES_SETUP MismipOshMeshSetup)
+
+  foreach (mismipAdaptInput input_mismip_transient_adapt input_mismip_transient_expl_adapt)
+    set (testName ${testNameRoot}_${mismipAdaptInput})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${mismipAdaptInput}.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/${mismipAdaptInput}.yaml)
+    add_test(${testName} ${Albany.exe} ${mismipAdaptInput}.yaml)
+    set_tests_properties(${testName} PROPERTIES
+          LABELS "LandIce;Forward;Omega_h;Adapt"
+          FIXTURES_REQUIRED MismipOshMeshSetup
+          DISABLED TRUE)
+  endforeach()
+endif()
+
 
 
 ######################
