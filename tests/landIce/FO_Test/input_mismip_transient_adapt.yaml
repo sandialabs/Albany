@@ -100,7 +100,7 @@ ANONYMOUS:
       basalside:
         Method: Omegah
         Mesh Creation Method: OshFile
-        Input Filename: ../AsciiMeshes/MISMIP/mismip_2d.osh
+        Input Filename: ../AsciiMeshes/MISMIP_coarse/mismip_2d.osh
         Number Of Time Derivatives: 1
         Mark Parts: [boundary_side_set, boundary_side_set_1, boundary_side_set_2, boundary_node_set_1, boundary_node_set_3]
         Mesh Adaptivity:
@@ -108,11 +108,12 @@ ANONYMOUS:
           # The indicator is the effective strain rate computed by the FO problem;
           # it is large around the grounding line, where we want a finer mesh.
           Indicator Field Name: effective_strain_rate
-          # NOTE: the values below are initial guesses (mesh units: km, base mesh h~1.9km)
+          # NOTE: initial guesses (mesh units: km, coarse base mesh h~10km). Edge lengths are
+          # bounded to [h/2, 2h] so the mesh (and the direct solve) stays small.
           Adapt Ratio: 1.0
           Error Threshold: 0.05
-          Minimum Edge Length: 0.5
-          Maximum Edge Length: 10.0
+          Minimum Edge Length: 5.0
+          Maximum Edge Length: 20.0
           Write VTK Files: false
           Verbose: true
         Required Fields Info:
@@ -121,17 +122,17 @@ ANONYMOUS:
             Field Name: ice_thickness
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/MISMIP/thickness.ascii
+            File Name: ../AsciiMeshes/MISMIP_coarse/thickness.ascii
           Field 1:
             Field Name: surface_height
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/MISMIP/surface_height.ascii
+            File Name: ../AsciiMeshes/MISMIP_coarse/surface_height.ascii
           Field 2:
             Field Name: bed_topography
             Field Type: Node Scalar
             Field Origin: File
-            File Name: ../AsciiMeshes/MISMIP/bed_topography.ascii
+            File Name: ../AsciiMeshes/MISMIP_coarse/bed_topography.ascii
           Field 3:
             Field Name: thickness_forcing
             Field Type: Node Scalar
@@ -155,7 +156,7 @@ ANONYMOUS:
           Initial Time: 0.0
           Initial Time Index: 0
           Initial Time Step: 0.1
-          Final Time: 1.0
+          Final Time: 0.3
           #Final Time Index: 1000
           Maximum Absolute Error: 1.0e-08
           Maximum Relative Error: 1.0e-08
@@ -188,7 +189,7 @@ ANONYMOUS:
                 Tolerance: 1.0e-04
               Test 1:
                 Test Type: MaxIters
-                Maximum Iterations: 100
+                Maximum Iterations: 30
             Direction:
               Method: Newton
               Newton:

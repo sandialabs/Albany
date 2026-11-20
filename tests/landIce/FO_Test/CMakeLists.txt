@@ -229,13 +229,14 @@ IF(NOT Kokkos_ENABLE_CUDA)
 ENDIF()
 
 # Adaptive-mesh MISMIP tests (Omega_h + SPR, indicator: effective strain rate).
-# The basal mesh is converted from the exodus file to an osh file.
+# The basal mesh is the coarse MISMIP mesh, converted from the exodus file to an osh file.
+# A TIMEOUT bounds the run time, since adaptation can make a run much more expensive.
 # TODO: add a regression block to the yaml files once reference values are available.
 if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   set (testNameMismipOsh ${testNameRoot}_MISMIP_CreateOsh)
   add_test (NAME ${testNameMismipOsh}
         COMMAND ${OMEGAH_EXO2OSH} mismip_2d.exo mismip_2d.osh
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP)
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP_coarse)
   set_tests_properties (${testNameMismipOsh} PROPERTIES
         LABELS "LandIce;Forward;Omega_h;Adaptation"
         FIXTURES_SETUP MismipOshMeshSetup)
@@ -247,7 +248,8 @@ if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_EN
     add_test(${testName} ${SerialAlbany.exe} ${mismipAdaptInput}.yaml)
     set_tests_properties(${testName} PROPERTIES
           LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation"
-          FIXTURES_REQUIRED MismipOshMeshSetup)
+          FIXTURES_REQUIRED MismipOshMeshSetup
+          TIMEOUT 900)
   endforeach()
 endif()
 
