@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
-# MISMIP adaptive-mesh variant (Omega_h + SPR). UNVERIFIED: needs ExtrudedDiscretization
-# adaptation support, and the regression value must be generated once that works.
+# MISMIP adaptive-mesh variant (Omega_h + SPR). UNVERIFIED: never run; SPR parameters
+# are guesses and the regression value must be generated from a first real run.
 ANONYMOUS:
   Debug Output:
           #Write Solution to MatrixMarket: -1
@@ -77,18 +77,6 @@ ANONYMOUS:
     Thickness Field Name: ice_thickness
     Use Glimmer Spacing: true
     Extrude Basal Fields: [ice_thickness, surface_height, bed_topography, thickness_forcing]
-    # Mesh adaptation (Omega_h, SPR). The indicator defaults to the effective strain rate,
-    # which is large around the grounding line: that is where we want a finer mesh.
-    # NOTE: the numeric values below are initial guesses (mesh units: km, base mesh h~1.9km)
-    Mesh Adaptivity:
-      Type: SPR
-      Indicator Field Name: effective_strain_rate
-      Adapt Ratio: 1.0
-      Error Threshold: 0.3
-      Minimum Edge Length: 0.5
-      Maximum Edge Length: 10.0
-      Write VTK Files: false
-      Verbose: true
     Required Fields Info:
       Number Of Fields: 4
       Field 0:
@@ -115,6 +103,18 @@ ANONYMOUS:
         Input Filename: ../AsciiMeshes/MISMIP/mismip_2d.osh
         Number Of Time Derivatives: 1
         Mark Parts: [boundary_side_set, boundary_side_set_1, boundary_side_set_2, boundary_node_set_1, boundary_node_set_3]
+        Mesh Adaptivity:
+          Type: SPR # superconvergent patch recovery
+          # The indicator is the effective strain rate computed by the FO problem;
+          # it is large around the grounding line, where we want a finer mesh.
+          Indicator Field Name: effective_strain_rate
+          # NOTE: the values below are initial guesses (mesh units: km, base mesh h~1.9km)
+          Adapt Ratio: 1.0
+          Error Threshold: 0.3
+          Minimum Edge Length: 0.5
+          Maximum Edge Length: 10.0
+          Write VTK Files: false
+          Verbose: true
         Required Fields Info:
           Number Of Fields: 4
           Field 0:

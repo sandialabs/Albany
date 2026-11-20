@@ -230,24 +230,25 @@ ENDIF()
 
 # Adaptive-mesh MISMIP tests (Omega_h + SPR, indicator: effective strain rate).
 # The basal mesh is converted from the exodus file to an osh file.
-# TODO: these tests are DISABLED until ExtrudedDiscretization supports mesh adaptation
-#       (currently throws NotYetImplemented), and regression values are generated.
-if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS)
+# TODO: these tests are DISABLED because they have never been run: once a first run
+#       confirms the SPR parameters and gives reference values (add a regression
+#       block to the yaml files), remove DISABLED.
+if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   set (testNameMismipOsh ${testNameRoot}_MISMIP_CreateOsh)
   add_test (NAME ${testNameMismipOsh}
         COMMAND ${OMEGAH_EXO2OSH} mismip_2d.exo mismip_2d.osh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP)
   set_tests_properties (${testNameMismipOsh} PROPERTIES
-        LABELS "LandIce;Forward;Omega_h;Adapt"
+        LABELS "LandIce;Forward;Omega_h;Adaptation"
         FIXTURES_SETUP MismipOshMeshSetup)
 
   foreach (mismipAdaptInput input_mismip_transient_adapt input_mismip_transient_expl_adapt)
     set (testName ${testNameRoot}_${mismipAdaptInput})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${mismipAdaptInput}.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/${mismipAdaptInput}.yaml)
-    add_test(${testName} ${Albany.exe} ${mismipAdaptInput}.yaml)
+    add_test(${testName} ${SerialAlbany.exe} ${mismipAdaptInput}.yaml)
     set_tests_properties(${testName} PROPERTIES
-          LABELS "LandIce;Forward;Omega_h;Adapt"
+          LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation"
           FIXTURES_REQUIRED MismipOshMeshSetup
           DISABLED TRUE)
   endforeach()
