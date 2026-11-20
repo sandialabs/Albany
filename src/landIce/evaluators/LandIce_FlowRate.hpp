@@ -49,6 +49,15 @@ private:
   PHX::MDField<TempST,Cell> flowRate; // [Pa^{-n} s^{-1}]
 
   double A; //[Pa^{-n} s^{-1}]
+
+  // Arrhenius relationship, used when the flow rate is temperature based
+  double actenh;     // [J mol^{-1}]
+  double actenl;     // [J mol^{-1}]
+  double gascon;     // [J mol^{-1} K^{-1}]
+  double switchingT; // [K]
+  double arrmlh;     // [Pa^{-n} s^{-1}]
+  double arrmll;     // [Pa^{-n} s^{-1}]
+
   enum FlowRateType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};
   FlowRateType flowRate_type;
 };

@@ -1,12 +1,23 @@
-#!/bin/csh
+#!/bin/bash
 
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterSerial
 
 cd ${BASE_DIR}/repos/compass
 
-./conda/configure_compass_env.py --conda ${BASE_DIR}/build/compass --env_only -m pm-cpu |& tee configure_compass_env_output.txt
-LOAD_DEV_FILENAME=`grep 'load_dev' configure_compass_env_output.txt | sed 's/ //g'`
-source $LOAD_DEV_FILENAME
+# compass now deploys with ./deploy.py (pixi + mache.deploy); pixi must be on
+# PATH or at ~/.pixi/bin/pixi
+# pixi/rattler lock their cache; /global/homes does not support those locks
+# from scron (os error 524), so keep the cache on pscratch
+export PIXI_CACHE_DIR=${BASE_DIR}/pixi_cache
+export RATTLER_CACHE_DIR=${PIXI_CACHE_DIR}
+git submodule update --init jigsaw-python
+./deploy.py --machine pm-cpu --compiler gnu --mpi mpich --no-spack --pixi-path ${BASE_DIR}/build/compass --recreate 2>&1 | tee deploy_compass_output.txt
+LOAD_SCRIPT=`ls -t ${BASE_DIR}/repos/compass/load_compass_pm-cpu*.sh 2>/dev/null | head -1`
+if [ -z "${LOAD_SCRIPT}" ]; then
+  echo "Error: compass deploy did not produce a load_compass_pm-cpu*.sh script"
+  exit 1
+fi
+source ${LOAD_SCRIPT}
 
 cd ${BASE_DIR}
 compass suite -c landice -t full_integration -w ${BASE_DIR}/repos/compass_tests -s -f ${BASE_DIR}/compass_pm-cpu_config.cfg -p ${BASE_DIR}/repos/E3SM/components/mpas-albany-landice -m pm-cpu

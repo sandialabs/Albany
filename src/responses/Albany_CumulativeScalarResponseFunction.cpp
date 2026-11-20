@@ -10,6 +10,8 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Thyra_VectorStdOps.hpp"
 
+#include <limits>
+
 using Teuchos::RCP;
 using Teuchos::rcp;
 
@@ -84,7 +86,7 @@ evaluateResponse(const double current_time,
   for (unsigned int i=0; i<responses.size(); i++) {
     // Create Thyra_Vector for response function
     Teuchos::RCP<Thyra_Vector> g_i = Thyra::createMember(responses[i]->responseVectorSpace());
-  
+
     // Evaluate response function
     responses[i]->evaluateResponse(current_time, x, xdot, xdotdot, p, g_i);
 
@@ -446,24 +448,35 @@ printResponse(Teuchos::RCP<Teuchos::FancyOStream> out)
   }
 }
 
-double 
+double
 Albany::CumulativeScalarResponseFunction::
 getContribution(int j)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(j < 0 || j >= (int)responses.size(), std::runtime_error,
+      "Error! getContribution(j), j=" << j <<
+      " is out of range [0," << responses.size() << ").\n");
   std::ostringstream response_string;
   RCP<Teuchos::FancyOStream> fancy = Teuchos::fancyOStream(Teuchos::rcpFromRef(response_string));
-  TEUCHOS_TEST_FOR_EXCEPTION(j>responses.size(), std::runtime_error,
-                              "Error! getContribution(j), j is larger than the responses.size().\n");
+  // printResponse uses the stream precision (6 digits by default): print all the digits
+  fancy->precision(std::numeric_limits<double>::max_digits10);
   responses[j]->printResponse(fancy);
 
-  return std::stod(response_string.str());
+  try {
+    return std::stod(response_string.str());
+  } catch (const std::exception&) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+        "Error! getContribution(j), could not read the value of response " << j
+        << " from '" << response_string.str() << "'.\n");
+  }
+  return 0; // Unreachable
 }
 
 void
 Albany::CumulativeScalarResponseFunction::
 updateWeight(int j, double weight)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(j>responses.size(), std::runtime_error,
-                              "Error! updateWeight(j, weight), j is larger than the responses.size().\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(j < 0 || j >= (int)scalar_weights.size(), std::runtime_error,
+      "Error! updateWeight(j, weight), j=" << j <<
+      " is out of range [0," << scalar_weights.size() << ").\n");
   scalar_weights[j] = weight;
 }

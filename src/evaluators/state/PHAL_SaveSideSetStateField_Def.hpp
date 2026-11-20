@@ -8,14 +8,55 @@
 #include "Albany_Layouts.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
 #include "Albany_STKDiscretization.hpp"
+#include "Albany_StateInfoStruct.hpp"
 
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
 #include <Teuchos_RCPDecl.hpp>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace PHAL
 {
+
+namespace detail {
+
+// The (Cell,...) elem state of a side set mesh in all its worksets. The sides in a workset of the
+// volume mesh can belong to any workset of the side set mesh. Only the states of the worksets
+// accessed through host() are synced to device.
+class SideSetStates {
+public:
+  SideSetStates (const Teuchos::RCP<Albany::AbstractDiscretization>& ss_disc,
+                 const std::string& stateName)
+  {
+    auto& elem_states = ss_disc->getMeshStruct()->get_field_accessor()->getElemStates();
+    for (auto& ws_states : elem_states) {
+      states.push_back(&ws_states.at(stateName));
+    }
+    modified.resize(states.size(),0);
+  }
+
+  // Host view of the state in workset ws of the side set mesh, to be modified
+  const Albany::StateView::host_t& host (const int ws) {
+    modified.at(ws) = 1;
+    return states[ws]->host();
+  }
+
+  void sync_to_dev () {
+    for (std::size_t ws=0; ws<states.size(); ++ws) {
+      if (modified[ws]) {
+        states[ws]->sync_to_dev();
+      }
+    }
+  }
+
+private:
+  std::vector<Albany::StateView*> states;
+  std::vector<int>                modified; // 1 if the state of workset ws was accessed
+};
+
+} // namespace detail
 
 // **********************************************************************
 template<typename Traits>
@@ -54,7 +95,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
     tangents = decltype(tangents)(tangents_name, dl->qp_tensor_cd_sd);
     this->addDependentField(tangents);
 
-    w_measure = decltype(w_measure)(tangents_name, dl->qp_tensor_cd_sd);
+    w_measure = decltype(w_measure)(w_meas_name, dl->qp_scalar);
     this->addDependentField(w_measure);
   }
 
@@ -84,9 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
       "Error! The mesh does not store any side set.\n");
 
-  if (workset.sideSetViews->find(sideSetName)==workset.sideSetViews->end())
-    return; // Side set not present in this workset
-
   TEUCHOS_TEST_FOR_EXCEPTION (workset.disc==Teuchos::null, std::logic_error,
       "Error! The workset must store a valid discretization pointer.\n");
 
@@ -101,16 +139,22 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (ssDiscs.at(sideSetName)==Teuchos::null, std::logic_error,
         "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
 
-  if (loc==FL::Node and workset.wsIndex == (workset.numWs-1)) {
-    saveNodeState(workset);
-    // Transfer the (Cell,Node,...) state to the purely nodal state
-    auto ss_disc = workset.disc->getSideSetDiscretizations().at(sideSetName);
-    auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
-    ss_mfa->transferElemStateToNodeState (stateName);
-  } else {
-    saveElemState(workset);
+  // Save the values on the sides of this side set that are in this workset, if any
+  if (workset.sideSetViews->find(sideSetName)!=workset.sideSetViews->end()) {
+    if (loc==FL::Node) {
+      saveNodeState(workset);
+    } else {
+      saveElemState(workset);
+    }
   }
 
+  // Once all worksets have saved their values, transfer the (Cell,Node,...) state to the nodal state.
+  // Do it on every rank, also if the last workset has no sides of this side set, since the transfer
+  // communicates with the other ranks.
+  if (loc==FL::Node and workset.wsIndex == (workset.numWs-1)) {
+    auto ss_mfa = ssDiscs.at(sideSetName)->getMeshStruct()->get_field_accessor();
+    ss_mfa->transferElemStateToNodeState (stateName);
+  }
 }
 
 template<typename Traits>
@@ -120,15 +164,14 @@ saveElemState(typename Traits::EvalData workset)
   const auto& ss_disc = workset.disc->getSideSetDiscretizations().at(sideSetName);
   const auto& side_to_ss_cell = workset.disc->getSideToSideSetCellMap().at(sideSetName);
   const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
-  const auto  ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
+  const auto& ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
 
   const auto field_d_view = field.get_view();
   const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
   Kokkos::deep_copy(field_h_mirror, field_d_view);
 
-  auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
-  auto& state = ss_mfa->getElemStates()[workset.wsIndex].at(stateName);
-  auto state_h = state.host();
+  // The side set mesh has its own worksets, and the sides in this workset can be in any of them
+  detail::SideSetStates states(ss_disc,stateName);
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -139,7 +182,9 @@ saveElemState(typename Traits::EvalData workset)
     const GO ss_cell_GID = side_to_ss_cell.at(side_GID);
     const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
 
-    const int icell = ss_elem_ws_idx[ss_cell_LID].idx;
+    const auto& ss_ws_idx = ss_elem_ws_idx[ss_cell_LID];
+    const auto& state_h = states.host(ss_ws_idx.ws);
+    const int icell = ss_ws_idx.idx;
 
     switch (rank) {
       case FRT::Scalar:
@@ -174,7 +219,7 @@ saveElemState(typename Traits::EvalData workset)
         break;
     }
   }
-  state.sync_to_dev();
+  states.sync_to_dev();
 }
 
 template<typename Traits>
@@ -185,15 +230,14 @@ saveNodeState(typename Traits::EvalData workset)
   const auto& side_to_ss_cell = workset.disc->getSideToSideSetCellMap().at(sideSetName);
   const auto& side_to_node_map = workset.disc->getSideNodeNumerationMap().at(sideSetName);
   const auto  ss_cell_indexer = ss_disc->getCellsGlobalLocalIndexer();
-  const auto  ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
+  const auto& ss_elem_ws_idx = ss_disc->get_elements_workset_idx();
 
   const auto field_d_view = field.get_view();
   const auto field_h_mirror = Kokkos::create_mirror_view(field_d_view);
   Kokkos::deep_copy(field_h_mirror, field_d_view);
 
-  auto ss_mfa = ss_disc->getMeshStruct()->get_field_accessor();
-  auto& state = ss_mfa->getElemStates()[workset.wsIndex].at(stateName);
-  auto state_h = state.host();
+  // The side set mesh has its own worksets, and the sides in this workset can be in any of them
+  detail::SideSetStates states(ss_disc,stateName);
 
   // Loop on the sides of this sideSet that are in this workset
   auto sideSet = workset.sideSetViews->at(sideSetName);
@@ -205,7 +249,9 @@ saveNodeState(typename Traits::EvalData workset)
     const int ss_cell_LID = ss_cell_indexer->getLocalElement(ss_cell_GID);
     const auto& node_map = side_to_node_map.at(side_GID);
 
-    const int icell = ss_elem_ws_idx[ss_cell_LID].idx;
+    const auto& ss_ws_idx = ss_elem_ws_idx[ss_cell_LID];
+    const auto& state_h = states.host(ss_ws_idx.ws);
+    const int icell = ss_ws_idx.idx;
 
     for (int side_node=0; side_node<numNodes; ++side_node) {
       auto ss_cell_node = node_map[side_node];
@@ -243,7 +289,7 @@ saveNodeState(typename Traits::EvalData workset)
       }
     }
   }
-  state.sync_to_dev();
+  states.sync_to_dev();
 }
 
 } // Namespace PHAL

@@ -195,5 +195,12 @@ Albany::HeatProblem::getValidProblemParameters() const
   validPL->set<bool>("Have Rho Cp", false, "Flag to indicate if rhoCp is used");
   validPL->set<std::string>("MaterialDB Filename","materials.xml","Filename of material database xml file");
 
+  Teuchos::ParameterList& targetPL = validPL->sublist("Target Temperature", false,
+      "Analytic target temperature, evaluated at the quadrature points as the field \"Target Temperature\"");
+  targetPL.set<std::string>("Type", "Linear Space-Time",
+      "Type of target temperature. Linear Space-Time: c_0 + c_1 x_1 + ... + c_d x_d + c_t t");
+  targetPL.set<Teuchos::Array<double>>("Coefficients", Teuchos::Array<double>(),
+      "Coefficients [c_0, c_1, ..., c_d, c_t] of the Linear Space-Time target temperature");
+
   return validPL;
 }

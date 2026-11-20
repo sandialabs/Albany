@@ -163,8 +163,9 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getEntGidsInClosureOfOwnedElms)
     auto gids = OmegahGhost::getEntGidsInClosureOfOwnedElms(mesh, dim);
     //this could be more general for n_edges and numRanks...
     if(numRanks == 4) {
-      for(int i=0; i<gids.size(); i++) {
-        TEST_ASSERT((rank*2)+i == gids[i]);
+      auto gids_h = Omega_h::HostRead(gids);
+      for(int i=0; i<gids_h.size(); i++) {
+        TEST_ASSERT((rank*2)+i == gids_h[i]);
       }
     }
     if(numRanks == 1) {
@@ -240,7 +241,7 @@ TEUCHOS_UNIT_TEST(OmegahGhost, getDownAdjacentEntsInClosureOfOwnedElms_1D)
   TEST_EQUALITY_CONST(edgeToVtx.size(), numOwnedEdges * 2);
  
   // Get vertex global ids
-  auto vtxGids = mesh.globals(OMEGA_H_VERT);
+  auto vtxGids = Omega_h::HostRead(mesh.globals(OMEGA_H_VERT));
 
   if(numRanks > 1) {
     TEST_ASSERT(numRanks == 4); //hardcoded for four ranks

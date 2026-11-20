@@ -2,6 +2,8 @@
 
 #include "Albany_DiscretizationUtils.hpp"
 
+#include <cmath>
+
 namespace Albany {
 
 ExtrudedMesh::
@@ -230,15 +232,7 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   m_basal_mesh->loadRequiredInputFields(comm,upper_reqs);
 
   // Complete initialization of layer data structures
-  const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
-  const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();
-  const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
-  const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
-
-  layers_data.cell.gid->numHorizEntities = max_basal_elem_gid+1;
-  layers_data.cell.lid->numHorizEntities = num_basal_elems;
-  layers_data.node.gid->numHorizEntities = max_basal_node_gid+1;
-  layers_data.node.lid->numHorizEntities = num_basal_nodes;
+  updateHorizEntityCounts();
 
   const auto& ctd = meshSpecs[0]->ctd;
   layers_data.top_side_pos = ctd.side_count-1;
@@ -250,7 +244,10 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
   int num_node_layers = layers_data.node.lid->numLayers;
 
   layers_data.z_ref.resize(num_node_layers);
-  if(useGlimmerSpacing) {
+  if (not m_levels_normalized_coords.empty()) {
+    // Levels set by the user (see setLevelsNormalizedCoords)
+    layers_data.z_ref = m_levels_normalized_coords;
+  } else if(useGlimmerSpacing) {
     for (int i = 0; i < num_node_layers; i++)
       layers_data.z_ref[num_elem_layers-i] = 1.0- (1.0 - std::pow(double(i) / num_elem_layers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
   } else {
@@ -259,22 +256,87 @@ setBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm)
       layers_data.z_ref[i] = double(i) / num_elem_layers;
   }
 
+  auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
+
+  setLayersRefData();
+  int_states["ordering"] = layers_data.cell.gid->layerOrd ? 0 : 1;
+  int_states["num_layers"] = num_elem_layers;
+
+  m_bulk_data_set = true;
+}
+
+// The horizontal entity counts of the layered numbering are all derived from the
+// basal mesh. They must be recomputed whenever the basal mesh changes, e.g. after
+// a mesh adaptation, or every 3d gid/lid computed from them would be stale.
+void ExtrudedMesh::updateHorizEntityCounts ()
+{
+  const auto max_basal_node_gid = m_basal_mesh->get_max_node_gid();
+  const auto num_basal_nodes    = m_basal_mesh->get_num_local_nodes();
+  const auto max_basal_elem_gid = m_basal_mesh->get_max_elem_gid();
+  const auto num_basal_elems    = m_basal_mesh->get_num_local_elements();
+
+  layers_data.cell.gid->numHorizEntities = max_basal_elem_gid+1;
+  layers_data.cell.lid->numHorizEntities = num_basal_elems;
+  layers_data.node.gid->numHorizEntities = max_basal_node_gid+1;
+  layers_data.node.lid->numHorizEntities = num_basal_nodes;
+
+  auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
+  int64_states["max_2d_elem_gid"] = layers_data.cell.gid->numHorizEntities-1;
+  int64_states["max_2d_node_gid"] = layers_data.node.gid->numHorizEntities-1;
+
+  // NOTE: meshSpecs[0]->worksetSize is deliberately NOT updated here. The Phalanx data
+  //       layouts are built once from it, so it must stay fixed across an adaptation;
+  //       a mesh that grew is split into more worksets instead. See the comment in
+  //       OmegahGenericMesh::updateWorksetSize.
+}
+
+void ExtrudedMesh::
+setLevelsNormalizedCoords (const std::vector<double>& z_ref)
+{
+  const int num_node_layers = layers_data.node.gid->numLayers;
+  TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(z_ref.size())!=num_node_layers, std::invalid_argument,
+      "[ExtrudedMesh::setLevelsNormalizedCoords] Error! Wrong number of levels.\n"
+      "  - input size      : " << z_ref.size() << "\n"
+      "  - number of levels: " << num_node_layers << " (NumLayers+1)\n");
+  constexpr double tol = 1e-6; // e.g., levels computed by summing layer thickness fractions
+  TEUCHOS_TEST_FOR_EXCEPTION (std::abs(z_ref.front())>tol or std::abs(z_ref.back()-1)>tol, std::invalid_argument,
+      "[ExtrudedMesh::setLevelsNormalizedCoords] Error! The normalized levels must go from 0 (bottom) to 1 (top).\n"
+      "  - first level: " << z_ref.front() << "\n"
+      "  - last level : " << z_ref.back() << "\n");
+
+  // Snap the first and last levels to 0 and 1, so that the bottom and top of the mesh are exactly the bed
+  // and the surface
+  auto levels = z_ref;
+  levels.front() = 0.0;
+  levels.back() = 1.0;
+  for (int i=0; i<num_node_layers-1; ++i) {
+    TEUCHOS_TEST_FOR_EXCEPTION (not (levels[i+1]>levels[i]), std::invalid_argument,
+        "[ExtrudedMesh::setLevelsNormalizedCoords] Error! The normalized levels must be strictly increasing.\n"
+        "  - level " << i << ": " << levels[i] << "\n"
+        "  - level " << i+1 << ": " << levels[i+1] << "\n");
+  }
+
+  m_levels_normalized_coords = levels;
+
+  // If the bulk data is not set yet, setBulkData will use these levels
+  if (isBulkDataSet()) {
+    layers_data.z_ref = levels;
+    setLayersRefData();
+  }
+}
+
+void ExtrudedMesh::setLayersRefData ()
+{
+  const int num_elem_layers = layers_data.cell.lid->numLayers;
   layers_data.dz_ref.resize(num_elem_layers);
   for (int i = 0; i < num_elem_layers; i++)
     layers_data.dz_ref[i] = layers_data.z_ref[i+1]-layers_data.z_ref[i];
 
+  // The field accessor uses these to interpolate basal layered fields, and to set the layers
+  // coords of the basal states that store 3d outputs
   auto& vec_states = m_field_accessor->getMeshVectorStates();
-  auto& int_states = m_field_accessor->getMeshScalarIntegerStates();
-  auto& int64_states = m_field_accessor->getMeshScalarInteger64States();
-
   vec_states["layers_dz_ref"] = layers_data.dz_ref;
   vec_states["layers_z_ref"] = layers_data.z_ref;
-  int_states["ordering"] = layers_data.cell.lid->layerOrd ? 0 : 1;
-  int_states["num_layers"] = num_elem_layers;
-  int64_states["max_2d_elem_gid"] = layers_data.cell.gid->numHorizEntities-1;
-  int64_states["max_2d_node_gid"] = layers_data.cell.gid->numHorizEntities-1;
-
-  m_bulk_data_set = true;
 }
 
 } // namespace Albany

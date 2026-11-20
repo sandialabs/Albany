@@ -16,6 +16,7 @@
 #include <Teuchos_LocalTestingHelpers.hpp>
 
 #include <random>
+#include <vector>
 
 TEUCHOS_UNIT_TEST (ExtrudedMesh, DiscFactoryCreateMesh)
 {
@@ -176,5 +177,63 @@ TEUCHOS_UNIT_TEST(ExtrudedMesh, MeshParts)
     TEST_ASSERT (contains(ssNames3d,"basalside"));
     TEST_ASSERT (contains(ssNames3d,"upperside"));
     TEST_ASSERT (contains(ssNames3d,"lateralside"));
+  }
+}
+
+TEUCHOS_UNIT_TEST(ExtrudedMesh, LevelsNormalizedCoords)
+{
+  using namespace Albany;
+
+  auto comm = getDefaultComm();
+
+  constexpr int numLayers = 3;
+  auto mesh_2d = Teuchos::rcp(new DummyMesh(2*comm->getSize(),comm));
+
+  // Levels within the tolerance (1e-6) of 0 and 1 at the ends, as, e.g., sums of layer thickness
+  // fractions: the first and last levels are set to exactly 0 and 1
+  const std::vector<double> levels   = {1e-9, 0.1, 0.4, 1.0-1e-9};
+  const std::vector<double> expected = {0.0,  0.1, 0.4, 1.0};
+
+  // Invalid levels
+  const std::vector<double> wrong_size     = {0.0, 0.5, 1.0};
+  const std::vector<double> bad_bottom     = {0.01, 0.1, 0.4, 1.0};
+  const std::vector<double> bad_top        = {0.0, 0.1, 0.4, 0.99};
+  const std::vector<double> not_increasing = {0.0, 0.4, 0.4, 1.0};
+
+  // The levels can be set before or after the bulk data
+  for (bool before_bulk_data : {true, false}) {
+    auto params = Teuchos::rcp(new Teuchos::ParameterList());
+    params->set<int>("NumLayers",numLayers);
+    params->set<int>("Workset Size",1000);
+    params->set("Columnwise Ordering", true);
+
+    auto mesh_3d = Teuchos::rcp(new ExtrudedMesh(mesh_2d,params,comm));
+
+    TEST_THROW (mesh_3d->setLevelsNormalizedCoords(wrong_size), std::invalid_argument);
+    TEST_THROW (mesh_3d->setLevelsNormalizedCoords(bad_bottom), std::invalid_argument);
+    TEST_THROW (mesh_3d->setLevelsNormalizedCoords(bad_top), std::invalid_argument);
+    TEST_THROW (mesh_3d->setLevelsNormalizedCoords(not_increasing), std::invalid_argument);
+
+    if (before_bulk_data) {
+      mesh_3d->setLevelsNormalizedCoords(levels);
+    }
+    mesh_3d->setFieldData(comm,Teuchos::null,{});
+    mesh_3d->setBulkData(comm);
+    if (not before_bulk_data) {
+      mesh_3d->setLevelsNormalizedCoords(levels);
+    }
+
+    const auto& z_ref = mesh_3d->layers_data.z_ref;
+    const auto& dz_ref = mesh_3d->layers_data.dz_ref;
+    TEST_EQUALITY (z_ref.size(), expected.size());
+    TEST_EQUALITY (dz_ref.size(), expected.size()-1);
+    if (z_ref.size()==expected.size() and dz_ref.size()==expected.size()-1) {
+      for (size_t i=0; i<expected.size(); ++i) {
+        TEST_EQUALITY (z_ref[i], expected[i]);
+      }
+      for (size_t i=0; i+1<expected.size(); ++i) {
+        TEST_FLOATING_EQUALITY (dz_ref[i], expected[i+1]-expected[i], 1e-14);
+      }
+    }
   }
 }

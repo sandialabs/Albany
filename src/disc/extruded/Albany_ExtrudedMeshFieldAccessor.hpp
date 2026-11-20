@@ -13,6 +13,9 @@
 
 #include "Teuchos_RCP.hpp"
 
+#include <string>
+#include <vector>
+
 namespace Albany {
 
 /*
@@ -45,6 +48,13 @@ public:
 
   // While 3d states are ALL elem states, the basal MFA needs to call this
   void transferNodeStatesToElemStates ();
+
+  // 3d nodal states are stored ONLY as (Cell,Node[,...]) elem states, since there is
+  // no 3d mesh database. For 3d nodal states that are neither extruded nor interpolated,
+  // this copies the 3d elem state into the basal layered nodal state registered in
+  // addStateStruct (averaging the two layers sharing each interior level), and then into
+  // the basal mesh nodal field (averaging over the basal elems). Otherwise, it's a no-op.
+  void transferElemStateToNodeState (const std::string& name) override;
 
   // Read from mesh methods
   void fillSolnVector (Thyra_Vector&        soln,
@@ -99,9 +109,17 @@ public:
   void setSolutionFieldsMetadata (const int neq) override;
 
   void extrudeBasalFields (const Teuchos::Array<std::string>& basal_fields);
-  void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields);
+  // qp_ref_z: vertical reference coords (in [-1,1]) of the cell cubature points,
+  // needed only if some of the fields are 3d QuadPoint states
+  void interpolateBasalLayeredFields (const Teuchos::Array<std::string>& basal_fields,
+                                      const std::vector<double>& qp_ref_z = {});
 
   void setWorksetElements (const DualView<int**>& workset_elements) { m_workset_elements = workset_elements; }
+
+  // Maps a (3d) element LID to the workset that owns it, and its index within that
+  // workset. Needed to scatter values computed from the layered numbering (which is
+  // defined over all the elements on the rank) into the per-workset state arrays.
+  void setElemWorksetIdx (const std::vector<WsIdx>& elem_ws_idx) { m_elem_ws_idx = elem_ws_idx; }
 protected:
 
   // This class will rely on the basal mesh to store fields
@@ -109,8 +127,22 @@ protected:
 
   Teuchos::RCP<const LayeredMeshNumbering<LO>>  m_elem_numbering_lid;
 
+  // Where a 3d element lives: the workset that owns it, and its index in that workset
+  struct WsLoc {
+    int ws;
+    int idx;
+  };
+  WsLoc locate3dElem (const int elem_lid, const char* caller) const;
+
   DualView<int**>     m_workset_elements;
   WorksetArray<int>   m_ws_sizes;
+  std::vector<WsIdx>  m_elem_ws_idx;
+
+  // 3d states (neither extruded nor interpolated) that are stored in the basal mesh as
+  // layered states, and whose normalized layers coords (${name}_NLC) we need to set,
+  // so that they can be read back (e.g., for a restart) as basal layered inputs
+  std::vector<std::string>  m_basal_layered_nodal_outputs;
+  std::vector<std::string>  m_basal_layered_elem_outputs;
 };
 
 }  // namespace Albany

@@ -47,10 +47,13 @@ protected:
   void setGeometryFieldsMetadata ();
 
   template<typename T>
+  // If ncopies>1, the field has ncmp*ncopies scalars per entity, with the ncmp index being
+  // the fastest one (same as layered vector states, which use ncmp=numLayers, ncopies=vecDim)
   stk::mesh::Field<T>* add_field_to_mesh(const std::string& name,
                                          const bool nodal,
                                          const bool transient,
-                                         const int ncmp);
+                                         const int ncmp,
+                                         const int ncopies = 1);
 
   Teuchos::RCP<stk::mesh::MetaData> metaData;
   Teuchos::RCP<stk::mesh::BulkData> bulkData;

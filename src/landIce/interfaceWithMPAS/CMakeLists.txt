@@ -1,8 +1,10 @@
 set(SOURCES_MPAS
+  Albany_MpasBasalSTKMeshStruct.cpp
   Albany_MpasSTKMeshStruct.cpp
   Interface.cpp
 )
 set(HEADERS_MPAS
+  Albany_MpasBasalSTKMeshStruct.hpp
   Albany_MpasSTKMeshStruct.hpp
 )
 

@@ -86,6 +86,9 @@ namespace Albany {
     double getContribution(int j);
     void updateWeight(int j, double weight);
     Teuchos::RCP<ScalarResponseFunction> getResponse(int j){
+      TEUCHOS_TEST_FOR_EXCEPTION(j < 0 || j >= (int)responses.size(), std::runtime_error,
+          "Error! getResponse(j), j=" << j <<
+          " is out of range [0," << responses.size() << ").\n");
       return responses[j];
     }
 

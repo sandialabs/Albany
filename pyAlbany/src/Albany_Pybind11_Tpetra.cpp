@@ -9,6 +9,8 @@
 #include "Albany_LinearOpWithSolveDecorators.hpp"
 #include "Albany_TpetraThyraUtils.hpp"
 
+#include <sstream>
+
 // The implementation of the conversion from numpy array to Kokkos view 
 // in both directions is based on:
 // https://github.com/sandialabs/compadre/blob/master/pycompadre/pycompadre.cpp
@@ -19,7 +21,7 @@ template< bool B, class T = void >
 using enable_if_t = typename std::enable_if<B,T>::type;
 
 template<typename T>
-Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T> array) {
+Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T, pybind11::array::c_style | pybind11::array::forcecast> array) {
 
     int size = array.shape(0);
     Teuchos::ArrayView< T > av(array.mutable_data(0), size);
@@ -29,10 +31,28 @@ Teuchos::ArrayView< T > convert_np_to_ArrayView(pybind11::array_t<T> array) {
 
 // conversion of numpy arrays to kokkos arrays
 
+// The numpy array must have exactly the extents of the destination view:
+// the copy loops below do not check bounds.
+template<typename ViewType>
+void check_np_shape(const pybind11::array& array, const ViewType& view) {
+    for (int d=0; d<static_cast<int>(ViewType::rank); ++d) {
+        if (static_cast<std::size_t>(array.shape(d)) != static_cast<std::size_t>(view.extent(d))) {
+            std::ostringstream msg;
+            msg << "Error! The numpy array has shape (";
+            for (int k=0; k<static_cast<int>(ViewType::rank); ++k) msg << (k>0 ? ", " : "") << array.shape(k);
+            msg << "), but the expected shape is (";
+            for (int k=0; k<static_cast<int>(ViewType::rank); ++k) msg << (k>0 ? ", " : "") << view.extent(k);
+            msg << ").";
+            throw pybind11::value_error(msg.str());
+        }
+    }
+}
+
 template<typename ViewType>
 void convert_np_to_kokkos_1d(pybind11::array_t<typename ViewType::non_const_value_type> array,  ViewType kokkos_array_device) {
 
     auto np_array = array.template unchecked<1>();
+    check_np_shape(array, kokkos_array_device);
 
     auto kokkos_array_host = Kokkos::create_mirror_view(kokkos_array_device);
     Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, array.shape(0)), [&](int i) {
@@ -46,6 +66,7 @@ template<typename ViewType>
 void convert_np_to_kokkos_2d(pybind11::array_t<typename ViewType::non_const_value_type> array,  ViewType kokkos_array_device) {
 
     auto np_array = array.template unchecked<2>();
+    check_np_shape(array, kokkos_array_device);
 
     auto kokkos_array_host = Kokkos::create_mirror_view(kokkos_array_device);
     Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, array.shape(0)), [&](int i) {
@@ -144,7 +165,7 @@ RCP_PyMap createRCPPyMap(int numGlobalEl, int numMyEl, int indexBase, RCP_Teucho
     return Teuchos::rcp<Tpetra_Map>(new Tpetra_Map(numGlobalEl, numMyEl, indexBase, comm));
 }
 
-RCP_PyMap createRCPPyMapFromView(int numGlobalEl, pybind11::array_t<int> indexList, int indexBase, RCP_Teuchos_Comm_PyAlbany comm ) {
+RCP_PyMap createRCPPyMapFromView(Tpetra_GO numGlobalEl, pybind11::array_t<Tpetra_GO> indexList, int indexBase, RCP_Teuchos_Comm_PyAlbany comm ) {
     Kokkos::View<Tpetra_GO*, Kokkos::DefaultExecutionSpace> indexView("map index view", indexList.shape(0));
     convert_np_to_kokkos_1d(indexList, indexView);
     return Teuchos::rcp<Tpetra_Map>(new Tpetra_Map(numGlobalEl, indexView, indexBase, comm));
@@ -208,7 +229,9 @@ RCP_PyCrsMatrix createRCPPyCrsMatrixFromFile(RCP_PyMap &map, const std::string& 
   return reader_type::readSparseFile (filename, map, colMap, domainMap, rangeMap);
 }
 
-pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_GO> globalIndexes)
+// Take a C-contiguous array here (pybind11 copies non-contiguous input), so that the data
+// viewed by globalIndexes_av stays alive for the whole function.
+pybind11::tuple getRemoteIndexList(RCP_ConstPyMap map, pybind11::array_t<Tpetra_GO, pybind11::array::c_style | pybind11::array::forcecast> globalIndexes)
 {
     auto globalIndexes_av = convert_np_to_ArrayView(globalIndexes);
 
@@ -255,7 +278,7 @@ void pyalbany_map(pybind11::module &m) {
         .def("isSameAs", &PyMap::isSameAs)
         .def("locallySameAs", &PyMap::locallySameAs)
         .def("getComm", &PyMap::getComm)
-        .def("getRemoteIndexList", [](Teuchos::RCP<PyMap> &m, py::array_t<Tpetra_GO> globalIndexes) {
+        .def("getRemoteIndexList", [](Teuchos::RCP<PyMap> &m, py::array_t<Tpetra_GO, py::array::c_style | py::array::forcecast> globalIndexes) {
             return getRemoteIndexList(m, globalIndexes);
         });
 }

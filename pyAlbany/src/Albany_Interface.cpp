@@ -179,6 +179,8 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getResponseMap(const int g_index)
         stackedTimer->stopBaseTimer();
         return Teuchos::null;
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(g_index < 0 || g_index >= static_cast<int>(thyraResponses.size()),
+        std::out_of_range, "getResponseMap: g_index " << g_index << " out of range [0," << thyraResponses.size() << ")");
     Teuchos::RCP<const Thyra_Vector> g = thyraResponses[g_index];
     if (Teuchos::nonnull(g))
     {
@@ -222,6 +224,8 @@ Teuchos::RCP<const Tpetra_Map> PyProblem::getParameterMap(const int p_index)
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameterMap");
+    TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= n_params,
+        std::out_of_range, "getParameterMap: p_index " << p_index << " out of range [0," << n_params << ")");
     auto p_space = albanyModel->get_p_space(p_index);
     auto outputMap = Albany::getTpetraMap(p_space);
     stackedTimer->stop("PyAlbany: getParameterMap");
@@ -234,6 +238,8 @@ void PyProblem::setDirections(const int p_index, Teuchos::RCP<Tpetra_MultiVector
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: setDirections");
+    TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= n_params,
+        std::out_of_range, "setDirections: p_index " << p_index << " out of range [0," << n_params << ")");
     forwardHasBeenSolved = false;
 
     const unsigned int n_directions = direction->getNumVectors();
@@ -265,6 +271,8 @@ void PyProblem::setParameter(const int p_index, Teuchos::RCP<Tpetra_Vector> p)
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: setParameter");
+    TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= n_params,
+        std::out_of_range, "setParameter: p_index " << p_index << " out of range [0," << n_params << ")");
     RCP<Teuchos::ParameterList> appParams = slvrfctry->getParameters();
     if (appParams->isSublist("Piro"))
     {
@@ -323,6 +331,8 @@ Teuchos::RCP<Tpetra_Vector> PyProblem::getParameter(const int p_index)
     Teuchos::TimeMonitor::setStackedTimer(stackedTimer);
     stackedTimer->startBaseTimer();
     stackedTimer->start("PyAlbany: getParameter");
+    TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= n_params,
+        std::out_of_range, "getParameter: p_index " << p_index << " out of range [0," << n_params << ")");
     Teuchos::RCP<Thyra_Vector> p = thyraParameter[p_index];
     Teuchos::RCP<Tpetra_Vector> p_out = Albany::getTpetraVector(p);
     stackedTimer->stop("PyAlbany: getParameter");
@@ -341,6 +351,8 @@ Teuchos::RCP<Tpetra_Vector> PyProblem::getResponse(const int g_index)
     }
     else
     {
+        TEUCHOS_TEST_FOR_EXCEPTION(g_index < 0 || g_index >= static_cast<int>(thyraResponses.size()),
+            std::out_of_range, "getResponse: g_index " << g_index << " out of range [0," << thyraResponses.size() << ")");
         Teuchos::RCP<Thyra_Vector> g = thyraResponses[g_index];
         Teuchos::RCP<Tpetra_Vector> g_out = Albany::getTpetraVector(g);
         stackedTimer->stop("PyAlbany: getResponse");
@@ -385,6 +397,10 @@ Teuchos::RCP<Tpetra_MultiVector> PyProblem::getSensitivity(const int g_index, co
     }
     else
     {
+        TEUCHOS_TEST_FOR_EXCEPTION(g_index < 0 || g_index >= static_cast<int>(thyraSensitivities.size()),
+            std::out_of_range, "getSensitivity: g_index " << g_index << " out of range [0," << thyraSensitivities.size() << ")");
+        TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= static_cast<int>(thyraSensitivities[g_index].size()),
+            std::out_of_range, "getSensitivity: p_index " << p_index << " out of range [0," << thyraSensitivities[g_index].size() << ")");
         Teuchos::RCP<Tpetra_MultiVector> dg_out = Albany::getTpetraMultiVector(thyraSensitivities[g_index][p_index]);
         stackedTimer->stop("PyAlbany: getSensitivity");
         stackedTimer->stopBaseTimer();
@@ -406,6 +422,10 @@ Teuchos::RCP<Tpetra_MultiVector> PyProblem::getReducedHessian(const int g_index,
     }
     else
     {
+        TEUCHOS_TEST_FOR_EXCEPTION(g_index < 0 || g_index >= static_cast<int>(thyraReducedHessian.size()),
+            std::out_of_range, "getReducedHessian: g_index " << g_index << " out of range [0," << thyraReducedHessian.size() << ")");
+        TEUCHOS_TEST_FOR_EXCEPTION(p_index < 0 || p_index >= static_cast<int>(thyraReducedHessian[g_index].size()),
+            std::out_of_range, "getReducedHessian: p_index " << p_index << " out of range [0," << thyraReducedHessian[g_index].size() << ")");
         Teuchos::RCP<Tpetra_MultiVector> hv_out = Albany::getTpetraMultiVector(thyraReducedHessian[g_index][p_index]);
         stackedTimer->stop("PyAlbany: getReducedHessian");
         stackedTimer->stopBaseTimer();
@@ -513,7 +533,8 @@ bool PyProblem::performAnalysis()
         p_samples.push_back(distParamLib->get(util::strint(p_sample_root_name, i, '_'))->vector()->clone_v());
         u_diff_at_samples.push_back(distParamLib->get(util::strint(x_diff_root_name, i, '_'))->vector()->clone_v());
       }
-      Piro::PerformAnalysis(*solver, piroParams, p, observer, u_diff_at_samples, p_samples);
+      int status = Piro::PerformAnalysis(*solver, piroParams, p, observer, u_diff_at_samples, p_samples);
+      error = (status != ROL::EXITSTATUS_CONVERGED && status != ROL::EXITSTATUS_STEPTOL);
 #else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
           "Error! 'Analysis Package: HDSA' requested, but Albany was configured without HDSA support.\n"
@@ -526,11 +547,17 @@ bool PyProblem::performAnalysis()
 
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
-    size_t n_params_in = n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : n_params;
-    for (size_t l = 0; l < n_params_in; l++)
-    {
-        thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
-        albanyModel->setNominalValue(l, thyraParameter[l]);
+    if (Teuchos::nonnull(p_dpv)) {
+        size_t n_params_in = (size_t)n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : (size_t)n_params;
+        for (size_t l = 0; l < n_params_in; l++)
+        {
+            thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);
+            albanyModel->setNominalValue(l, thyraParameter[l]);
+        }
+    } else if (Teuchos::nonnull(p) && n_params >= 1) {
+        // p is a plain (non-product) vector: single parameter block
+        thyraParameter[0] = p;
+        albanyModel->setNominalValue(0, thyraParameter[0]);
     }
 
     inverseHasBeenSolved = true;

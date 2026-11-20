@@ -61,13 +61,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   validPL.set<double>("Bed Roughness", 1.0, "Constant value for Bed Roughness");
   validPL.set<std::string>("Flow Rate Type", "Viscosity Flow Rate", "Type of Flow Rate: Constant, Flow Rate Type");
   validPL.set<double>("Flow Rate", 3.17e-24, "Constant Value for Flow Rate");
-  validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes, Transition Computed At Nodes");
+  validPL.set<std::string>("Effective Pressure Type", "Field", "Type of N: One, Field, Hydrostatic, Hydrostatic Computed At Nodes, Transition, Transition Computed At Nodes");
   validPL.set<double>("Effective Pressure", 1.0, "Effective Pressure [kPa]");
   validPL.set<double>("Effective Pressure Regularization", 1000.0, "Effective Pressure Regularization [kPa]");
   validPL.set<double>("Sliding Velocity Regularization", 500.0, "Sliding Velocity Regularization [m yr^{-1}]");
   validPL.set<double>("Minimum Flotation Fraction", 1.0, "Minimum Flotation Fraction");
   validPL.set<double>("Length Scale Factor", 1.0, "Length Scale Factor [km]");
-  validPL.set<double>("Transition Height Above Flotation", 0.025, "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition Computed At Nodes only)");
+  validPL.set<double>("Transition Height Above Flotation", 0.025, "Height above flotation [km] below which the effective pressure is assumed to be set purely by the ocean-connected (hydrostatic) fraction, with no inland transition applied (for Effective Pressure Type == Transition or Transition Computed At Nodes only)");
   validPL.set<std::string>("Beta Field Name", "", "Name of the Field Mu");
   validPL.set<double>("Beta", 1.0, "Constant value for beta");
   validPL.set<bool>("Zero Effective Pressure On Floating Ice At Nodes", false, "Whether to zero the effective pressure on floating ice at nodes");
@@ -234,6 +234,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         outN = PHX::MDField<EffPressureOutT>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
         this->addEvaluatedField (outN);
       }
+    } else if (effectivePressureType == "TRANSITION") {
+      effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::TRANSITION;
+      save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
+      if(save_pressure_field && nodal) {
+        outN = PHX::MDField<EffPressureOutT>(p.get<std::string> ("Effective Pressure Output Variable Name"), nodal_layout);
+        this->addEvaluatedField (outN);
+      }
     } else if (effectivePressureType == "TRANSITION COMPUTED AT NODES") {
       effectivePressure_type = EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES;
       save_pressure_field = p.isParameter("Effective Pressure Output Variable Name");
@@ -246,20 +253,23 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"" << effectivePressureType << "\" is not a valid parameter for Effective Pressure Type\n");
     }
 
-    if(use_pressurized_bed || effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES) {
+    const bool is_transition_N = (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION) ||
+                                 (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES);
+
+    if(use_pressurized_bed || is_transition_N) {
       min_flotation_fraction = beta_list.get<double>("Minimum Flotation Fraction");
       pressure_smoothing_length_scale = beta_list.get<double>("Length Scale Factor");
       TEUCHOS_TEST_FOR_EXCEPTION(pressure_smoothing_length_scale <= 0.0, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Length Scale Factor\" should be positive\n");
     }
 
-    if(effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES) {
+    if(is_transition_N) {
       transition_h_ocean = beta_list.get<double>("Transition Height Above Flotation");
       TEUCHOS_TEST_FOR_EXCEPTION(transition_h_ocean < 0.0, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient:  \"Transition Height Above Flotation\" should be non-negative\n");
     }
 
-    if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES) ) {
+    if(zero_on_floating || zero_N_on_floating_at_nodes || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC_AT_NODES) || (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC) || is_transition_N ) {
       bed_topo_field = PHX::MDField<const MeshScalarT>(p.get<std::string> ("Bed Topography Variable Name"), nodal_layout);
       this->addDependentField (bed_topo_field);
       thickness_field = PHX::MDField<const EffPressureST>(p.get<std::string> ("Ice Thickness Variable Name"), nodal_layout);
@@ -277,6 +287,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     if(!nodal && zero_N_on_floating_at_nodes && (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::HYDROSTATIC)) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in LandIce::BasalFrictionCoefficient: Cannot set the effective pressure to zero at nodes when effective pressure type is Hydrostatic\n");
+    }
+
+    if(!nodal && zero_N_on_floating_at_nodes && (effectivePressure_type == EFFECTIVE_PRESSURE_TYPE::TRANSITION)) {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in LandIce::BasalFrictionCoefficient: Cannot set the effective pressure to zero at nodes when effective pressure type is Transition\n");
     }
 
     std::string muType = util::upper_case((beta_list.isParameter("Mu Type") ? beta_list.get<std::string>("Mu Type") : "Field"));
@@ -602,6 +617,22 @@ operator() (const BasalFrictionCoefficient_Tag&, const int& cell) const {
                     thickness_field(cell,node)*f_p) + (1.0 - f_p)*
                     KU::max(-1.0 * rho_w*bed_topo_field(cell,node),0.0) ),0.0)*BF(cell,node,ipt);
           }
+        }
+        break;
+      case EFFECTIVE_PRESSURE_TYPE::TRANSITION:
+        if(nodal) {
+          NVal = computeTransitionEffectivePressure(thickness_field(cell,ipt), bed_topo_field(cell,ipt));
+          if(save_pressure_field) {
+            outN(cell,ipt) = NVal;
+          }
+        } else {
+          EffPressureST thickness(0);
+          MeshScalarT bed_topo(0);
+          for (int node=0; node<numNodes; ++node) {
+            thickness += thickness_field(cell,node)*BF(cell,node,ipt);
+            bed_topo += bed_topo_field(cell,node)*BF(cell,node,ipt);
+          }
+          NVal = computeTransitionEffectivePressure(thickness, bed_topo);
         }
         break;
       case EFFECTIVE_PRESSURE_TYPE::TRANSITION_COMPUTED_AT_NODES:

@@ -13,9 +13,46 @@
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 
-#include "Thyra_DetachedVectorView.hpp"
+#include "Thyra_VectorStdOps.hpp"
+#include "RTOpPack_ROpGetSubVector.hpp"
+
+#include "Teuchos_Tuple.hpp"
+
+#include <cmath>
+#include <iomanip>
+#include <limits>
 
 #include "Teuchos_TestForException.hpp"
+
+namespace
+{
+
+// Entries [0,n) of a (possibly distributed, possibly product) vector, on all ranks.
+// Note: Thyra::DetachedVectorView cannot be used here. For a distributed vector,
+//       a rank that owns all the requested entries takes them from its local data,
+//       while the other ranks perform a reduction (that the first rank never joins),
+//       which leads to MPI errors (e.g., MPI_ERR_TRUNCATE) or hangs.
+//       The reduction below is done by all the ranks.
+Teuchos::Array<double>
+getEntriesOnAllRanks (const Thyra::VectorBase<double>& v, const int n)
+{
+  Teuchos::Array<double> entries(n);
+  if (n==0) {
+    return entries;
+  }
+  RTOpPack::ROpGetSubVector<double> get_sub_vector_op(0,n-1);
+  Teuchos::RCP<RTOpPack::ReductTarget> reduct_obj = get_sub_vector_op.reduct_obj_create();
+  ::Thyra::applyOp<double>(get_sub_vector_op,
+                           Teuchos::tuple(Teuchos::ptrFromRef(v))(),
+                           Teuchos::null, reduct_obj.ptr());
+  const RTOpPack::ConstSubVectorView<double> sub_vec = get_sub_vector_op(*reduct_obj);
+  for (int i=0; i<n; ++i) {
+    entries[i] = sub_vec(i);
+  }
+  return entries;
+}
+
+} // anonymous namespace
 
 namespace Albany
 {
@@ -188,7 +225,8 @@ std::pair<int,int> RegressionTests::checkAnalysisTestResults(
   int          failures    = 0;
   int          comparisons = 0;
 
-  if (testParams != NULL) {
+  // Note: all the operations on tvec below are collective (tvec can be distributed)
+  if (testParams != NULL && tvec != Teuchos::null) {
     const double relTol      = testParams->get<double>("Relative Tolerance", 1.0e-8);
     const double absTol      = testParams->get<double>("Absolute Tolerance", 1.0e-8);
 
@@ -196,14 +234,9 @@ std::pair<int,int> RegressionTests::checkAnalysisTestResults(
         testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values").size() :
         0;
 
-    if (numPiroTests > 0 && tvec != Teuchos::null) {
-      // Create indexable thyra vector
-      ::Thyra::DetachedVectorView<double> p(tvec);
+    if (numPiroTests > 0) {
+      const int dim = tvec->space()->dim();
 
-      ALBANY_ASSERT(
-          numPiroTests <= p.subDim(),
-          "more Piro Analysis Comparisons (" << numPiroTests << ") than values ("
-          << p.subDim() << ") !\n");
       // Read accepted test results
       Teuchos::Array<double> testValues =
           testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
@@ -215,12 +248,33 @@ std::pair<int,int> RegressionTests::checkAnalysisTestResults(
         comparisons++;
       }
       else {
+        ALBANY_ASSERT(
+            numPiroTests <= dim,
+            "more Piro Analysis Comparisons (" << numPiroTests << ") than values ("
+            << dim << ") !\n");
+        const auto p = getEntriesOnAllRanks(*tvec, numPiroTests);
         for (int i = 0; i < numPiroTests; i++) {
           auto s = std::string("Piro Analysis Test ") + std::to_string(i);
           failures += scaledCompare(p[i], testValues[i], relTol, absTol, s);
           comparisons++;
         }
       }
+    }
+
+    // All the parameters must be equal to a given value (e.g., a constant distributed parameter)
+    if (testParams->isParameter("Piro Analysis Test Uniform Value")) {
+      const double value = testParams->get<double>("Piro Analysis Test Uniform Value");
+      auto diff = tvec->clone_v();
+      ::Thyra::add_scalar(-value, diff.ptr());
+      const double maxDiff = ::Thyra::norm_inf(*diff);
+      *out << "Parameter Vector Max Distance From " << value << ": " << std::setprecision(12) << maxDiff << std::endl;
+      const bool ok = (maxDiff <= std::fabs(value)*relTol) || (maxDiff <= std::fabs(absTol));
+      if (!ok) {
+        *out << "Piro Analysis Test Uniform Value: max_i |p_i - " << value << "| = " << maxDiff
+             << " (rel " << relTol << " abs " << absTol << ")\n";
+      }
+      failures += !ok;
+      comparisons++;
     }
   }
 
@@ -250,8 +304,16 @@ bool RegressionTests::scaledCompare(
   auto abs_ok  = (d <= fabs(absTol));
   auto ok      = rel_ok || abs_ok;
   if (!ok) {
-    *out << name << ": " << x1 << " != " << x2 << " (rel " << relTol << " abs "
-        << absTol << ")\n";
+    // Print the values with all their digits: the stream may be set to just a few (e.g., by the
+    // solvers), and then the two values may look the same
+    const auto flags     = out->flags();
+    const auto precision = out->precision();
+    out->unsetf(std::ios_base::floatfield);
+    *out << std::setprecision(std::numeric_limits<double>::digits10)
+         << name << ": " << x1 << " != " << x2;
+    out->flags(flags);
+    out->precision(precision);
+    *out << " (rel " << relTol << " abs " << absTol << ")\n";
   }
   return !ok;
 }
@@ -302,6 +364,10 @@ RegressionTests::getValidRegressionResultsParameters() const
       "Piro Analysis Test Values",
       ta,
       "Array of regression values for final parameters from Analysis runs");
+  validPL->set<double>(
+      "Piro Analysis Test Uniform Value",
+      0.0,
+      "Regression value of all the final parameters from Analysis runs (e.g., for a constant distributed parameter)");
 
   // Should deprecate these options, but need to remove them from all input
   // files

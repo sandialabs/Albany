@@ -80,8 +80,8 @@ ANONYMOUS:
       basalside:
         Method: Omegah
         Mesh Creation Method: OshFile
-        Input Filename: ../ExoMeshes/gis_unstruct_2d.osh
-        Mark Parts: ['LateralSide']
+        Input Filename: ../OmegahMeshes/gis_unstruct_2d.osh
+        Mark Parts: ['lateral_side_set']
         Number Of Time Derivatives: 0
         Required Fields Info:
           Number Of Fields: 4
@@ -198,7 +198,7 @@ ANONYMOUS:
       Line Search:
         Full Step:
           Full Step: 1.0
-        Method: Backtrack
+        Method: Full Step
       Nonlinear Solver: Line Search Based
       Printing:
         Output Precision: 3

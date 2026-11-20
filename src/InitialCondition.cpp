@@ -144,18 +144,19 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
         initFunc = Teuchos::rcp(new ConstantFunction(neq, numDim, data));
       }
 
-      std::vector<double> X(neq);
+      // Element centroid (the coordinates have numDim components, independently of neq)
+      std::vector<double> X(numDim);
 
       for (int ielem=0; ielem<ws_sizes[ws]; ++ielem) {
-        for (int eq=0; eq<neq; eq++)
-          X[eq] = 0;
+        for (int idim=0; idim<numDim; idim++)
+          X[idim] = 0;
 
         for (int inode=0; inode<numNodes; ++inode)
-          for (int eq=0; eq<neq; eq++)
-            X[eq] += coords[ws][ielem][inode][eq]; // nodal coords
+          for (int idim=0; idim<numDim; idim++)
+            X[idim] += coords[ws][ielem][inode][idim]; // nodal coords
 
-        for (int eq=0; eq<neq; eq++)
-          X[eq] /= (double)neq;
+        for (int idim=0; idim<numDim; idim++)
+          X[idim] /= (double)numNodes;
 
         initFunc->compute(&x[0], &X[0]);
 
@@ -185,7 +186,7 @@ void InitialConditions (const Teuchos::RCP<Thyra_Vector>& soln,
           const int idim = eq % numDim;
           for (int inode=0; inode<numNodes; ++inode) {
             const double* X = coords[ws][ielem][inode];
-            soln_data[dof_lids[offsets[inode]]] += X[idim];
+            soln_data[dof_lids[offsets[inode]]] = X[idim];
         }}
       }
     }

@@ -96,18 +96,31 @@ setSolutionFieldsMetadata (int neq)
     sol_sens_id_name_vec[0] = "sensitivity dg" + std::to_string(resp_fn_index) + "dp" + std::to_string(param_sens_index);
   }
 
+  // When this is the basal mesh of an extruded mesh, the solution has neq/levels components
+  // at each of the node levels of the extruded mesh (set by ExtrudedDiscretization). In that case,
+  // store it as a (Level,Comp) field, i.e., with the same layout of 'Node Layered Vector' fields,
+  // so that each level/component pair is a separate entry in the output file.
+  // NOTE: the solution vector must then store level lev of comp icmp at icmp*levels+lev.
+  const int levels = params->isParameter("Solution Field Levels")
+                   ? params->get<int>("Solution Field Levels") : 1;
+  TEUCHOS_TEST_FOR_EXCEPTION (levels<1 or neq % levels != 0, std::runtime_error,
+      "[OrdinarySTKFieldContainer::setSolutionFieldsMetadata] Error! Invalid 'Solution Field Levels'.\n"
+      "  - Solution Field Levels: " << levels << "\n"
+      "  - neq                  : " << neq << "\n");
+  const int ncmp    = levels>1 ? levels : neq;
+  const int ncopies = levels>1 ? neq/levels : 1;
+
   if (save_solution_field) {
     solution_field.resize(num_time_deriv + 1);
     solution_field_dtk.resize(num_time_deriv + 1);
-    solution_field_dxdp.resize(num_params);
 
     for (int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++) {
       const auto& name = params->get(sol_tag_name[num_vecs],sol_id_name[num_vecs]);
-      solution_field[num_vecs] = add_field_to_mesh<double>(name,true,true,neq);
+      solution_field[num_vecs] = add_field_to_mesh<double>(name,true,true,ncmp,ncopies);
 #if defined(ALBANY_DTK)
       if (output_dtk_field == true) {
         const auto& dtk_name = params->get(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]);
-        solution_field_dtk[num_vecs] = add_field_to_mesh<double>(dtk_name,true,true,neq);
+        solution_field_dtk[num_vecs] = add_field_to_mesh<double>(dtk_name,true,true,ncmp,ncopies);
       }
 #endif
     }
@@ -115,11 +128,14 @@ setSolutionFieldsMetadata (int neq)
 
   //Transient sensitivities output to Exodus
   if(output_sens_field) {
+    // For Adjoint, only one sensitivity field is registered (one parameter at a time);
+    // for Forward, one field per parameter.  Size the container to the number of
+    // fields that are actually added so that callers can safely iterate over it.
     const int num_sens = (sens_method == "Forward") ? num_params : 1;
+    solution_field_dxdp.resize(num_sens);
     for (int np = 0; np < num_sens; np++) {
       const auto sens_name = params->get(sol_sens_tag_name_vec[np], sol_sens_id_name_vec[np]);
-      solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,neq);
-
+      solution_field_dxdp[np] = add_field_to_mesh<double>(sens_name,true,true,ncmp,ncopies);
     }
   }
 }
@@ -195,13 +211,14 @@ saveSolnVector (const Thyra_Vector& soln,
   }
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
+    const int num_sens = static_cast<int>(solution_field_dxdp.size());
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
-      "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
-      "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << num_params << "\n");
+      soln_dxdp->domain()->dim() < num_sens, std::runtime_error,
+      "Error in saveSolnVector! Not enough vectors in soln_dxdp.\n"
+      "  - num vectors   : " << soln_dxdp->domain()->dim() << "\n"
+      "  - num sens fields: " << num_sens << "\n");
 
-    for (int np = 0; np < num_params; np++) {
+    for (int np = 0; np < num_sens; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }
@@ -245,13 +262,14 @@ saveSolnMultiVector (const Thyra_MultiVector& soln,
   }
 
   if (soln_dxdp != Teuchos::null and output_sens_field) {
+    const int num_sens = static_cast<int>(solution_field_dxdp.size());
     TEUCHOS_TEST_FOR_EXCEPTION(
-      soln_dxdp->domain()->dim() != num_params, std::runtime_error,
-      "Error in saveSolnVector! Wrong number of vectors in soln_dxdp.\n"
-      "  - num vectors: " << soln_dxdp->domain()->dim() << "\n"
-      "  - num_params : " << num_params << "\n");
+      soln_dxdp->domain()->dim() < num_sens, std::runtime_error,
+      "Error in saveSolnMultiVector! Not enough vectors in soln_dxdp.\n"
+      "  - num vectors   : " << soln_dxdp->domain()->dim() << "\n"
+      "  - num sens fields: " << num_sens << "\n");
 
-    for (int np = 0; np < num_params; np++) {
+    for (int np = 0; np < num_sens; np++) {
       saveVectorImpl (*soln_dxdp->col(np), solution_field_dxdp[np]->name(), sol_dof_mgr, overlapped);
     }
   }

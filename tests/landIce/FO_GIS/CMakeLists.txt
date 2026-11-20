@@ -11,7 +11,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute FO_GIS tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -130,20 +130,14 @@ if (ALBANY_IFPACK2)
                        FIXTURES_REQUIRED PopulateMesh2d
                        FIXTURES_SETUP ${testName}_extruded)
 
-  if (ALBANY_OMEGAH)
-    add_test (NAME ${testName}_CreateGisOsh
-          COMMAND ${OMEGAH_EXO2OSH} gis_unstruct_2d.exo gis_unstruct_2d.osh
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../ExoMeshes)
-    set_tests_properties (${testName}_CreateGisOsh PROPERTIES FIXTURES_SETUP CreateGisOshMesh)
-
+  if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
     # Logically extruded mesh with omegah for the basal disc
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_omegah.yaml)
     add_test(${testName}_Omega_h ${Albany.exe} input_fo_gis_unstruct_omegah.yaml)
     set_tests_properties(${testName}_Omega_h
                          PROPERTIES
-                         LABELS "LandIce;Forward;Omega_h"
-                         FIXTURES_REQUIRED CreateGisOshMesh)
+                         LABELS "LandIce;Forward;Omega_h")
   endif()
 
   # Memoization run
@@ -233,7 +227,14 @@ if (ALBANY_FROSCH)
   set_tests_properties(${testNameRoot}_Humboldt_transitionEffectPress_FROSch
                      PROPERTIES
                      LABELS         "LandIce;Forward")
-  
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_transition_qp_effect_press.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_transition_qp_effect_press.yaml)
+  add_test(${testNameRoot}_Humboldt_transitionQPEffectPress_FROSch ${Albany.exe} input_fo_humboldt_frosch_transition_qp_effect_press.yaml)
+  set_tests_properties(${testNameRoot}_Humboldt_transitionQPEffectPress_FROSch
+                     PROPERTIES
+                     LABELS         "LandIce;Forward")
+
 	     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_frosch_pressurized_bed.yaml)
   add_test(${testNameRoot}_Humboldt_pressurizedBed_FROSch ${Albany.exe} input_fo_humboldt_frosch_pressurized_bed.yaml)
@@ -255,6 +256,9 @@ if (ALBANY_FROSCH)
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
     
     set_tests_properties(${testNameRoot}_Humboldt_transitionEffectPress_FROSch
+      PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_transitionQPEffectPress_FROSch
       PROPERTIES FIXTURES_REQUIRED humboldtMeshSetup2d)
                        
   endif()
@@ -292,32 +296,41 @@ if (ALBANY_MUELU)
     set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
                        LABELS            "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
+
+    set_tests_properties(${testNameRoot}_Humboldt_n4_MueLu
+                       PROPERTIES
+                       LABELS            "LandIce;Forward"
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu
                        PROPERTIES
                        LABELS            "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb
                        PROPERTIES
                        LABELS            "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_RegCoulomb_ConstA
                        PROPERTIES
                        LABELS            "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
 
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction
                        PROPERTIES
                        LABELS            "LandIce;Forward"
-                       FIXTURES_REQUIRED humboldtMeshSetup)
+                       FIXTURES_REQUIRED humboldtMeshSetup2d)
   else ()
     set_tests_properties(${testNameRoot}_Humboldt_MueLu
                        PROPERTIES
                        LABELS         "LandIce;Forward")
 
+    set_tests_properties(${testNameRoot}_Humboldt_n4_MueLu
+                       PROPERTIES
+                       LABELS         "LandIce;Forward")
+
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu
                        PROPERTIES
                        LABELS         "LandIce;Forward")
@@ -333,6 +346,33 @@ if (ALBANY_MUELU)
     set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_DebrisFriction
                        PROPERTIES
                        LABELS         "LandIce;Forward")
+  endif()
+
+  # The two logically extruded runs above write their basal mesh, which the restart tests below read
+  set_tests_properties(${testNameRoot}_Humboldt_MueLu
+                       PROPERTIES FIXTURES_SETUP ${testNameRoot}_Humboldt_MueLu)
+  set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu
+                       PROPERTIES FIXTURES_SETUP ${testNameRoot}_Humboldt_DepthIntegrated_MueLu)
+
+  if (NOT ALBANY_DISABLE_OUTPUT_MESH)
+    # Restart the logically extruded runs, reading all basal and surface fields from their basal output mesh
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_muelu_restart.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_muelu_restart.yaml)
+    add_test(${testNameRoot}_Humboldt_MueLu_Restart ${Albany.exe} input_fo_humboldt_muelu_restart.yaml)
+    set_tests_properties(${testNameRoot}_Humboldt_MueLu_Restart
+                         PROPERTIES
+                         LABELS            "LandIce;Forward"
+                         RUN_SERIAL        TRUE
+                         FIXTURES_REQUIRED ${testNameRoot}_Humboldt_MueLu)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_depthInt_muelu_restart.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_depthInt_muelu_restart.yaml)
+    add_test(${testNameRoot}_Humboldt_DepthIntegrated_MueLu_Restart ${Albany.exe} input_fo_humboldt_depthInt_muelu_restart.yaml)
+    set_tests_properties(${testNameRoot}_Humboldt_DepthIntegrated_MueLu_Restart
+                         PROPERTIES
+                         LABELS            "LandIce;Forward"
+                         RUN_SERIAL        TRUE
+                         FIXTURES_REQUIRED ${testNameRoot}_Humboldt_DepthIntegrated_MueLu)
   endif()
   
 endif()
@@ -372,27 +412,27 @@ IF(NOT Kokkos_ENABLE_CUDA)
     ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_sensitivities.yaml)
 
     add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_sensitivities.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
   
   else()
     set (testName ${testNameRoot}_Humboldt_Transient_STK3D)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk3d.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk3d.yaml)
     add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk3d.yaml)
-    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+    set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
   endif()
 
   set (testName ${testNameRoot}_Humboldt_Transient_STK)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_stk.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_stk.yaml)
   add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_stk.yaml)
-  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
   set (testName ${testNameRoot}_Humboldt_Transient_Explicit_STK)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_explicit_stk.yaml
                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_explicit_stk.yaml)
   add_test(${testName} ${Albany.exe} input_fo_humboldt_transient_explicit_stk.yaml)
-  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetup)
+  set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward" FIXTURES_REQUIRED humboldtMeshSetupContiguous2d)
 
   if (ALBANY_OMEGAH)
     # TODO: when exo2osh treats nodesets correctly, we can uncomment this (and remove code in AsciiMeshes/Humboldt)
@@ -411,6 +451,16 @@ IF(NOT Kokkos_ENABLE_CUDA)
       LABELS "LandIce;Forward;Omega_h")
     # set_tests_properties(${testName}  PROPERTIES
     #   FIXTURES_REQUIRED CreateHumboldtOshMesh)
+
+    if (ALBANY_MESHFIELDS)
+      # Five time steps of the Humboldt transient problem with adaptation driven by a MeshFields SPR error estimate.
+      set (testName ${testNameRoot}_Humboldt_Transient_Omega_h_Adapt_3t)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+      add_test(${testName} ${SerialAlbany.exe} input_fo_humboldt_transient_omegah_adapt_3t.yaml)
+      set_tests_properties(${testName}  PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+    endif()
 
   endif()
 

@@ -62,7 +62,7 @@ ANONYMOUS:
     Number Of Time Derivatives: 1
     # Exodus Output File Name: output/humboldt_transient.exo
     Columnwise Ordering: false
-    NumLayers: 5
+    NumLayers: 1
     Thickness Field Name: ice_thickness
     #Surface Height Field Name: surface_height
     Use Glimmer Spacing: true
@@ -94,8 +94,10 @@ ANONYMOUS:
       Side Sets: [basalside, upperside]
       basalside:
         Method: Omegah
+        VTK Output File Name: fo_box_transient
+        VTK Write Interval: 1
         Mesh Creation Method: Box2D
-        Number of Elements: [4, 4]   # M x N basal mesh (configurable)
+        Number of Elements: [2, 2]   # M x N basal mesh (configurable)
         Box Scaling: [40.0, 40.0]    # domain [0,40]x[0,40] (km)
         Number Of Time Derivatives: 1
         Required Fields Info:

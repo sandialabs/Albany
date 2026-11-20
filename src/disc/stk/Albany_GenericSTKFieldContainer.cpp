@@ -12,6 +12,7 @@
 // Start of STK stuff
 #include <stk_mesh/base/Types.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/FieldParallel.hpp>
 #include <stk_mesh/base/MetaData.hpp>
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -250,15 +251,18 @@ void GenericSTKFieldContainer::createStateArrays (const WorksetArray<int>& works
     }
   }
 
-  // Global states
+  // Global states. They have rank 1: they are scalars if dim[0]==1, and vectors of length
+  // dim[0] otherwise (see GenericSTKFieldContainer::addStateStruct).
   for (const auto& st : global_sis) {
+    TEUCHOS_TEST_FOR_EXCEPTION (st->dim.size()!=1, std::runtime_error,
+        "Error! Unsupported rank (" << st->dim.size() << ") for global state '" + st->name + "'.\n");
     auto& state = globalStates[st->name];
-    if (st->dim.size()==1) {
+    if (st->dim[0]==1) {
       state.reset_from_host_ptr(&mesh_scalar_states[st->name],1);
-    } else if (st->dim.size()==1) {
-      state.reset_from_host_ptr(mesh_vector_states[st->name].data(),st->dim[0]);
     } else {
-      throw std::runtime_error("Error! Unsupported rank for global state '" + st->name + "'.\n");
+      auto& values = mesh_vector_states[st->name];
+      values.resize(st->dim[0],0);
+      state.reset_from_host_ptr(values.data(),st->dim[0]);
     }
   }
 }
@@ -313,53 +317,113 @@ void GenericSTKFieldContainer::transferNodeStatesToElemStates ()
 void GenericSTKFieldContainer::
 transferElemStateToNodeState (const std::string& name)
 {
+  // The (Cell,Node[,...]) elem state holds, for each element, the values at its nodes. The elements
+  // containing a node can hold different values (e.g., if they are computed with element quantities,
+  // like the flow rate used in the nodal basal friction coefficient). Each nodal value is set to the
+  // average over all the elements containing the node, including the elements owned by other ranks,
+  // so that the nodal field depends neither on the order in which elements are visited nor on the
+  // partition, and all the copies of a shared node agree. Where the elements agree, the nodal value
+  // is unchanged (up to round-off).
   const auto ELEM_RANK = stk::topology::ELEM_RANK;
+  const auto NODE_RANK = stk::topology::NODE_RANK;
 
   auto select_owned_part = stk::mesh::Selector(metaData->universal_part()) &
                            stk::mesh::Selector(metaData->locally_owned_part());
   const auto& elem_buckets = bulkData->get_buckets(ELEM_RANK,select_owned_part);
-  auto* node_field = metaData->get_field<double>(stk::topology::NODE_RANK,name);
+  auto* node_field = metaData->get_field<double>(NODE_RANK,name);
   TEUCHOS_TEST_FOR_EXCEPTION(node_field==nullptr, std::runtime_error,
       "Error! Cannot retrieve nodal field '" + name + "\n");
+  const std::vector<const stk::mesh::FieldBase*> fields = {node_field};
 
-  int num_buckets = elem_buckets.size();
-  for (int ws=0; ws<num_buckets; ++ws) {
-    auto& e_state_h = elemStateArrays[ws][name].host();
+  // Number of scalars per node, and value of scalar c of node 'in' of elem 'ie'
+  auto num_comps = [&](const auto& e_state_h) {
+    switch (e_state_h.rank()) {
+      case 2: return 1;
+      case 3: return e_state_h.extent_int(2);
+      case 4: return e_state_h.extent_int(2)*e_state_h.extent_int(3);
+      default:
+        throw std::runtime_error("Unsupported rank for state '" + name + "'\n");
+    }
+  };
+  auto elem_value = [](const auto& e_state_h, int ie, int in, int c) {
+    switch (e_state_h.rank()) {
+      case 2: return e_state_h(ie,in);
+      case 3: return e_state_h(ie,in,c);
+      default: {
+        const int dim3 = e_state_h.extent_int(3);
+        return e_state_h(ie,in,c/dim3,c%dim3);
+      }
+    }
+  };
 
-    const auto& bucket = *elem_buckets[ws];
-    int nelems = bucket.size();
-    int nelem_nodes = e_state_h.extent(1);
-    int rank = e_state_h.rank();
-    int dim2,dim3;
-    for (int ie=0; ie<nelems; ++ie) {
-      auto e = bucket[ie];
-      const auto& nodes = bulkData->begin_nodes(e);
-      for (int in=0; in<nelem_nodes; ++in) {
-        auto values = stk::mesh::field_data(*node_field,nodes[in]);
-        switch(rank) {
-          case 2:
-            values[0] = e_state_h(ie,in);
-            break;
-          case 3:
-            dim2 = e_state_h.extent_int(2);
-            for (int j=0; j<dim2; ++j) {
-              values[j] = e_state_h(ie,in,j);
-            }
-            break;
-          case 4:
-            dim2 = e_state_h.extent_int(2);
-            dim3 = e_state_h.extent_int(3);
-            for (int j=0; j<dim2; ++j) {
-              for (int k=0; k<dim3; ++k) {
-                values[j*dim3+k] = e_state_h(ie,in,j,k);
-              }
-            }
-            break;
-          default:
-            throw std::runtime_error("Unsupported rank for state '" + name + "'\n");
+  // Calls f(node,values,e_state_h,ie,in,ncomps) for each node of each owned element
+  const int num_buckets = elem_buckets.size();
+  auto for_each_elem_node = [&](const auto& f) {
+    for (int ws=0; ws<num_buckets; ++ws) {
+      const auto& e_state_h = elemStateArrays[ws][name].host();
+      const auto& bucket = *elem_buckets[ws];
+      const int nelems = bucket.size();
+      const int nelem_nodes = e_state_h.extent(1);
+      const int ncomps = num_comps(e_state_h);
+      for (int ie=0; ie<nelems; ++ie) {
+        const auto& nodes = bulkData->begin_nodes(bucket[ie]);
+        for (int in=0; in<nelem_nodes; ++in) {
+          f(nodes[in],stk::mesh::field_data(*node_field,nodes[in]),e_state_h,ie,in,ncomps);
         }
       }
     }
+  };
+
+  // Zeroes the field on all owned and shared nodes, so that parallel_sum only adds what we accumulate
+  const auto& node_buckets = bulkData->get_buckets(NODE_RANK,
+      stk::mesh::Selector(metaData->locally_owned_part()) | stk::mesh::Selector(metaData->globally_shared_part()));
+  auto zero_field = [&]() {
+    for (const auto* b : node_buckets) {
+      for (size_t i=0; i<b->size(); ++i) {
+        const auto node = (*b)[i];
+        const int n = stk::mesh::field_scalars_per_entity(*node_field,node);
+        auto values = stk::mesh::field_data(*node_field,node);
+        for (int c=0; c<n; ++c) {
+          values[c] = 0;
+        }
+      }
+    }
+  };
+
+  // 1. Number of elements containing each node, over all ranks
+  std::vector<double> num_elems(bulkData->get_size_of_entity_index_space(),0);
+  zero_field();
+  for_each_elem_node([](stk::mesh::Entity, double* values, const auto&, int, int, int) {
+    values[0] += 1;
+  });
+  stk::mesh::parallel_sum(*bulkData,fields);
+  for_each_elem_node([&](stk::mesh::Entity node, double* values, const auto&, int, int, int) {
+    num_elems[node.local_offset()] = values[0];
+  });
+
+  // 2. Sum of the values of the elements containing each node, over all ranks
+  zero_field();
+  for_each_elem_node([&](stk::mesh::Entity, double* values, const auto& e_state_h, int ie, int in, int ncomps) {
+    for (int c=0; c<ncomps; ++c) {
+      values[c] += elem_value(e_state_h,ie,in,c);
+    }
+  });
+  stk::mesh::parallel_sum(*bulkData,fields);
+
+  // 3. Average. Nodes belong to several elements, so reset the count once a node is done.
+  for_each_elem_node([&](stk::mesh::Entity node, double* values, const auto&, int, int, int ncomps) {
+    auto& n = num_elems[node.local_offset()];
+    if (n>0) {
+      for (int c=0; c<ncomps; ++c) {
+        values[c] /= n;
+      }
+      n = 0;
+    }
+  });
+
+  // Ghosted (aura) copies of the nodes are not set above
+  if (bulkData->is_automatic_aura_on()) {
+    stk::mesh::communicate_field_data(bulkData->aura_ghosting(),fields);
   }
 }
 
@@ -385,7 +449,8 @@ GenericSTKFieldContainer::
 add_field_to_mesh (const std::string& name,
                    const bool nodal,
                    const bool transient,
-                   const int ncmp)
+                   const int ncmp,
+                   const int ncopies)
 {
   constexpr auto NODE_RANK = stk::topology::NODE_RANK;
   constexpr auto ELEM_RANK = stk::topology::ELEM_RANK;
@@ -397,7 +462,9 @@ add_field_to_mesh (const std::string& name,
     fptr = &metaData->declare_field<T>(rank,name);
   }
   auto& universal_part = metaData->universal_part();
-  if (ncmp>0)
+  if (ncmp>0 and ncopies>1)
+    stk::mesh::put_field_on_mesh(*fptr,universal_part,ncmp,ncopies,nullptr);
+  else if (ncmp>0)
     stk::mesh::put_field_on_mesh(*fptr,universal_part,ncmp,nullptr);
   else
     stk::mesh::put_field_on_mesh(*fptr,universal_part,nullptr);
@@ -417,12 +484,14 @@ GenericSTKFieldContainer::
 add_field_to_mesh<int> (const std::string& name,
                         const bool nodal,
                         const bool transient,
+                        const int,
                         const int);
 template stk::mesh::Field<double>*
 GenericSTKFieldContainer::
 add_field_to_mesh<double> (const std::string& name,
                            const bool nodal,
                            const bool transient,
+                           const int,
                            const int);
 
 } // namespace Albany

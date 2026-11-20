@@ -314,18 +314,24 @@ evaluate_HessVecProd_pp(
   if (!Hv_dp.is_null() && !l1_is_distributed && parameter_index < n_parameters) {
     typedef SerialDenseVector<int, double> DVector;
 
-    DVector tmp1(total_dimension), tmp2(total_dimension);
+    // Compute the offset into the full theta vector for this parameter block.
+    const int dim = (*dimensions)(parameter_index);
+    int offset = 0;
+    for (int j = 0; j < parameter_index; ++j)
+      offset += (*dimensions)(j);
 
-    for (int i=0; i<total_dimension; i++) {
-      tmp1(i) = Thyra::get_ele(*v->col(0),i);
-    }
+    // Embed v (dimension dim) into a full-dimension vector at [offset, offset+dim).
+    DVector tmp1(total_dimension), tmp2(total_dimension);
+    tmp1.putScalar(0.0);
+    for (int i = 0; i < dim; ++i)
+      tmp1(offset + i) = Thyra::get_ele(*v->col(0), i);
 
     tmp2.multiply( Teuchos::NO_TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 0.0 );
     tmp2.multiply( Teuchos::TRANS, Teuchos::NO_TRANS, 0.5, *invC, tmp1, 1.0 );
 
-    for (int i=0; i<total_dimension; i++) {
-      Thyra::set_ele(i, tmp2(i), Hv_dp->col(0).ptr());
-    }
+    // Extract the result for this block.
+    for (int i = 0; i < dim; ++i)
+      Thyra::set_ele(i, tmp2(offset + i), Hv_dp->col(0).ptr());
   }
   else if (!Hv_dp.is_null()) {
     Hv_dp->assign(0.0);

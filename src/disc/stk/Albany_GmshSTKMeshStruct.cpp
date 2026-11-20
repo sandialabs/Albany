@@ -424,9 +424,9 @@ void GmshSTKMeshStruct::loadLegacyMesh ()
   hexas = new int*[9];
   quads = new int*[5];
   for (int i(0); i<5; ++i) {
-    tetra[i] = new int[nb_tetra];\
+    tetra[i] = new int[nb_tetra];
   }
-  for (int i(0); i<5; ++i) {
+  for (int i(0); i<4; ++i) {
     trias[i] = new int[nb_trias];
   }
   for (int i(0); i<9; ++i) {
@@ -500,7 +500,7 @@ void GmshSTKMeshStruct::loadLegacyMesh ()
         break;
       case 2: // 3-pt Triangle
         ss >> trias[0][itria] >> trias[1][itria] >> trias[2][itria];
-        trias[4][itria] = reg_phys;
+        trias[3][itria] = reg_phys;
         ++itria;
         break;
       case 3: // 4-pt Quad
@@ -510,8 +510,8 @@ void GmshSTKMeshStruct::loadLegacyMesh ()
         break;
       case 4: // 4-pt Tetra
         ss >> tetra[0][itetra] >> tetra[1][itetra] >> tetra[2][itetra] >> tetra[3][itetra];
-        trias[4][itetra] = reg_phys;
-        ++itria;
+        tetra[4][itetra] = reg_phys;
+        ++itetra;
         break;
       case 5: // 8-pt Hexa
         ss >> hexas[0][ihexa] >> hexas[1][ihexa] >> hexas[2][ihexa] >> hexas[3][ihexa]
@@ -582,12 +582,17 @@ void GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
       int parametric     = 0;
       int num_node_block = 0;
       ifile >> entity_dim >> entity_tag >> parametric >> num_node_block;
+      TEUCHOS_TEST_FOR_EXCEPTION (!ifile || num_node_block<0 || num_node_block>NumNodes-accounted_nodes,
+          std::runtime_error, "Error! Invalid number of nodes in node block.\n");
 
       // First get the node id's
-      int* node_IDs = new int[num_node_block];
+      std::vector<int> node_IDs(num_node_block);
       for( int i = 0; i < num_node_block; i++)
       {
         ifile >> node_IDs[i];
+        // Nodes are stored by tag, so tags must be in [1,NumNodes]
+        TEUCHOS_TEST_FOR_EXCEPTION (!ifile || node_IDs[i]<1 || node_IDs[i]>NumNodes, std::runtime_error,
+            "Error! Invalid node tag " << node_IDs[i] << " (must be in [1," << NumNodes << "]).\n");
       }
 
       // Put node coordinates into proper ID place
@@ -598,7 +603,7 @@ void GmshSTKMeshStruct::load_node_data( std::ifstream& ifile)
         ifile >> pts[this_id][0] >> pts[this_id][1] >> pts[this_id][2];
         accounted_nodes++;
       }
-      delete[] node_IDs;
+      TEUCHOS_TEST_FOR_EXCEPTION (!ifile, std::runtime_error, "Error! Could not read node coordinates.\n");
     }
   }
 }
@@ -1072,55 +1077,58 @@ void GmshSTKMeshStruct::loadBinaryMesh ()
   // Gmsh lists elements and sides (and some points) all together, and does not specify beforehand what kind of elements
   // the mesh has. Hence, we need to scan the entity list once to establish what kind of elements we have. We support
   // linear Tetrahedra/Hexahedra in 3D and linear Triangle/Quads in 2D
+  // Each block of elements starts with a header [element type, number of elements, number of tags],
+  // followed, for each element, by: id, tags, points.
+  auto num_pts = [](const int e_type) -> int {
+    switch (e_type) {
+      case 1:  return 2;  // 2-pt Line
+      case 2:  return 3;  // 3-pt Triangle
+      case 3:  return 4;  // 4-pt Quad
+      case 4:  return 4;  // 4-pt Tetra
+      case 5:  return 8;  // 8-pt Hexa
+      case 15: return 1;  // Point
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+            "Error! Element type (" << e_type << ") not supported.\n");
+    }
+    return 0;
+  };
+  // Read the header of the next block, check it, and read the block data into tmp.
+  // Returns the number of ints per element.
+  const auto elems_start = ifile.tellg();
+  ifile.seekg (0, std::ios::end);
+  const auto file_end = ifile.tellg();
+  ifile.seekg (elems_start);
   std::vector<int> tmp;
-  int n_tags(0), e_type(0), entities_found(0);
+  auto read_block = [&](int (&header)[3], const int entities_found) -> std::size_t {
+    ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
+    TEUCHOS_TEST_FOR_EXCEPTION (!ifile, std::runtime_error, "Error! Unexpected end of file while reading the elements.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (header[1]<=0 || header[1]>nb_entities-entities_found, std::logic_error,
+        "Error! Invalid number of elements of this type.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (header[2]<=0, std::logic_error, "Error! Invalid number of tags.\n");
+    const std::size_t length = 1 + static_cast<std::size_t>(header[2]) + num_pts(header[0]);
+    const std::size_t block_size = static_cast<std::size_t>(header[1])*length;
+    TEUCHOS_TEST_FOR_EXCEPTION (block_size*sizeof(int) > static_cast<std::size_t>(file_end-ifile.tellg()), std::runtime_error,
+        "Error! Element block extends past the end of the file.\n");
+    tmp.resize(block_size);
+    ifile.read (reinterpret_cast<char*> (tmp.data()), tmp.size()*sizeof(int));
+    TEUCHOS_TEST_FOR_EXCEPTION (!ifile, std::runtime_error, "Error! Unexpected end of file while reading the elements.\n");
+    return length;
+  };
+
+  int entities_found(0);
   while (entities_found<nb_entities) {
     int header[3];
-    ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
-
-    TEUCHOS_TEST_FOR_EXCEPTION (header[1]<=0, std::logic_error, "Error! Invalid number of elements of this type.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (header[2]<=0, std::logic_error, "Error! Invalid number of tags.\n");
-
-    e_type = header[0];
+    read_block(header,entities_found);
     entities_found += header[1];
-    n_tags = header[2];
 
-    int length;
-    switch (e_type) {
-      case 1: // 2-pt Line
-        length = 1+n_tags+2; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_lines += header[1];
-        break;
-      case 2: // 3-pt Triangle
-        length = 1+n_tags+3; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_trias += header[1];
-        break;
-      case 3: // 4-pt Quad
-        length = 1+n_tags+4; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quads += header[1];
-        break;
-      case 4: // 4-pt Tetra
-        length = 1+n_tags+4; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quads += header[1];
-        break;
-      case 5: // 8-pt Hexa
-        length = 1+n_tags+8; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        nb_quads += header[1];
-        break;
-      case 15: // Point
-        break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
+    switch (header[0]) {
+      case 1: nb_lines += header[1]; break;
+      case 2: nb_trias += header[1]; break;
+      case 3: nb_quads += header[1]; break;
+      case 4: nb_tetra += header[1]; break;
+      case 5: nb_hexas += header[1]; break;
+      default: break; // Points
     }
   }
   TEUCHOS_TEST_FOR_EXCEPTION (nb_tetra*nb_hexas!=0, std::logic_error, "Error! Cannot mix tetrahedra and hexahedra.\n");
@@ -1135,7 +1143,7 @@ void GmshSTKMeshStruct::loadBinaryMesh ()
   for (int i(0); i<5; ++i) {
     tetra[i] = new int[nb_tetra];
   }
-  for (int i(0); i<5; ++i) {
+  for (int i(0); i<4; ++i) {
     trias[i] = new int[nb_trias];
   }
   for (int i(0); i<9; ++i) {
@@ -1197,82 +1205,32 @@ void GmshSTKMeshStruct::loadBinaryMesh ()
   int iline(0), itria(0), iquad(0), itetra(0), ihexa(0);
   while (entities_found<nb_entities) {
     int header[3];
-    ifile.read(reinterpret_cast<char*> (header), 3*sizeof(int));
-
-    TEUCHOS_TEST_FOR_EXCEPTION (header[1]<=0, std::logic_error, "Error! Invalid number of elements of this type.\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (header[2]<=0, std::logic_error, "Error! Invalid number of tags.\n");
-
-    e_type = header[0];
+    const std::size_t length = read_block(header,entities_found);
     entities_found += header[1];
-    n_tags = header[2];
 
-    int length;
-    switch (e_type) {
-      case 1: // 2-pt Line
-        length = 1+n_tags+2; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        for (int j(0); j<header[1]; ++j, ++iline) {
-          lines[0][j] = tmp[sizeof(int)*(j*length+1+n_tags)];   // First pt
-          lines[1][j] = tmp[sizeof(int)*(j*length+1+n_tags+1)];
-          lines[2][j] = tmp[sizeof(int)*(j*length+1)];          // Use first tag
-        }
-        break;
-      case 2: // 3-pt Triangle
-        length = 1+n_tags+3; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        for (int j(0); j<header[1]; ++j, ++itria) {
-          trias[0][j] = tmp[sizeof(int)*(j*length+1+n_tags)];   // First pt
-          trias[1][j] = tmp[sizeof(int)*(j*length+1+n_tags+1)];
-          trias[2][j] = tmp[sizeof(int)*(j*length+1+n_tags+2)];
-          trias[3][j] = tmp[sizeof(int)*(j*length+1)];          // Use first tag
-        }
-        break;
-      case 3: // 4-pt Quad
-        length = 1+n_tags+4; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        for (int j(0); j<header[1]; ++j, ++iquad) {
-          quads[0][j] = tmp[sizeof(int)*(j*length+1+n_tags)];   // First pt
-          quads[1][j] = tmp[sizeof(int)*(j*length+1+n_tags+1)];
-          quads[2][j] = tmp[sizeof(int)*(j*length+1+n_tags+2)];
-          quads[3][j] = tmp[sizeof(int)*(j*length+1+n_tags+3)];
-          quads[4][j] = tmp[sizeof(int)*(j*length+1)];          // Use first tag
-        }
-        break;
-      case 4: // 4-pt Tetra
-        length = 1+n_tags+4; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        for (int j(0); j<header[1]; ++j, ++itetra) {
-          tetra[0][j] = tmp[sizeof(int)*(j*length+1+n_tags)];   // First pt
-          tetra[1][j] = tmp[sizeof(int)*(j*length+1+n_tags+1)];
-          tetra[2][j] = tmp[sizeof(int)*(j*length+1+n_tags+2)];
-          tetra[3][j] = tmp[sizeof(int)*(j*length+1+n_tags+3)];
-          tetra[4][j] = tmp[sizeof(int)*(j*length+1)];          // Use first tag
-        }
-        break;
-      case 5: // 8-pt Hexa
-        length = 1+n_tags+8; // id, tags, points
-        tmp.resize(header[1]*length);
-        ifile.read (reinterpret_cast<char*> (&tmp[0]), header[1]*length*sizeof(int));
-        for (int j(0); j<header[1]; ++j, ++ihexa) {
-          hexas[0][j] = tmp[sizeof(int)*(j*length+1+n_tags)];   // First pt
-          hexas[1][j] = tmp[sizeof(int)*(j*length+1+n_tags+1)];
-          hexas[2][j] = tmp[sizeof(int)*(j*length+1+n_tags+2)];
-          hexas[3][j] = tmp[sizeof(int)*(j*length+1+n_tags+3)];
-          hexas[4][j] = tmp[sizeof(int)*(j*length+1+n_tags+4)];
-          hexas[5][j] = tmp[sizeof(int)*(j*length+1+n_tags+5)];
-          hexas[6][j] = tmp[sizeof(int)*(j*length+1+n_tags+6)];
-          hexas[7][j] = tmp[sizeof(int)*(j*length+1+n_tags+7)];
-          hexas[8][j] = tmp[sizeof(int)*(j*length+1)];          // Use first tag
-        }
-        break;
-      case 15: // Point
-        break;
-      default:
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Element type not supported.\n");
+    // Rows 0..npts-1 of the array are the points, row npts is the (first) tag
+    int** rows = nullptr;
+    int*  count = nullptr;
+    int   nb = 0;
+    switch (header[0]) {
+      case 1: rows = lines; count = &iline;  nb = nb_lines; break;
+      case 2: rows = trias; count = &itria;  nb = nb_trias; break;
+      case 3: rows = quads; count = &iquad;  nb = nb_quads; break;
+      case 4: rows = tetra; count = &itetra; nb = nb_tetra; break;
+      case 5: rows = hexas; count = &ihexa;  nb = nb_hexas; break;
+      default: continue; // Points are not used
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (header[1]>nb-*count, std::runtime_error,
+        "Error! Element counts changed while reading the file.\n");
+
+    const int npts = num_pts(header[0]);
+    const std::size_t first_pt = length - npts;
+    for (int j(0); j<header[1]; ++j, ++(*count)) {
+      const int* elem = tmp.data() + j*length;
+      for (int k(0); k<npts; ++k) {
+        rows[k][*count] = elem[first_pt+k];
+      }
+      rows[npts][*count] = elem[1]; // Use first tag
     }
   }
 

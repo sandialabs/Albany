@@ -171,8 +171,12 @@ evaluateResidNode(int cell, int node, ScalarT *residual) const {
   for (std::size_t qp = 0; qp < numQPs; ++qp) {
     // Time derivative of the enthalpy, with lumped mass (nodal value times the integral of the test
     // function) and time in years: [MW s m^{-3} yr^{-1}] / scyr * [km^3], same units as the advection term.
+    // The 1e6 (pow3*pow3) factor converts from the physical (E/yr * km^3) convention to the
+    // internal residual convention used by all other terms (e.g. advection uses pow3 on top of
+    // E/km gradients, diffusion uses SI K_i in m^2/s against per-km gradients), giving a net
+    // 1e6 factor relative to the directly physical expression.
     if (transientTerms)
-      retval += EnthalpyDot(cell,node)*wBF(cell,node,qp)/scyr;
+      retval += 1e6*EnthalpyDot(cell,node)*wBF(cell,node,qp)/scyr;
 
     retval -= (diss(cell,qp))*wBF(cell,node,qp);
 

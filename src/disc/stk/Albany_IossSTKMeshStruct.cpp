@@ -434,22 +434,29 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& comm)
     temp_any.type = stk::util::ParameterType::INT64;
     mesh_data->get_global (state_name, temp_any, true);
     auto max_2d_elem_gid = temp_any.get_value<int64_t>();
-    fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_elem_gid ;
+    TEUCHOS_TEST_FOR_EXCEPTION (max_2d_elem_gid < 0, std::runtime_error,
+        "Error! Negative max_2d_elem_gid (" << max_2d_elem_gid << ") in input mesh.\n");
+    fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_elem_gid;
 
     // Max global node id
     state_name = "max_2d_node_gid";
     mesh_data->get_global (state_name, temp_any, true);
     auto max_2d_node_gid = temp_any.get_value<int64_t>();
+    TEUCHOS_TEST_FOR_EXCEPTION (max_2d_node_gid < 0, std::runtime_error,
+        "Error! Negative max_2d_node_gid (" << max_2d_node_gid << ") in input mesh.\n");
     fieldContainer->getMeshScalarInteger64States()[state_name] = max_2d_node_gid;
 
     // Build cell layers data
     auto ordering = orderingAsInt==0 ? LayeredMeshOrdering::LAYER : LayeredMeshOrdering::COLUMN;
-    layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_2d_elem_gid,numLayers,ordering));
+    layers_data.cell.gid = Teuchos::rcp(new LayeredMeshNumbering<GO>(max_2d_elem_gid+1,numLayers,ordering));
 
     // Build LO cell layers data
     stk::mesh::Selector select_owned_in_part(metaData->locally_owned_part());
     const auto& buckets = bulkData->buckets(stk::topology::ELEM_RANK);
     const LO numLocalCells3D = stk::mesh::count_selected_entities(select_owned_in_part,buckets);
+    TEUCHOS_TEST_FOR_EXCEPTION (numLocalCells3D % numLayers != 0, std::runtime_error,
+        "Error! Local 3D cell count (" << numLocalCells3D << ") is not divisible by "
+        "num_layers (" << numLayers << ") from the restart file.\n");
     const LO numLocalCells2D = numLocalCells3D / numLayers;
     layers_data.cell.lid = Teuchos::rcp(new LayeredMeshNumbering<LO>(numLocalCells2D,numLayers,ordering));
 

@@ -44,7 +44,7 @@ static constexpr double zs_value   = 2000.0;  // surface height (m)
 static constexpr double beta_value =    1.0;  // basal friction
 
 // Name of the lateral side set in the .osh file (used to mark the part in Omega_h)
-static const std::string lateral_part = "lateralside";
+static const std::string lateral_part = "lateral_side_set";
 
 namespace {
 

@@ -127,7 +127,13 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   numLayers = d.get_num_layers();
-  quadWeights.resize("quadWeights", numLayers+1);
+  // NOTE: this can be a re-setup (e.g., after a mesh adaptation), in which case
+  //       quadWeights is already allocated, and resize would throw. The number of
+  //       layers is fixed at discretization creation, so the existing allocation
+  //       (and the weights cached in it) are still correct.
+  if (quadWeights.size()==0) {
+    quadWeights.resize("quadWeights", numLayers+1);
+  }
 
   this->utils.setFieldData(contractedSol,fm);
   d.fill_field_dependencies(this->dependentFields(),this->evaluatedFields(),false);

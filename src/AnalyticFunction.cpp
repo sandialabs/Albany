@@ -193,6 +193,9 @@ DispConstTemperatureStep::DispConstTemperatureStep(int neq_, int numDim_,
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 9),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureStep; Length = " << 9 << ", data.size() = " << data.size() <<  std::endl) ;
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 4),
+                             std::logic_error,
+                             "Error! DispConstTemperatureStep requires neq >= 4 (3 displacement + 1 temperature); neq = " << neq <<  std::endl) ;
 }
 
 void DispConstTemperatureStep::compute(double* x, const double* X) {
@@ -240,6 +243,9 @@ DispConstTemperatureLinear::DispConstTemperatureLinear(int neq_, int numDim_,
   TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 8),
                              std::logic_error,
                              "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureLinear; Length = " << 8 << ", data.size() = " << data.size() <<  std::endl) ;
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 4),
+                             std::logic_error,
+                             "Error! DispConstTemperatureLinear requires neq >= 4 (3 displacement + 1 temperature); neq = " << neq <<  std::endl) ;
 }
 
 void DispConstTemperatureLinear::compute(double* x, const double* X) {
@@ -448,7 +454,7 @@ void GaussCos::compute(double* x, const double* X) {
 //*****************************************************************************
 LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 1),
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < numDim) || (numDim < 2) || (data.size() != 1),
                              std::logic_error,
                              "Error! Invalid call of LinearY with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
@@ -544,7 +550,7 @@ void AboutLinearZ::compute(double* x, const double* X) {
 //*****************************************************************************
 GaussianZ::GaussianZ(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 3),
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim < 2) || (data.size() != 3),
                              std::logic_error,
                              "Error! Invalid call of GaussianZ with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
@@ -630,7 +636,7 @@ void SinScalar::compute(double* x, const double* X) {
 //*****************************************************************************
 TaylorGreenVortex::TaylorGreenVortex(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim != 2),
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 4) || (numDim != 2),
                              std::logic_error,
                              "Error! Invalid call of TaylorGreenVortex with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
@@ -644,7 +650,7 @@ void TaylorGreenVortex::compute(double* x, const double* X) {
 //*****************************************************************************
 AcousticWave::AcousticWave(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq > 3) || (numDim > 2) || (data.size() != 3),
+  TEUCHOS_TEST_FOR_EXCEPTION((neq > 3) || (numDim > 2) || (data.size() != 3) || (neq < numDim),
                              std::logic_error,
                              "Error! Invalid call of AcousticWave with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);

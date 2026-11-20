@@ -133,6 +133,7 @@ ANONYMOUS:
         Side Set Name: lateralside
     LandIce Physical Parameters:
       Water Density:                 1028.0
+      Fresh Water Density:           1000.0
       Ice Density:                    910.0
       Ice Latent Heat Of Fusion:        3.35e+05
       Gravity Acceleration:             9.8

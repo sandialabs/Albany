@@ -9,18 +9,21 @@
 #include "Albany_PiroTempusObserver.hpp"
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_ExplicitODEModelEvaluator.hpp"
+#include "Albany_ConsistentInitialStateSolver.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ThyraUtils.hpp"
 #include "Albany_Macros.hpp"
 #include "Albany_StringUtils.hpp"
+#include "Albany_DOFManager.hpp"
 
 #include "Piro_ProviderBase.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_SolverFactory.hpp"
 #include "Piro_StratimikosUtils.hpp"
 #include "Piro_ProductModelEval.hpp"
+#include "Piro_TempusSolver.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
@@ -43,10 +46,13 @@
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_YamlParameterListHelpers.hpp"
+
+#include <algorithm>
 
 namespace {
 
@@ -81,6 +87,126 @@ buildLinearSolveStrategy(const Teuchos::RCP<Teuchos::ParameterList>& stratParams
   linearSolverBuilder->setParameterList(stratParams);
   return createLinearSolveStrategy(*linearSolverBuilder);
 }
+
+// Value of a parameter of a const list, or a default if the parameter is not set
+template<typename T>
+T getOr (const Teuchos::ParameterList& pl, const std::string& name, const T& defaultValue)
+{
+  return pl.isType<T>(name) ? pl.get<T>(name) : defaultValue;
+}
+
+// Whether the transient sensitivities are computed by the adjoint sensitivity integrator of
+// Tempus: Tempus-driven transient optimization (analysis), or adjoint sensitivities of a
+// transient solve (forward mode). The ROL-driven transient optimization (ROL dynamic
+// constraints) uses discrete adjoints instead, which need the actual mass matrix.
+bool usesTempusAdjointIntegrator (const Teuchos::ParameterList& piroParams,
+                                  const Teuchos::ParameterList& problemParams,
+                                  const bool forwardMode)
+{
+  if (getOr<std::string>(problemParams,"Solution Method","Steady") != "Transient") {
+    return false;
+  }
+  if (forwardMode) {
+    return getOr<std::string>(piroParams,"Sensitivity Method","None") == "Adjoint" &&
+           getOr<bool>(problemParams,"Compute Sensitivities",false);
+  }
+  if (!piroParams.isSublist("Analysis")) {
+    return false;
+  }
+  const auto& analysisParams = piroParams.sublist("Analysis");
+  return getOr<bool>(analysisParams,"Transient",false) &&
+         getOr<std::string>(analysisParams,"Analysis Package","") == "ROL" &&
+         analysisParams.isSublist("ROL") &&
+         getOr<bool>(analysisParams.sublist("ROL"),"Tempus Driver",false);
+}
+
+// Whether Problem->Dirichlet BCs has weak Dirichlet conditions ("DBC on NS ...", also time
+// dependent or prescribing a field), as opposed to strong ones ("SDBC on NS ...")
+bool hasWeakDirichletBCs (const Teuchos::ParameterList& problemParams)
+{
+  if (!problemParams.isSublist("Dirichlet BCs")) {
+    return false;
+  }
+  const auto& dbcParams = problemParams.sublist("Dirichlet BCs");
+  for (auto it=dbcParams.begin(); it!=dbcParams.end(); ++it) {
+    const std::string& name = dbcParams.name(it);
+    if (name.find("DBC on NS ")!=std::string::npos && name.find("SDBC on NS ")==std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// The "NOX" list of the nonlinear solver of the Tempus stepper (Piro->Tempus list), or null
+// if the stepper has no solver list of its own (e.g., Tempus default solver)
+const Teuchos::ParameterList*
+getTempusStepperNOXParams (const Teuchos::ParameterList& tempusParams)
+{
+  const auto integratorName = getOr<std::string>(tempusParams,"Integrator Name","");
+  if (integratorName.empty() || !tempusParams.isSublist(integratorName)) {
+    return nullptr;
+  }
+  const auto stepperName = getOr<std::string>(tempusParams.sublist(integratorName),"Stepper Name","");
+  if (stepperName.empty() || !tempusParams.isSublist(stepperName)) {
+    return nullptr;
+  }
+  const auto& stepperParams = tempusParams.sublist(stepperName);
+  const auto solverName = getOr<std::string>(stepperParams,"Solver Name","");
+  if (solverName.empty() || !stepperParams.isSublist(solverName) ||
+      !stepperParams.sublist(solverName).isSublist("NOX")) {
+    return nullptr;
+  }
+  return &stepperParams.sublist(solverName).sublist("NOX");
+}
+
+// The Stratimikos list of a NOX list (Direction->Newton->Stratimikos Linear Solver->Stratimikos),
+// or null if there is none
+const Teuchos::ParameterList*
+getNOXStratimikosParams (const Teuchos::ParameterList& noxParams)
+{
+  if (noxParams.isSublist("Direction") &&
+      noxParams.sublist("Direction").isSublist("Newton") &&
+      noxParams.sublist("Direction").sublist("Newton").isSublist("Stratimikos Linear Solver") &&
+      noxParams.sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver").isSublist("Stratimikos")) {
+    return &noxParams.sublist("Direction").sublist("Newton").sublist("Stratimikos Linear Solver").sublist("Stratimikos");
+  }
+  return nullptr;
+}
+
+// Vector in the residual space equal to 'value' on the rows of the (weak) Dirichlet
+// conditions, and to zero elsewhere
+Teuchos::RCP<Thyra_Vector>
+buildDirichletRowsVector (const Albany::Application& app, const double value)
+{
+  const auto problem = app.getProblem();
+  const auto disc    = app.getDiscretization();
+
+  auto v = Thyra::createMember(app.getVectorSpace());
+  v->assign(0.0);
+  auto v_data = Albany::getNonconstLocalData(v);
+
+  const auto& sol_dof_mgr = disc->getDOFManager();
+  const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
+  const auto& nodeSets = disc->getNodeSets();
+  const auto nodeSetIDs = problem->getNodeSetIDs();
+  const auto offsets = problem->getOffsets();
+  for (size_t ns=0; ns<nodeSetIDs.size() && ns<static_cast<size_t>(offsets.size()); ++ns) {
+    const auto it = nodeSets.find(nodeSetIDs[ns]);
+    if (it==nodeSets.end()) {
+      continue;
+    }
+    for (const int eq : offsets[ns]) {
+      const auto& eq_offsets = sol_dof_mgr->getGIDFieldOffsets(eq);
+      for (const auto& ep : it->second) {
+        const int ielem = ep.first;
+        const int pos   = ep.second;
+        v_data[sol_elem_dof_lids(ielem,eq_offsets[pos])] = value;
+      }
+    }
+  }
+  return v;
+}
+
 }  // namespace
 
 namespace Albany
@@ -310,6 +436,13 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
     }
   }
 
+  if (solutionMethod=="Transient" && Teuchos::is_null(explicitOdeModel) &&
+      usesTempusAdjointIntegrator(*piroParams, *problemParams, forwardMode) &&
+      !(piroParams->isSublist("Tempus") && usesExplicitTempusStepper(piroParams->sublist("Tempus"))))
+  {
+    setupTempusAdjointDAE(model_tmp->getAlbanyApp());
+  }
+
   Teuchos::RCP<Thyra_ModelEvaluator> modelWithSolve;
   Teuchos::RCP<Thyra_ModelEvaluator> adjointModelWithSolve = Teuchos::null;
   if (Teuchos::nonnull(model->get_W_factory())) {
@@ -359,8 +492,195 @@ createSolver (const Teuchos::RCP<ModelEvaluator>&     model_tmp,
   }
 
   Piro::SolverFactory piroFactory;
-  return piroFactory.createSolver<ST>(
+  const auto solver = piroFactory.createSolver<ST>(
        piroParams, modelWithSolve, adjointModelWithSolve, observer);
+
+  // With an explicit stepper, Albany::ExplicitODEModelEvaluator solves for the algebraic dofs
+  if (solutionMethod=="Transient" && Teuchos::is_null(explicitOdeModel)) {
+    setupConsistentInitialState(app, solver, forwardMode);
+  } else if (Teuchos::nonnull(explicitOdeModel) &&
+             problemParams->isSublist("Consistent Initial State") &&
+             getOr<bool>(problemParams->sublist("Consistent Initial State"),"Solve For Algebraic Dofs",false)) {
+    *m_out << "Note: Problem->Consistent Initial State->\"Solve For Algebraic Dofs\" is not used with an explicit\n"
+           << "      stepper: Albany::ExplicitODEModelEvaluator already solves for the algebraic dofs.\n";
+  }
+
+  return solver;
+}
+
+void SolverFactory::
+setupConsistentInitialState (const Teuchos::RCP<Application>& app,
+                             const Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>& solver,
+                             const bool forwardMode)
+{
+  // Before each forward time integration, solve the algebraic equations of a DAE for the
+  // algebraic dofs of the initial state (e.g., the FO velocity for the initial thickness),
+  // with the current parameters. Implicit steppers do not need it, but the adjoint
+  // sensitivities of Tempus do: the last step of the adjoint integration evaluates the
+  // model at the initial state (see Albany::ConsistentInitialStateSolver). Hence the
+  // default: solve when the transient sensitivities come from the adjoint integrator.
+  const std::string listName = "Consistent Initial State";
+  const std::string solveName = "Solve For Algebraic Dofs";
+  const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
+  const auto piroParams    = Teuchos::sublist(m_appParams, "Piro");
+
+  Teuchos::ParameterList icParams(listName);
+  if (problemParams->isSublist(listName)) {
+    icParams = problemParams->sublist(listName);
+    icParams.validateParameters(*getValidConsistentInitialStateParameters(), 0);
+  }
+  const bool requested = icParams.isParameter(solveName) && icParams.get<bool>(solveName);
+  const bool solve = icParams.isParameter(solveName) ? icParams.get<bool>(solveName) :
+                     usesTempusAdjointIntegrator(*piroParams, *problemParams, forwardMode);
+  if (!solve) {
+    return;
+  }
+
+  // The algebraic dofs of the problem. The rows of weak Dirichlet conditions are algebraic
+  // equations too (see setupTempusAdjointDAE), but they are not solved for: the initial
+  // condition is expected to satisfy them.
+  Teuchos::RCP<Thyra_Vector> mask, differential_mask;
+  const bool is_dae = app->getProblem()->getDAEMasks(*app->getDiscretization(),mask,differential_mask);
+  if (!is_dae || mask.is_null() || mask->norm_inf()==0.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION (requested, std::logic_error,
+        "Error! Problem->" << listName << "->\"" << solveName << "\" is true, but the problem\n"
+        "       has no algebraic dofs (see AbstractProblem::getDAEMasks).\n");
+    return;
+  }
+
+  const auto tempusSolver = Teuchos::rcp_dynamic_cast<Piro::TempusSolver<ST>>(solver);
+  if (tempusSolver.is_null()) {
+    TEUCHOS_TEST_FOR_EXCEPTION (requested, std::logic_error,
+        "Error! Problem->" << listName << "->\"" << solveName << "\" requires the Tempus solver of Piro.\n");
+    return;
+  }
+
+  // Nonlinear solver: Problem->Consistent Initial State->NOX, or else the solver of the Tempus
+  // stepper (the time steps solve the same equations), or else Piro->NOX. Linear solver: the
+  // Stratimikos list of that NOX list, if any, or else the Piro->Tempus one.
+  Teuchos::ParameterList noxParams;
+  std::string noxSource;
+  const auto stepperNoxParams = piroParams->isSublist("Tempus") ?
+      getTempusStepperNOXParams(piroParams->sublist("Tempus")) : nullptr;
+  if (icParams.isSublist("NOX")) {
+    noxParams = icParams.sublist("NOX");
+    noxSource = "Problem->" + listName + "->NOX";
+  } else if (stepperNoxParams!=nullptr) {
+    noxParams = *stepperNoxParams;
+    noxSource = "the solver of the Tempus stepper";
+  } else {
+    noxParams = piroParams->sublist("NOX");
+    noxSource = "Piro->NOX";
+  }
+  const auto noxStratParams = getNOXStratimikosParams(noxParams);
+  const auto stratParams = Teuchos::rcp(new Teuchos::ParameterList(
+      noxStratParams!=nullptr ? *noxStratParams : *Piro::extractStratimikosParams(piroParams)));
+
+  // The solver gets the mask of the current discretization when it builds its Newton
+  // solver: at the first solve, and again if the solution space changed (mesh adaptation)
+  const auto maskFunction = [app]() -> Teuchos::RCP<const Thyra_Vector> {
+    Teuchos::RCP<Thyra_Vector> algebraic_mask, differential_mask;
+    const bool dae = app->getProblem()->getDAEMasks(*app->getDiscretization(),algebraic_mask,differential_mask);
+    TEUCHOS_TEST_FOR_EXCEPTION (!dae, std::logic_error,
+        "Error! The problem stopped providing the DAE masks (AbstractProblem::getDAEMasks).\n");
+    return algebraic_mask;
+  };
+  const auto icSolver = Teuchos::rcp(new ConsistentInitialStateSolver(
+      maskFunction, noxParams, buildLinearSolveStrategy(stratParams)));
+  tempusSolver->setConsistentInitialStateFunction(
+      [icSolver](const Teuchos::RCP<Thyra_ModelEvaluator>& model,
+                 const Thyra_InArgs& inArgs, Thyra_Vector& x0) {
+        icSolver->solve(model, inArgs, x0);
+      });
+
+  *m_out << "Note: the problem is a DAE. Before each forward time integration, the algebraic dofs of the\n"
+         << "      initial state are solved for with the current parameters (Problem->" << listName << "),\n"
+         << "      with the nonlinear solver settings of " << noxSource << ".\n";
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+SolverFactory::getValidConsistentInitialStateParameters() const
+{
+  auto validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidConsistentInitialStateParams"));
+  validPL->set<bool>("Solve For Algebraic Dofs", false,
+      "Whether to solve for the algebraic dofs of the initial state of a DAE (AbstractProblem::getDAEMasks), "
+      "for the current parameters, before each forward time integration with an implicit stepper. "
+      "Default: true if the transient sensitivities are computed by the adjoint integrator of Tempus.");
+  validPL->sublist("NOX", false,
+      "Nonlinear solver of the algebraic solve. Default: the NOX list of the solver of the Tempus "
+      "stepper, or Piro->NOX if the stepper has none.");
+  return validPL;
+}
+
+void SolverFactory::
+setupTempusAdjointDAE (const Teuchos::RCP<Application>& app)
+{
+  // The adjoint sensitivity integrator of Tempus computes the jumps of the adjoint at the
+  // response times ("Final Time", "Sum Over Times") with the mass matrix df/dx_dot. If some
+  // equations do not depend on x_dot (algebraic equations), the mass matrix is singular, and
+  // Tempus needs the structure of the (index-1) DAE: the vector flagging the
+  // algebraic equations with 1, Tempus->Sensitivities->"Algebraic Equations Mask". The jumps
+  // are then computed with df/dx on the algebraic rows and df/dx_dot on the other rows. The
+  // algebraic equations are
+  //  - the algebraic dofs of the problem (AbstractProblem::getDAEMasks), e.g., the velocity of
+  //    the coupled velocity-thickness problem of LandIce;
+  //  - the rows of the weak Dirichlet conditions, f_i = x_i - d_i(p,t), whose rows of the mass
+  //    matrix are zero (with strong Dirichlet conditions, these rows keep the diagonal of the
+  //    mass matrix, and the parameters entering the Dirichlet conditions are not supported).
+  // Without the mask, the gradients of these responses are wrong when the response depends on
+  // the algebraic unknowns, or when the parameters enter the algebraic equations (e.g.,
+  // "dirichlet_field"). The model must return the true mass matrix, with zero rows on the
+  // algebraic equations.
+  // Note: the mask is rebuilt for every solver, since the parameter list can be used again for
+  //       another solver, with another discretization (e.g., by PyAlbany).
+  const std::string maskName = "Algebraic Equations Mask";
+  auto& sensParams = m_appParams->sublist("Piro").sublist("Tempus").sublist("Sensitivities");
+  sensParams.remove(maskName,false);
+
+  const auto problem = app->getProblem();
+  auto mask = Thyra::createMember(app->getVectorSpace());
+  mask->assign(0.0);
+  std::string flagged;
+
+  // Algebraic dofs of the problem
+  Teuchos::RCP<Thyra_Vector> algebraic_mask, differential_mask;
+  if (problem->getDAEMasks(*app->getDiscretization(),algebraic_mask,differential_mask)) {
+    mask->update(1.0,*algebraic_mask);
+    flagged = "the algebraic dofs of the problem";
+  }
+
+  // Rows of the weak Dirichlet conditions
+  const auto problemParams = Teuchos::sublist(m_appParams, "Problem");
+  TEUCHOS_TEST_FOR_EXCEPTION (problem->useSDBCs() && hasWeakDirichletBCs(*problemParams), std::logic_error,
+      "Error! The adjoint sensitivities of Tempus do not support weak and strong Dirichlet conditions\n"
+      "       together (\"DBC on NS ...\" and \"SDBC on NS ...\" in Problem->Dirichlet BCs): the rows of\n"
+      "       the weak ones are algebraic equations, but those of the strong ones are not.\n");
+  if (problem->getNodeSetIDs().size()>0 && !problem->useSDBCs()) {
+    const auto dbc_rows = buildDirichletRowsVector(*app, 1.0);
+    if (dbc_rows->norm_inf()>0.0) {
+      const double perturb = getOr<double>(*problemParams,"Perturb Dirichlet",0.0);
+      TEUCHOS_TEST_FOR_EXCEPTION (perturb!=0.0, std::logic_error,
+          "Error! Problem->\"Perturb Dirichlet\" = " << perturb << " cannot be used with the adjoint\n"
+          "       sensitivities of Tempus: the rows of the Dirichlet conditions of the mass matrix\n"
+          "       must be zero, since Tempus treats them as algebraic equations.\n");
+      auto mask_data = Albany::getNonconstLocalData(mask);
+      const auto dbc_data = Albany::getLocalData(dbc_rows.getConst());
+      for (int i=0; i<static_cast<int>(mask_data.size()); ++i) {
+        mask_data[i] = std::max(mask_data[i],dbc_data[i]);
+      }
+      flagged += flagged.empty() ? "" : " and ";
+      flagged += "the rows of the weak Dirichlet conditions";
+    }
+  }
+
+  if (mask->norm_inf()==0.0) {
+    // An ODE: nothing to do
+    return;
+  }
+
+  sensParams.set<Teuchos::RCP<const Thyra_Vector>>(maskName, mask);
+  *m_out << "Note: the problem is a DAE and uses the adjoint sensitivities of Tempus: Tempus->Sensitivities->\n"
+         << "      \"" << maskName << "\" flags " << flagged << ".\n";
 }
 
 void SolverFactory::

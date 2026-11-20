@@ -141,7 +141,7 @@ getConnectivityMask (const std::string& sub_part_name) const
     } else {
       basal_parts.push_back(m_mesh->get_basal_part_name(sub_part_name));
     }
-    LayeredMeshNumbering<LO> dofs_layers(m_num_hdofs_per_elem*m_num_fields,m_num_vdofs_per_elem,LayeredMeshOrdering::LAYER);
+    const int hdofs_per_level = m_num_hdofs_per_elem*m_num_fields;
     for (const auto& basal_part : basal_parts) {
       const auto basal_mask = m_conn_mgr_h->getConnectivityMask(basal_part);
       for (int ie=0; ie<num_basal_elems; ++ie) {
@@ -154,8 +154,9 @@ getConnectivityMask (const std::string& sub_part_name) const
               const int start3d = getConnectivityStart(ielem3d);
               auto m = &mask[start3d];
               for (int ilev=0; ilev<m_num_vdofs_per_elem; ++ilev) {
-                const int lid = dofs_layers.getId(idof,ilev);
-                m[lid] = 1;
+                for (int ifield=0; ifield<m_num_fields; ++ifield) {
+                  m[idof*m_num_fields+ifield + ilev*hdofs_per_level] = 1;
+                }
               }
             }
           }
@@ -173,7 +174,9 @@ getConnectivityMask (const std::string& sub_part_name) const
         if (basal_mask[start_h+idof]==1) {
           const int ielem3d = layers_data.cell.lid->getId(ie,ilay);
           const int start3d = getConnectivityStart(ielem3d);
-          mask[start3d+idof] = 1;
+          for (int ifield=0; ifield<m_num_fields; ++ifield) {
+            mask[start3d + idof*m_num_fields + ifield] = 1;
+          }
         }
       }
     }

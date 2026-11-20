@@ -24,7 +24,7 @@ IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_IFPACK2)
   set_tests_properties(${testName}_2d_stk PROPERTIES LABELS "Demo;Forward;Serial")
 
   # If omegah is available, repeat all tests but with Omega_h as discretization lib
-  if (ENABLE_OMEGAH)
+  if (ENABLE_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
     # 1d test
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_1d_omegah.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/input_1d_omegah.yaml COPYONLY)

@@ -68,6 +68,9 @@ public:
 
   // For NodalDataToElemNode states, populate elem state array from corresponding node state array
   virtual void transferNodeStatesToElemStates () = 0;
+  // For a NodalDataToElemNode state, set the node state from the (Cell,Node[,...]) elem state.
+  // Each nodal value is the average over all the elements containing the node (on all ranks),
+  // so implementations may communicate with the other ranks: all ranks must call this.
   virtual void transferElemStateToNodeState (const std::string& /* name */) {
     throw NotYetImplemented("AbstractMeshFieldAccessor::transferElemStateToNodeState");
   }

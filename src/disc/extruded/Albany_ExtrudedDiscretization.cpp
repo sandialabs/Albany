@@ -13,12 +13,18 @@
 #include "Albany_Utils.hpp"
 #include "Albany_StringUtils.hpp"
 #include "Albany_GlobalLocalIndexer.hpp"
+
+#include <vector>
+#include <algorithm>
 #include "Albany_ProblemUtils.hpp"
 
 #include <PHAL_Dimension.hpp>
 
 #include <Panzer_IntrepidFieldPattern.hpp>
 #include <Panzer_ElemFieldPattern.hpp>
+
+#include <Intrepid2_Cubature.hpp>
+#include <Teuchos_CommHelpers.hpp>
 
 #include <iostream>
 #include <string>
@@ -54,8 +60,13 @@ void ExtrudedDiscretization::setNumEq (int neq)
   m_neq = neq;
 
   // On the basal mesh, make the solution vector numNodeLayers times longer
-  int basal_neq = neq * m_extruded_mesh->layers_data.node.gid->numLayers;
+  const int num_levels = m_extruded_mesh->layers_data.node.gid->numLayers;
+  int basal_neq = neq * num_levels;
   m_basal_disc->setNumEq(basal_neq);
+
+  // Ask the basal mesh to store the solution as a (Level,Eq) layered field (see copySolutionData).
+  // NOTE: m_basal_disc was created with this very sublist (see DiscretizationFactory)
+  m_disc_params->sublist("Side Set Discretizations").sublist("basalside").set("Solution Field Levels",num_levels);
 }
 
 void
@@ -103,7 +114,11 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool overlapped)
 {
-  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,overlapped);
 }
 
 void
@@ -113,7 +128,12 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dot,
     const bool overlapped)
 {
-  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,soln_dot,overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,
+                                            *solutionToBasal(soln_dot,overlapped),overlapped);
 }
 
 void
@@ -124,7 +144,13 @@ ExtrudedDiscretization::writeSolutionToMeshDatabase(
     const Thyra_Vector& soln_dotdot,
     const bool overlapped)
 {
-  m_basal_disc->writeSolutionToMeshDatabase(soln,soln_dxdp,soln_dot,soln_dotdot,overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,
+                                            *solutionToBasal(soln_dot,overlapped),
+                                            *solutionToBasal(soln_dotdot,overlapped),overlapped);
 }
 
 void
@@ -133,7 +159,11 @@ ExtrudedDiscretization::writeSolutionMVToMeshDatabase(
     const Teuchos::RCP<const Thyra_MultiVector>& soln_dxdp,
     const bool overlapped)
 {
-  m_basal_disc->writeSolutionMVToMeshDatabase(soln,soln_dxdp,overlapped);
+  Teuchos::RCP<const Thyra_MultiVector> b_dxdp;
+  if (not soln_dxdp.is_null()) {
+    b_dxdp = solutionToBasal(*soln_dxdp,overlapped);
+  }
+  m_basal_disc->writeSolutionMVToMeshDatabase(*solutionToBasal(soln,overlapped),b_dxdp,overlapped);
 }
 
 void
@@ -143,35 +173,71 @@ ExtrudedDiscretization::writeMeshDatabaseToFile(const double time,
   m_basal_disc->writeMeshDatabaseToFile(time,force_write_solution);
 }
 
+Teuchos::ParameterList&
+ExtrudedDiscretization::getAdaptParams ()
+{
+  return Albany::getAdaptParams(*m_disc_params);
+}
+
 Teuchos::RCP<AdaptationData>
 ExtrudedDiscretization::
-checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& /* solution */,
-                        const Teuchos::RCP<const Thyra_Vector>& /* solution_dot */,
-                        const Teuchos::RCP<const Thyra_Vector>& /* solution_dotdot */,
-                        const Teuchos::RCP<const Thyra_MultiVector>& /* dxdp */)
+checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution,
+                        const Teuchos::RCP<const Thyra_Vector>& solution_dot,
+                        const Teuchos::RCP<const Thyra_Vector>& solution_dotdot,
+                        const Teuchos::RCP<const Thyra_MultiVector>& dxdp)
 {
-  auto& adapt_params = m_disc_params->sublist("Mesh Adaptivity");
+  auto& adapt_params = getAdaptParams();
   auto adapt_type = adapt_params.get<std::string>("Type","None");
   auto adapt_data = Teuchos::rcp(new AdaptationData());
   if (adapt_type=="None") {
     return adapt_data;
   }
-  // We can't just do
-  //  return m_basal_disc->checkForAdaptation(solution,solution_dot,solution_dotdot);
-  // We need to decide WHAT to bass to basal disc: the whole solution or the projection?
-  throw NotYetImplemented("ExtrudedDiscretization::checkForAdaptation");
+
+  // The basal disc stores the (owned) solution vectors it is given, so they must be in
+  // the basal layout (see copySolutionData)
+  const bool overlapped = false;
+
+  auto basal_solution = solutionToBasal(*solution,overlapped);
+  Teuchos::RCP<Thyra_Vector> basal_solution_dot, basal_solution_dotdot;
+  if (solution_dot!=Teuchos::null) {
+    basal_solution_dot = solutionToBasal(*solution_dot,overlapped);
+  }
+  if (solution_dotdot!=Teuchos::null) {
+    basal_solution_dotdot = solutionToBasal(*solution_dotdot,overlapped);
+  }
+  Teuchos::RCP<const Thyra_MultiVector> basal_dxdp;
+  if (dxdp!=Teuchos::null) {
+    basal_dxdp = solutionToBasal(*dxdp,overlapped);
+  }
+
+  return m_basal_disc->checkForAdaptation(basal_solution,basal_solution_dot,
+                                          basal_solution_dotdot,basal_dxdp);
 }
 
 void ExtrudedDiscretization::
-adapt (const Teuchos::RCP<AdaptationData>& /* adaptData */)
+adapt (const Teuchos::RCP<AdaptationData>& adaptData)
 {
-  throw NotYetImplemented("ExtrudedDiscretization::adapt");
+  // Adapt the basal mesh. This also runs m_basal_disc->updateMesh(), so the basal
+  // disc is consistent with the new basal mesh when we return from here.
+  m_basal_disc->adapt(adaptData);
+
+  // The 3d layered numbering is built on top of the basal entity counts, which the
+  // adaptation just changed. Refresh them before rebuilding anything that uses them.
+  m_extruded_mesh->updateHorizEntityCounts();
+
+  // Rebuild the extruded dof managers, worksets, node/side sets, graphs, ... so that
+  // this disc (and its vector spaces) describe the adapted mesh. Without this, the
+  // extruded disc would still advertise the pre-adaptation vector spaces.
+  updateMesh();
 }
 
 Teuchos::RCP<Thyra_Vector>
 ExtrudedDiscretization::getSolutionField(bool overlapped) const
 {
-  return m_basal_disc->getSolutionField(overlapped);
+  auto b_soln = m_basal_disc->getSolutionField(overlapped);
+  auto soln = Thyra::createMember(overlapped ? getOverlapVectorSpace() : getVectorSpace());
+  copySolutionData(*b_soln,*soln,false);
+  return soln;
 }
 
 void
@@ -190,7 +256,12 @@ ExtrudedDiscretization::getSolutionMV(
     Thyra_MultiVector& result,
     const bool         overlapped) const
 {
-  m_basal_disc->getSolutionMV(result,overlapped);
+  auto vs = overlapped ? m_basal_disc->getOverlapVectorSpace() : m_basal_disc->getVectorSpace();
+  auto b_result = Thyra::createMembers(vs,result.domain()->dim());
+  m_basal_disc->getSolutionMV(*b_result,overlapped);
+  for (int i=0; i<result.domain()->dim(); ++i) {
+    copySolutionData(*b_result->col(i),*result.col(i),false);
+  }
 }
 
 void
@@ -198,12 +269,131 @@ ExtrudedDiscretization::getSolutionDxDp(
     Thyra_MultiVector& result,
     const bool         overlapped) const
 {
-  m_basal_disc->getSolutionDxDp(result,overlapped);
+  auto vs = overlapped ? m_basal_disc->getOverlapVectorSpace() : m_basal_disc->getVectorSpace();
+  auto b_result = Thyra::createMembers(vs,result.domain()->dim());
+  m_basal_disc->getSolutionDxDp(*b_result,overlapped);
+  for (int i=0; i<result.domain()->dim(); ++i) {
+    copySolutionData(*b_result->col(i),*result.col(i),false);
+  }
 }
 
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
+
+void ExtrudedDiscretization::
+copyNodalData (const Thyra_Vector& src, Thyra_Vector& tgt, const bool to_basal,
+               const DOFManager& dof_mgr_3d, const DOFManager& dof_mgr_2d,
+               const bool layered) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (not layered and not to_basal, std::logic_error,
+      "[ExtrudedDiscretization::copyNodalData] Error! Non-layered copy is only supported from 3d to basal.\n");
+
+  const auto lids_3d = dof_mgr_3d.elem_dof_lids().host();
+  const auto lids_2d = dof_mgr_2d.elem_dof_lids().host();
+
+  const int num_levels = m_extruded_mesh->layers_data.node.lid->numLayers;
+  const int num_elem_layers = num_levels-1;
+  const auto& cell_layers = m_extruded_mesh->layers_data.cell.lid;
+
+  // The 3d elem has the basal elem nodes at the bottom, followed by the same nodes at the top
+  const int nb = dof_mgr_2d.get_topology().getNodeCount();
+  TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(dof_mgr_3d.get_topology().getNodeCount())!=2*nb, std::logic_error,
+      "[ExtrudedDiscretization::copyNodalData] Error! Unexpected number of nodes in the 3d element.\n");
+
+  const int ncmp = dof_mgr_3d.getNumFields();
+  const int nfields_2d = layered ? ncmp*num_levels : ncmp;
+  TEUCHOS_TEST_FOR_EXCEPTION (dof_mgr_2d.getNumFields()!=nfields_2d, std::logic_error,
+      "[ExtrudedDiscretization::copyNodalData] Error! Unexpected number of fields in the basal DOF manager.\n"
+      "  - basal num fields   : " << dof_mgr_2d.getNumFields() << "\n"
+      "  - expected num fields: " << nfields_2d << "\n");
+
+  // Pre-compute offsets: off_3d[c][k] for 3d elem node k, off_2d[f][k] for basal elem node k
+  std::vector<std::vector<int>> off_3d(ncmp,std::vector<int>(2*nb));
+  std::vector<std::vector<int>> off_2d(nfields_2d,std::vector<int>(nb));
+  for (int c=0; c<ncmp; ++c) {
+    TEUCHOS_TEST_FOR_EXCEPTION (static_cast<int>(dof_mgr_3d.getGIDFieldOffsets(c).size())!=2*nb, std::logic_error,
+        "[ExtrudedDiscretization::copyNodalData] Error! Only nodal (P1) fields are supported.\n");
+    for (int k=0; k<2*nb; ++k) {
+      off_3d[c][k] = dof_mgr_3d.getGIDFieldOffsetsSubcell(c,0,k)[0];
+    }
+  }
+  for (int f=0; f<nfields_2d; ++f) {
+    for (int k=0; k<nb; ++k) {
+      off_2d[f][k] = dof_mgr_2d.getGIDFieldOffsetsSubcell(f,0,k)[0];
+    }
+  }
+
+  auto src_data = getLocalData(src);
+  auto tgt_data = getNonconstLocalData(tgt);
+  const LO size_3d = to_basal ? src_data.size() : tgt_data.size();
+  const LO size_2d = to_basal ? tgt_data.size() : src_data.size();
+
+  // For non-layered copies, the first level found for a basal dof wins. Since levels are visited
+  // bottom to top within each elem, that's the lowest level where the 3d field has dofs.
+  std::vector<char> written (layered ? 0 : size_2d, 0);
+
+  // elem_dof_lids are overlapped lids, and owned dofs come first. A 3d dof and its basal
+  // counterpart have the same owner, so for non-overlapped vectors they are both in range or not.
+  // Restricted dof managers (e.g., fields defined only on top/bottom) have lid=-1 outside their part.
+  const int num_basal_elems = lids_2d.extent(0);
+  for (int ibelem=0; ibelem<num_basal_elems; ++ibelem) {
+    for (int il=0; il<num_elem_layers; ++il) {
+      const int ie3d = cell_layers->getId(ibelem,il);
+      for (int side : {0,1}) { // 0=elem-bottom, 1=elem-top
+        const int lev = il+side;
+        for (int k=0; k<nb; ++k) {
+          for (int c=0; c<ncmp; ++c) {
+            const int f = layered ? c*num_levels+lev : c;
+            const LO lid_3d = lids_3d(ie3d,off_3d[c][k+side*nb]);
+            const LO lid_2d = lids_2d(ibelem,off_2d[f][k]);
+            if (lid_3d<0 or lid_2d<0 or lid_3d>=size_3d or lid_2d>=size_2d) {
+              continue;
+            }
+            if (to_basal) {
+              if (not layered) {
+                if (written[lid_2d]) continue;
+                written[lid_2d] = 1;
+              }
+              tgt_data[lid_2d] = src_data[lid_3d];
+            } else {
+              tgt_data[lid_3d] = src_data[lid_2d];
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void ExtrudedDiscretization::
+copySolutionData (const Thyra_Vector& src, Thyra_Vector& tgt, const bool to_basal) const
+{
+  copyNodalData(src,tgt,to_basal,*getDOFManager(),*m_basal_disc->getDOFManager(),true);
+}
+
+Teuchos::RCP<Thyra_Vector>
+ExtrudedDiscretization::solutionToBasal (const Thyra_Vector& v, const bool overlapped) const
+{
+  auto vs = overlapped ? m_basal_disc->getOverlapVectorSpace() : m_basal_disc->getVectorSpace();
+  auto bv = Thyra::createMember(vs);
+  bv->assign(0.0);
+  copySolutionData(v,*bv,true);
+  return bv;
+}
+
+Teuchos::RCP<Thyra_MultiVector>
+ExtrudedDiscretization::solutionToBasal (const Thyra_MultiVector& mv, const bool overlapped) const
+{
+  auto vs = overlapped ? m_basal_disc->getOverlapVectorSpace() : m_basal_disc->getVectorSpace();
+  const int ncols = mv.domain()->dim();
+  auto bmv = Thyra::createMembers(vs,ncols);
+  bmv->assign(0.0);
+  for (int i=0; i<ncols; ++i) {
+    copySolutionData(*mv.col(i),*bmv->col(i),true);
+  }
+  return bmv;
+}
 
 void
 ExtrudedDiscretization::setField(
@@ -211,7 +401,32 @@ ExtrudedDiscretization::setField(
     const std::string&  name,
     bool                overlapped)
 {
-  m_basal_disc->setField(result,name,overlapped);
+  // NOTE: we cannot pass the 3d vector to the basal disc as is: the basal and 3d DOF managers
+  //       lids are NOT related by a simple formula (see copyNodalData).
+  const auto& mfa = m_extruded_mesh->get_field_accessor();
+  const auto st = mfa->getNodalSIS().find(name,false);
+  TEUCHOS_TEST_FOR_EXCEPTION (st.is_null(), std::runtime_error,
+      "[ExtrudedDiscretization::setField] Error! '" + name + "' is not a 3d nodal state.\n");
+
+  if (st->interpolated) {
+    // The basal field holds the original layered data (on its own layers, which in general
+    // are not the mesh levels), from which the 3d field was interpolated. Do not overwrite it.
+    // This is the case, e.g., of Dirichlet fields interpolated from basal layered data.
+    return;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPTION (not st->extruded, std::runtime_error,
+      "[ExtrudedDiscretization::setField] Error! Cannot store 3d field '" + name + "' in the basal mesh,\n"
+      "  since it is neither extruded nor interpolated from a basal field.\n");
+
+  // Extruded field: store in the basal field the values of the lowest level where the 3d field
+  // has dofs (level 0, or the top level for fields defined only on the top part).
+  const auto& dof_mgr_3d = getDOFManager(name);
+  const auto& dof_mgr_2d = m_basal_disc->getDOFManager(name);
+  auto b_field = Thyra::createMember(overlapped ? dof_mgr_2d->ov_vs() : dof_mgr_2d->vs());
+  b_field->assign(0.0);
+  copyNodalData(result,*b_field,true,*dof_mgr_3d,*dof_mgr_2d,false);
+  m_basal_disc->setField(*b_field,name,overlapped);
 }
 
 void ExtrudedDiscretization::computeCoordinates ()
@@ -513,22 +728,45 @@ ExtrudedDiscretization::computeWorksetInfo()
 
   const int num_elems = m_extruded_mesh->get_num_local_elements();
   const int ws_size = m_extruded_mesh->meshSpecs[0]->worksetSize;
-  const int num_ws  = (num_elems + ws_size - 1) / ws_size;
+
+  // The 3d worksets must be the columns of the basal worksets: 3d elem states that are
+  // stored on the basal mesh are views of the basal workset state arrays, laid out as
+  // (basal elem, layer), so 3d workset ws must contain exactly the columns of basal
+  // workset ws, in the same order, with the layer index striding fastest.
+  const auto& cell_lid = *m_extruded_mesh->layers_data.cell.lid;
+  const int num_layers = cell_lid.numLayers;
+  const auto& basal_ws_sizes = m_basal_disc->getWorksetsSizes();
+  const auto basal_ws_elems = m_basal_disc->getWsElementLIDs().host();
+  const int num_ws = basal_ws_sizes.size();
 
   m_workset_sizes.resize(num_ws);
   m_workset_elements = DualView<int**>("ws_elem",num_ws,ws_size);
-  for (int ws=0,lid=0; ws<num_ws; ++ws) {
-    // For the last ws, we may have less elems.
-    int this_ws_size = ws==(num_ws-1) ? num_elems-ws*ws_size : ws_size;
+  int num_ws_elems = 0;
+  for (int ws=0; ws<num_ws; ++ws) {
+    const int this_ws_size = basal_ws_sizes[ws]*num_layers;
+    TEUCHOS_TEST_FOR_EXCEPTION (this_ws_size>ws_size, std::runtime_error,
+        "[ExtrudedDiscretization::computeWorksetInfo] 3d workset exceeds the workset size.\n"
+        "  - workset: " << ws << "\n"
+        "  - basal workset size: " << basal_ws_sizes[ws] << "\n"
+        "  - num layers: " << num_layers << "\n"
+        "  - 3d workset size: " << ws_size << "\n");
     m_workset_sizes[ws] = this_ws_size;
-    for (int ie=0; ie<this_ws_size; ++ie, ++lid) {
-      m_workset_elements.host()(ws,ie) = lid;
+    for (int ib=0; ib<basal_ws_sizes[ws]; ++ib) {
+      const int basal_lid = basal_ws_elems(ws,ib);
+      for (int il=0; il<num_layers; ++il) {
+        m_workset_elements.host()(ws,ib*num_layers+il) = cell_lid.getId(basal_lid,il);
+      }
     }
     // Fill the remainder (if any) with very invalid numbers
     for (int ie=this_ws_size; ie<ws_size; ++ie) {
       m_workset_elements.host()(ws,ie) = -1;
     }
+    num_ws_elems += this_ws_size;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION (num_ws_elems!=num_elems, std::runtime_error,
+      "[ExtrudedDiscretization::computeWorksetInfo] Worksets do not cover all 3d elements.\n"
+      "  - elems in worksets: " << num_ws_elems << "\n"
+      "  - local 3d elems: " << num_elems << "\n");
   m_workset_elements.sync_to_dev();
 
   // For now, everything has the same element block name, and same phys index
@@ -571,13 +809,32 @@ ExtrudedDiscretization::computeWorksetInfo()
   m_extruded_mesh->get_field_accessor()->createStateArrays(m_workset_sizes);
   m_extruded_mesh->get_field_accessor()->transferNodeStatesToElemStates();
   m_extruded_mesh->get_extruded_field_accessor()->setWorksetElements(m_workset_elements);
+  m_extruded_mesh->get_extruded_field_accessor()->setElemWorksetIdx(m_elem_ws_idx);
 
   // Extrude/interpolate basal fields
   const auto& extrude_names = m_disc_params->get<Teuchos::Array<std::string>>("Extrude Basal Fields",{});
   const auto& interpolate_names = m_disc_params->get<Teuchos::Array<std::string>>("Interpolate Basal Layered Fields",{});
   auto emfa = Teuchos::rcp_dynamic_cast<ExtrudedMeshFieldAccessor>(m_extruded_mesh->get_field_accessor());
   emfa->extrudeBasalFields(extrude_names);
-  emfa->interpolateBasalLayeredFields(interpolate_names);
+
+  // Interpolating into 3d QuadPoint states requires the vertical reference coords of the
+  // cell cubature points. The problem (if needed) stores the cubature in the disc params.
+  std::vector<double> qp_ref_z;
+  using cub_ptr_t = Teuchos::RCP<Intrepid2::Cubature<PHX::Device,RealType,RealType>>;
+  if (m_disc_params->isType<cub_ptr_t>("Cell Cubature")) {
+    const auto cub = m_disc_params->get<cub_ptr_t>("Cell Cubature");
+    const int num_qps = cub->getNumPoints();
+    const int cub_dim = cub->getDimension();
+    Kokkos::DynRankView<RealType,PHX::Device> points("points",num_qps,cub_dim);
+    Kokkos::DynRankView<RealType,PHX::Device> weights("weights",num_qps);
+    cub->getCubature(points,weights);
+    auto points_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),points);
+    qp_ref_z.resize(num_qps);
+    for (int iq=0; iq<num_qps; ++iq) {
+      qp_ref_z[iq] = points_h(iq,cub_dim-1); // The extrusion direction is the last one
+    }
+  }
+  emfa->interpolateBasalLayeredFields(interpolate_names,qp_ref_z);
 }
 
 void
@@ -589,6 +846,9 @@ ExtrudedDiscretization::computeSideSets()
   // - basal side
   // - upper side
   // - lateral side
+  // The basal and upper sides GIDs span the range of the basal elems GIDs, which are not necessarily
+  // contiguous, so the upper and lateral sides GIDs are shifted by the max basal elem GID+1 (rather
+  // than by the number of basal elems), so that the GIDs of different kinds of sides do not overlap.
 
   // Clean up existing sideset structure (in case we are remeshing)
   m_sideSets.clear();
@@ -601,9 +861,28 @@ ExtrudedDiscretization::computeSideSets()
   const auto& basal_cell_indexer = m_basal_disc->getDOFManager()->cell_indexer();
   const auto& node_dof_mgr = getNodeDOFManager();
   const auto& cell_indexer = node_dof_mgr->cell_indexer();
-  const int num_glb_basal_elems = basal_cell_indexer->getNumGlobalElements();
   const auto& layers_data = m_extruded_mesh->layers_data;
+  const GO basal_elems_gid_range = layers_data.cell.gid->numHorizEntities; // max basal elem GID+1
   const auto& extr_conn_mgr = Teuchos::rcp_dynamic_cast<ExtrudedConnManager>(getNodeDOFManager()->getAlbanyConnManager(),true);
+
+  // The lateral sides are numbered from the GIDs of the basal sides they are extruded from, with a
+  // LayeredMeshNumbering. To give a lateral side the same GID in all the side sets it belongs to, and on
+  // all ranks, use the same numbering for all side sets, sized with the global max GID of all basal sides.
+  // NOTE: the number of horizontal entities must be max GID+1: with max GID, with the layer-wise ordering
+  //       the side with the max GID in layer il and the side with GID 0 in layer il+1 got the same GID,
+  //       and one of them was dropped below (as a duplicate)
+  GO my_max_basal_side_GID = -1;
+  for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
+    for (const auto& basal_ss : m_basal_disc->getSideSets(ws)) {
+      for (const auto& side : basal_ss.second) {
+        my_max_basal_side_GID = std::max(my_max_basal_side_GID,side.side_GID);
+      }
+    }
+  }
+  GO max_basal_side_GID;
+  Teuchos::reduceAll(*m_comm,Teuchos::REDUCE_MAX,my_max_basal_side_GID,Teuchos::outArg(max_basal_side_GID));
+  LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID+1,layers_data.cell.gid->numLayers,layers_data.cell.gid->ordering);
+
   for (const auto& ss : m_extruded_mesh->meshSpecs[0]->ssNames) {
     // Make sure the sideset exist even if no sides are owned on this process
     for (int i=0; i<num_ws; ++i) {
@@ -621,7 +900,7 @@ ExtrudedDiscretization::computeSideSets()
         const int ilayer = ss=="basalside" ? 0 : layers_data.cell.gid->numLayers-1;
 
         sStruct.elem_GID = layers_data.cell.gid->getId(basal_gid,ilayer);
-        sStruct.side_GID = basal_gid + (ss=="upperside" ? num_glb_basal_elems : 0);
+        sStruct.side_GID = basal_gid + (ss=="upperside" ? basal_elems_gid_range : 0);
         side_GIDs.push_back(sStruct.side_GID);
 
         auto elem_LID = cell_indexer->getLocalElement(sStruct.elem_GID);
@@ -653,18 +932,6 @@ ExtrudedDiscretization::computeSideSets()
         basal_ss_names.push_back(m_extruded_mesh->get_basal_part_name(ss));
       }
 
-      // First, figure out the largest basal side GID (so we can build a proper LayeredMeshNumbering)
-      GO max_basal_side_GID = -1;
-      for (int ws=0; ws<m_basal_disc->getNumWorksets(); ++ws) {
-        for (const auto& basal_ssn : basal_ss_names) {
-          auto basal_ss = m_basal_disc->getSideSets(ws).at(basal_ssn);
-          for (const auto& side : basal_ss) {
-            max_basal_side_GID = std::max(max_basal_side_GID,side.side_GID);
-          }
-        }
-      }
-
-      LayeredMeshNumbering<GO> side_layers_gid (max_basal_side_GID,layers_data.cell.gid->numLayers,layers_data.cell.gid->ordering);
       auto get_basal_side_nodes = [&](const SideStruct& basal_side) {
         std::vector<GO> nodes;
         const int belem_LID = basal_cell_indexer->getLocalElement(basal_side.elem_GID);
@@ -718,7 +985,7 @@ ExtrudedDiscretization::computeSideSets()
             for (int ilev=0; ilev<layers_data.cell.gid->numLayers; ++ilev) {
               SideStruct sStruct;
               sStruct.elem_GID = layers_data.cell.gid->getId(basal_elem_gid,ilev);
-              sStruct.side_GID = 2*num_glb_basal_elems + side_layers_gid.getId(basal_side.side_GID,ilev);
+              sStruct.side_GID = 2*basal_elems_gid_range + side_layers_gid.getId(basal_side.side_GID,ilev);
 
               // Skip if this side was already added (can happen when basal side sets overlap)
               if (!added_side_GIDs.insert(sStruct.side_GID).second) continue;
@@ -767,6 +1034,12 @@ ExtrudedDiscretization::computeNodeSets()
     auto& ns_gids     = m_nodeSetGIDs[ns];
     auto& ns_elem_pos = m_nodeSets[ns];
     auto& ns_coords   = m_nodeSetCoords[ns];
+
+    // updateMesh may be called more than once (e.g., by a driver that updates the geometry
+    // before each solve, like the MPAS interface), so discard what previous calls stored
+    ns_gids.clear();
+    ns_elem_pos.clear();
+    ns_coords.clear();
 
     // Get the mask for this nodeset from the conn mgr, and count how many nodes are in it
     auto mask = node_conn_mgr->getConnectivityMask(ns);
@@ -820,6 +1093,13 @@ void
 ExtrudedDiscretization::updateMesh()
 {
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: updateMesh");
+
+  // Make sure we don't reuse old dof mgrs (if adapting). create_dof_mgr returns any
+  // cached dof mgr matching the requested specs, so without this the extruded disc
+  // would keep the ones built for the pre-adaptation mesh.
+  m_key_to_dof_mgr.clear();
+  m_dof_managers.clear();
+  m_node_dof_managers.clear();
 
   // First, make sure the basal disc is updated
   m_basal_disc->updateMesh();
@@ -897,6 +1177,16 @@ void ExtrudedDiscretization::setFieldData()
   TEUCHOS_FUNC_TIME_MONITOR("ExtrudedDiscretization: setFieldData");
 
   m_basal_disc->setFieldData();
+
+  // The 3d solution is stored in the basal mesh (see copySolutionData), so we can restart it
+  // only if the basal mesh has restart data. Since the basal mesh may set 'Restart Index' or
+  // 'Restart Time' just to load the fields, restarting the solution must be requested explicitly.
+  // NOTE: the basal mesh struct sets its restart info in setFieldData, which is called before this.
+  m_restart_solution = m_disc_params->get("Restart Solution",false);
+  TEUCHOS_TEST_FOR_EXCEPTION (m_restart_solution and not m_basal_disc->hasRestartSolution(), std::runtime_error,
+      "[ExtrudedDiscretization::setFieldData] Error! 'Restart Solution' is true, but the basal mesh has no restart data.\n"
+      "  Set 'Restart Index' or 'Restart Time' in the 'Side Set Discretizations->basalside' sublist,\n"
+      "  and make sure its input file contains the solution written by a previous run.\n");
 
   const auto basal_sol_mfa = m_basal_disc->get_solution_mesh_field_accessor();
   const auto elem_numbering_lid = m_extruded_mesh->layers_data.cell.lid;

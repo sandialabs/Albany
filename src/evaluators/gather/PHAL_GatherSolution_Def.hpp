@@ -483,9 +483,9 @@ evaluateFields(typename Traits::EvalData workset)
   if (Vx!=Teuchos::null)
     Vx_data = Albany::getDeviceData(Vx);
   if (Vxdot!=Teuchos::null)
-    Vxdot_data = Albany::getDeviceData(Vx);
+    Vxdot_data = Albany::getDeviceData(Vxdot);
   if (Vxdotdot!=Teuchos::null)
-    Vxdotdot_data = Albany::getDeviceData(Vx);
+    Vxdotdot_data = Albany::getDeviceData(Vxdotdot);
 
   const auto elem_lids_dev   = Kokkos::subview(elem_lids.dev(),ws,ALL);
   const auto& fields_offsets = m_fields_offsets.dev();

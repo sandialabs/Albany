@@ -1,4 +1,4 @@
-#!/bin/csh
+#!/bin/bash
 
 BASE_DIR=/pscratch/sd/j/jwatkins/nightlyCDashPerlmutterCuda
 

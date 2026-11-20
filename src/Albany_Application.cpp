@@ -224,9 +224,6 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     }
   } else if (solutionMethod == "Transient") {
     solMethod = Transient;
-  } else if (
-      solutionMethod == "Transient") {
-    solMethod = Transient;
 
     // Add NOX pre-post-operator for debugging.
     bool const have_piro = params->isSublist("Piro");
@@ -235,7 +232,9 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
 
     Teuchos::ParameterList& piro_params = params->sublist("Piro");
 
-    bool const have_dbcs = problemParams->isSublist("Dirichlet BCs");
+    // An empty 'Dirichlet BCs' sublist means no Dirichlet BCs as well
+    bool const have_dbcs = problemParams->isSublist("Dirichlet BCs") &&
+                           problemParams->sublist("Dirichlet BCs").numParams() > 0;
 
     if (have_dbcs == false) no_dir_bcs_ = true;
 
@@ -325,8 +324,8 @@ Application::initialSetUp(const RCP<Teuchos::ParameterList>& params)
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::logic_error,
-        "Solution Method must be Steady, Transient, Transient, "
-            << "Continuation, not : "
+        "Solution Method must be Steady, Transient, "
+            << "or Continuation, not : "
             << solutionMethod);
   }
 
@@ -493,16 +492,6 @@ Application::buildProblem()
         "with them!\n");
   }
 
-  if ((no_dir_bcs_ == true) && (scaleBCdofs == true)) {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "Error in Albany::Application: you are attempting "
-        "to set 'Scale DOF BCs = true' for a problem with no  "
-        "Dirichlet BCs!  Scaling will do nothing.  Re-run "
-        "with 'Scale DOF BCs = false'\n");
-  }
-
   neq               = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
 
@@ -559,6 +548,7 @@ Application::createDiscretization()
       stateMgr.getStateInfoStruct(),
       stateMgr.getSideSetStateInfoStruct(),
       problem->getNullSpace());
+  disc->setSolutionComponents(problem->getSolutionComponents());
   // For extruded meshes, we need the number of layers in postRegistrationSetup
   const auto& layers_data = disc->getMeshStruct()->layers_data;
   if (!layers_data.cell.lid.is_null()) {
@@ -600,6 +590,17 @@ Application::setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params)
 
   if (scale == 1.0) scaleBCdofs = false;
 
+  // This check must come after scaleBCdofs is read (it used to be in buildProblem, before setScaling)
+  if ((no_dir_bcs_ == true) && (scaleBCdofs == true)) {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are attempting "
+        "to set 'Scale BC Dofs = true' for a problem with no "
+        "Dirichlet BCs!  Scaling will do nothing.  Re-run "
+        "with 'Scale BC Dofs = false'\n");
+  }
+
   if ((scale != 1.0) && (problem->useSDBCs() == true)) {
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
@@ -608,26 +609,33 @@ Application::setScaling(const Teuchos::RCP<Teuchos::ParameterList>& params)
   }
 }
 
+// Create the distributed parameters and initialize them with data stored in the mesh.
+// Each one allocates its vectors from a dof manager's vector spaces, so they must be
+// rebuilt after adaptation, when the dof managers change.
 void
-Application::finalSetUp(
+Application::buildDistributedParameters(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const Teuchos::RCP<const Thyra_Vector>&     initial_guess)
+    const bool is_rebuild)
 {
-  setScaling(params);
+  if (is_rebuild) {
+    auto& problemParams = params->sublist("Problem");
+    if (problemParams.isSublist("Parameters")) {
+      auto& parameterParams = problemParams.sublist("Parameters");
+      const int num_params = parameterParams.get<int>("Number Of Parameters",0);
+      for (int i=0; i<num_params; ++i) {
+        const auto p_name = util::strint("Parameter",i);
+        if (not parameterParams.isSublist(p_name)) continue;
+        auto& p_sublist = parameterParams.sublist(p_name);
+        TEUCHOS_TEST_FOR_EXCEPTION (
+            p_sublist.get<std::string>("Type","Scalar")=="Distributed", std::logic_error,
+            "Error! Rebuilding distributed parameters after mesh adaptation is not supported "
+            "when a distributed parameter is also a solver parameter.\n"
+            "  - parameter name: " << p_sublist.get<std::string>("Name","<unnamed>") << "\n"
+            "  - fix: refresh the ModelEvaluator's cached nominalValues/bounds vectors.\n");
+      }
+    }
+  }
 
-  // Now that space is allocated in STK for state fields, initialize states.
-  // If the states have been already allocated, skip this.
-  if (!stateMgr.areStateVarsAllocated()) stateMgr.initStateArrays(disc);
-
-  solMgr = rcp(new SolutionManager(
-      params,
-      initial_guess,
-      paramLib,
-      disc,
-      comm));
-
-  // Create Distributed parameters and initialize them with data stored in the
-  // mesh.
   const StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
   for (const auto& sis : distParamSIS) {
     // Get name of distributed parameter
@@ -689,6 +697,29 @@ Application::finalSetUp(
     // Add parameter to the distributed parameter library
     distParamLib->add(parameter->name(), parameter);
   }
+}
+
+void
+Application::finalSetUp(
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const Teuchos::RCP<const Thyra_Vector>&     initial_guess)
+{
+  setScaling(params);
+
+  // Now that space is allocated in STK for state fields, initialize states.
+  // If the states have been already allocated, skip this.
+  if (!stateMgr.areStateVarsAllocated()) stateMgr.initStateArrays(disc);
+
+  solMgr = rcp(new SolutionManager(
+      params,
+      initial_guess,
+      paramLib,
+      disc,
+      comm));
+
+  // Create Distributed parameters and initialize them with data stored in the
+  // mesh.
+  buildDistributedParameters(params);
 
   // Now setup response functions (see note above)
   for (int i = 0; i < responses.size(); i++) { responses[i]->setup(); }
@@ -1028,8 +1059,7 @@ checkDerivatives(
   // Construct a perturbation.
   const double               delta = 1e-7;
   Teuchos::RCP<Thyra_Vector> xd    = w1;
-  xd->randomize(
-      -Teuchos::ScalarTraits<ST>::rmax(), Teuchos::ScalarTraits<ST>::rmax());
+  xd->randomize(0.0, 1.0);
   Teuchos::RCP<Thyra_Vector> xpd = w2;
   {
     const Teuchos::ArrayRCP<const RealType> x_d   = getLocalData(x);
@@ -1233,6 +1263,30 @@ void
 Application::postRegSetup<PHAL::AlbanyTraits::HessianVec>()
 {
   postRegSetupDImpl<PHAL::AlbanyTraits::HessianVec>();
+}
+
+// Re-run the post-registration setup of all the field managers.
+// Their field extents (in particular those of the side set fields, see
+// setDynamicLayoutSizes) are computed from the discretization, so after a mesh
+// adaptation they describe the old mesh and their allocations are the wrong size.
+// NOTE: must be defined after the postRegSetup specializations above, or calling them
+//       here would instantiate the primary template instead.
+void
+Application::refreshFieldManagers()
+{
+  // Drop the record of which evaluation types have already been set up, so that the
+  // post registration setup below actually runs again (it early-outs otherwise).
+  phxSetup->clear_evals();
+
+  // Problem field managers (residual/jacobian/... , dirichlet and neumann).
+  postRegSetup<PHAL::AlbanyTraits::Residual>();
+  postRegSetup<PHAL::AlbanyTraits::Jacobian>();
+  postRegSetup<PHAL::AlbanyTraits::Tangent>();
+  postRegSetup<PHAL::AlbanyTraits::DistParamDeriv>();
+  postRegSetup<PHAL::AlbanyTraits::HessianVec>();
+
+  // Response field managers
+  for (int i = 0; i < responses.size(); ++i) { responses[i]->postRegSetup(); }
 }
 
 template <typename EvalT>
@@ -1650,9 +1704,9 @@ Application::computeGlobalJacobianImpl(
         Teuchos::rcp_dynamic_cast<Thyra::ScaledLinearOpBase<ST>>(jac, true);
     jac_scaled_lop->scaleLeft(*scaleVec_);
     // scale residual
-    /*IKTif (Teuchos::nonnull(f)) {
+    if (Teuchos::nonnull(f)) {
       Thyra::ele_wise_scale<ST>(*scaleVec_,f.ptr());
-    }*/
+    }
 #ifdef WRITE_TO_MATRIX_MARKET
     writeMatrixMarket(jac, "jacScaled", countScale);
     if (f != Teuchos::null) { writeMatrixMarket(f, "resScaled", countScale); }
@@ -3341,9 +3395,10 @@ Application::setScaleBCDofs(
     const auto& sol_dof_mgr   = disc->getDOFManager();
     const auto& sol_elem_dof_lids = sol_dof_mgr->elem_dof_lids().host();
 
+    // ns_offsets[j] is the index of the j-th equation constrained on this nodeset
     std::vector<std::vector<int>> sol_offsets(ns_offsets.size());
     for (unsigned j=0; j<ns_offsets.size(); ++j) {
-      sol_offsets[j] = sol_dof_mgr->getGIDFieldOffsets(j);
+      sol_offsets[j] = sol_dof_mgr->getGIDFieldOffsets(ns_offsets[j]);
     }
     for (const auto& ep : ns_node_elem_pos) {
       const int ielem = ep.first;
@@ -3351,7 +3406,7 @@ Application::setScaleBCDofs(
       // std::cout << "IKTIKT ns, offsets size: " << ns << ", " <<
       // offsets_[ns].size() << "\n";
       for (unsigned j=0; j<ns_offsets.size(); ++j) {
-        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[ns_offsets[j]][pos]);
+        const int x_lid = sol_elem_dof_lids(ielem,sol_offsets[j][pos]);
         scaleVecLocalData[x_lid] = scale;
       }
     }

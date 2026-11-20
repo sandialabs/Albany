@@ -54,6 +54,11 @@ public:
   //! Determine if evaluation type name exists
   bool contain_eval(const std::string& eval) const;
 
+  //! Forget all evaluation type names, so that the post registration setup of the
+  //! field managers runs again. Needed after a mesh adaptation, since the field
+  //! extents/allocations are sized from the discretization.
+  void clear_evals();
+
   //! Store MDField identifiers in order to identify field dependencies in the FieldManager
   //! "saved" is used to specify whether an MDField should be saved for memoization
   void fill_field_dependencies(const std::vector<Teuchos::RCP<PHX::FieldTag>>& depFields,

@@ -47,6 +47,7 @@ else ()
     GIT_REPOSITORY git@github.com:SCOREC/omega_h
     GIT_TAG        origin/master
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
 
   # Set options for Omega_h before adding the subdirectory

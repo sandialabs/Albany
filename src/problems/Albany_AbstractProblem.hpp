@@ -22,6 +22,7 @@
 #include "Teuchos_RCP.hpp"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Albany {
@@ -172,7 +173,10 @@ class AbstractProblem {
   //! With an explicit Tempus stepper, Albany::SolverFactory uses these masks to solve
   //! the constraint at every stage, and to integrate the differential dofs explicitly
   //! (see Albany::ExplicitODEModelEvaluator). Without them, an explicit stepper cannot
-  //! be used at all, since the mass matrix of a DAE is singular.
+  //! be used at all, since the mass matrix of a DAE is singular. With an implicit
+  //! stepper and the adjoint sensitivities of Tempus, the algebraic mask is given to
+  //! Tempus ("Algebraic Equations Mask"), for the adjoint jumps of the "Final Time"
+  //! and "Sum Over Times" responses.
   virtual bool
   getDAEMasks(
       const AbstractDiscretization& /* disc */,
@@ -181,6 +185,12 @@ class AbstractProblem {
   {
     return false;
   }
+
+  //! Name and number of components of each solution field, in solution component
+  //! order. Used to label the solution in mesh output. Empty (the default) if the
+  //! problem does not describe its solution layout.
+  virtual std::vector<std::pair<std::string,int>>
+  getSolutionComponents() const { return {}; }
 
  protected:
   Teuchos::Array<Teuchos::Array<int>> offsets_;

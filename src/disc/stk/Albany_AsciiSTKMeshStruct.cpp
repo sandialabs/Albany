@@ -472,88 +472,95 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
 
      double* coord;
      int node_GID;
-     unsigned int node_LID;
+     // Returns the validated local index; throws if GID is not in this rank's map.
+     auto get_node_lid = [&](int gid, int elem_i) {
+       const int lid = node_mapT->getLocalElement(gid);
+       TEUCHOS_TEST_FOR_EXCEPTION(lid < 0, std::runtime_error,
+           "Error in AsciiSTKMeshStruct: node " << gid+1 << " of element " << elem_i
+           << " is not among the nodes read on this process.\n");
+       return lid;
+     };
 
      node_GID = eles[i][0]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     int node_LID = get_node_lid(node_GID, i);
      coord = stk::mesh::field_data(*coordinates_field, llnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][1]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord = stk::mesh::field_data(*coordinates_field, lrnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][2]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord = stk::mesh::field_data(*coordinates_field, urnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][3]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord = stk::mesh::field_data(*coordinates_field, ulnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk::mesh::field_data(*coordinates_field, llnodeb);
      node_GID = eles[i][4]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][5]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord = stk::mesh::field_data(*coordinates_field, lrnodeb);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk::mesh::field_data(*coordinates_field, urnodeb);
      node_GID = eles[i][6]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk::mesh::field_data(*coordinates_field, ulnodeb);
      node_GID = eles[i][7]-1;
-     node_LID = node_mapT->getLocalElement(node_GID);
+     node_LID = get_node_lid(node_GID, i);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      if (have_sh) {
        double* sHeight;
        sHeight = stk::mesh::field_data(*surfaceHeight_field, llnode);
        node_GID = eles[i][0]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnode);
        node_GID = eles[i][1]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, urnode);
        node_GID = eles[i][2]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnode);
        node_GID = eles[i][3]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, llnodeb);
        node_GID = eles[i][4]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnodeb);
        node_GID = eles[i][5]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, urnodeb);
        node_GID = eles[i][6]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnodeb);
        node_GID = eles[i][7]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
@@ -572,42 +579,42 @@ setBulkData (const Teuchos::RCP<const Teuchos_Comm>& /* comm */)
        double* bFriction;
        bFriction = stk::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, lrnode);
        node_GID = eles[i][1]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, urnode);
        node_GID = eles[i][2]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, ulnode);
        node_GID = eles[i][3]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, llnodeb);
        node_GID = eles[i][4]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, lrnodeb);
        node_GID = eles[i][5]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, urnodeb);
        node_GID = eles[i][6]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk::mesh::field_data(*basal_friction_field, ulnodeb);
        node_GID = eles[i][7]-1;
-       node_LID = node_mapT->getLocalElement(node_GID);
+       node_LID = get_node_lid(node_GID, i);
        bFriction[0] = beta[node_LID];
        }
 

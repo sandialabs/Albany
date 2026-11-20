@@ -344,8 +344,10 @@ ANONYMOUS:
         Method: Backtrack
       Nonlinear Solver: Pseudo-Transient
       Pseudo-Transient:
-        deltaInit: 1.0          # [yr]
-        deltaMax: 1.0e+04       # [yr]; above this the transient term is dropped (plain Newton)
+        # The enthalpy transient term is now correctly scaled (it used to be 1e6 times too small):
+        # these pseudo-time steps (1e6 times the values originally tuned) give the same iterations.
+        deltaInit: 1.0e+06      # [yr]
+        deltaMax: 1.0e+10       # [yr]; above this the transient term is dropped (plain Newton)
         Use Transient Residual in Direction Computation: false
       Printing:
         Output Precision: 3

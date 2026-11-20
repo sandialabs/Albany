@@ -164,6 +164,11 @@ if (BUILD_COMPASS)
 
   MESSAGE("\nBuilding compass with script '${CTEST_BUILD_COMMAND}' ...\n")
 
+  # Python warnings (e.g. "file.py:82: SetuptoolsWarning: ...") match CTest's
+  # generic "file:line:" error regex; report them as warnings instead
+  list (APPEND CTEST_CUSTOM_ERROR_EXCEPTION ":[0-9]+: [A-Za-z]*Warning")
+  list (APPEND CTEST_CUSTOM_WARNING_MATCH ":[0-9]+: [A-Za-z]*Warning")
+
   CTEST_BUILD(
     BUILD "${CTEST_SOURCE_DIRECTORY}/compass"
     RETURN_VALUE  HAD_ERROR

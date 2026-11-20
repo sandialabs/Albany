@@ -339,10 +339,14 @@ evaluateFields(typename Traits::EvalData workset)
   // rho*C*dT/dt - \nabla \cdot (kappa*\nabla T) = f 
   // (in this case, kappa is isotropic)
 
+  // Zero the residual unconditionally so each evaluation starts clean.
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    for (std::size_t node = 0; node < numNodes; ++node)
+      TResidual(cell, node) = 0.0;
+
   if (!disable_transient) { //Inertia terms
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t node = 0; node < numNodes; ++node) {
-        TResidual(cell, node) = 0.0;
         for (std::size_t qp = 0; qp < numQPs; ++qp) {
           // Time-derivative contribution to residual
           TResidual(cell, node) += rho * C * Tdot(cell, qp) * wBF(cell, node, qp);
@@ -350,7 +354,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  //Diffusion and source terms 
+  //Diffusion and source terms
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {

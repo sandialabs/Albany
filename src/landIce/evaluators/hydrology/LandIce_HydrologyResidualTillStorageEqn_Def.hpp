@@ -40,7 +40,7 @@ HydrologyResidualTillStorageEqn (const Teuchos::ParameterList& p,
   auto& hydro_params = *p.get<Teuchos::ParameterList*>("LandIce Hydrology Parameters");
   auto& phys_params  = *p.get<Teuchos::ParameterList*>("LandIce Physical Parameters");
 
-  rho_w       = phys_params.get<double>("Water Density", 1028.0);
+  rho_w       = phys_params.get<double>("Fresh Water Density", 1000.0); // subglacial (fresh) water; "Water Density" is the seawater one
   use_melting = hydro_params.get<bool>("Use Melting In Conservation Of Mass", false);
   C_drain     = hydro_params.get<double>("Till Water Storage Drain Rate", -1.0);
   TEUCHOS_TEST_FOR_EXCEPTION (C_drain<=0, Teuchos::Exceptions::InvalidParameter,

@@ -29,6 +29,9 @@ FAD_SIZE="none"
 
 LOG_FILE=$BASE_DIR/test_log_frontier_Albany.txt
 
+# Stop starting new tests 15 min before the 2h job limit so results are submitted
+export CTEST_STOP_TIME=$(date -d '+105 minutes' +%H:%M:%S)
+
 eval "BUILD_OR_TEST=test FAD_CONFIGURATION=${FAD_CONFIGURATION} FAD_SIZE=${FAD_SIZE} BASE_DIR=${BASE_DIR} DEPLOY_DIR=${DEPLOY_DIR} TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly_albany_slfad.cmake" > $LOG_FILE 2>&1
 
 cp test_log_frontier_Albany.txt ${DEPLOY_DIR}/logs/test_log_frontier_Albany.txt

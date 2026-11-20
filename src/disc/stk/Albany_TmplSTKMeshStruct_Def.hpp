@@ -734,6 +734,8 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
          bulkData->declare_relation(side, ulnode, 0, stk::mesh::DEFAULT_PERMUTATION);
          bulkData->declare_relation(side, llnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
+         singlePartVec[0] = ssPartVec["SideSetX"];
+         bulkData->change_entity_parts(side, singlePartVec);
       }
       if (x_GIDplus1==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
@@ -743,6 +745,8 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
          bulkData->declare_relation(side, lrnode, 0, stk::mesh::DEFAULT_PERMUTATION);
          bulkData->declare_relation(side, urnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
+         singlePartVec[0] = ssPartVec["SideSetX"];
+         bulkData->change_entity_parts(side, singlePartVec);
       }
       if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
 
@@ -752,6 +756,8 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
          bulkData->declare_relation(side, llnode, 0, stk::mesh::DEFAULT_PERMUTATION);
          bulkData->declare_relation(side, lrnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
+         singlePartVec[0] = ssPartVec["SideSetY"];
+         bulkData->change_entity_parts(side, singlePartVec);
       }
       if (y_GIDplus1==nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
 
@@ -761,6 +767,8 @@ TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& /* comm 
          bulkData->declare_relation(side, urnode, 0, stk::mesh::DEFAULT_PERMUTATION);
          bulkData->declare_relation(side, ulnode, 1, stk::mesh::DEFAULT_PERMUTATION);
 
+         singlePartVec[0] = ssPartVec["SideSetY"];
+         bulkData->change_entity_parts(side, singlePartVec);
       }
     } // end pair of triangles
 

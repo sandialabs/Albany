@@ -10,7 +10,7 @@ if (ALBANY_PARALLEL_EXODUS)
 else ()
   # If there's no Iopx, we *must* have ALBANY_DECOMP defined (to decompose the mesh)
   # OR execute with only one rank.
-  IF (NOT ${ALBANY_SEACAS_PATH})
+  IF (NOT SEACAS_DECOMP)
     MESSAGE (FATAL_ERROR "Error! Cannot execute some FO_Test tests in parallel without Iopx or decomp from Trilinos.\n")
   ENDIF()
  set (USE_SERIAL_MESH "false")
@@ -88,7 +88,7 @@ ENDIF()
 ###     Box mesh transient test      ###
 ########################################
 
-if (ALBANY_OMEGAH)
+if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
   # Transient FO+H test on an extruded, small, structured MxN Omega_h basal box mesh, with analytic input fields.
   # Meant as a small test case for debugging/adaptivity (see also FO_GIS Humboldt transient Omega_h test).
   set (testName ${testNameRoot}_Box_Transient_Omega_h)
@@ -97,6 +97,52 @@ if (ALBANY_OMEGAH)
   add_test(${testName} ${Albany.exe} input_fo_box_transient_omegah.yaml)
   set_tests_properties(${testName}  PROPERTIES
     LABELS "LandIce;Forward;Omega_h")
+
+  # Same box problem with 5 layers and refinement adaptation (max edge length 0.45).
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_Refine_5Layers_MaxLen0.45)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_refine_5layers_maxLen0.45.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h;Adaptation")
+
+  # Same box problem with 5 layers and refinement adaptation (max edge length 0.3).
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_Refine_5Layers_MaxLen0.3)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_refine_5layers_maxLen0.3.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h;Adaptation")
+
+  # Same box problem restarted from the solution stored on a 128 triangle, 5 layer Omega_h mesh.
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_128Tri_Resume)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/box22_0.45_5l_128tri.osh
+       DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_128tri_resume.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_128tri_resume.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_128tri_resume.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h")
+
+  # Same box problem restarted from the solution stored on a 192 triangle, 5 layer Omega_h mesh.
+  set (testName ${testNameRoot}_Box_Transient_Omega_h_192Tri_Resume)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/box22_0.3_5l_192tri.osh
+       DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_192tri_resume.yaml
+                 ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_192tri_resume.yaml)
+  add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_192tri_resume.yaml)
+  set_tests_properties(${testName}  PROPERTIES
+    LABELS "LandIce;Forward;Omega_h")
+
+  if (ALBANY_MESHFIELDS)
+    # Same box problem with adaptation driven by a MeshFields SPR error estimate.
+    set (testName ${testNameRoot}_Box_Transient_Omega_h_Adapt)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_adapt.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_adapt.yaml)
+    add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_adapt.yaml)
+    set_tests_properties(${testName}  PROPERTIES
+      LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+  endif()
 endif()
 
 ####################################
@@ -118,6 +164,49 @@ IF(NOT Kokkos_ENABLE_CUDA)
                     ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_sensitivity.yaml)
     add_test(${testName} ${Albany.exe} input_mismip_transient_sensitivity.yaml)
     set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Implcit" FIXTURES_REQUIRED MismipMeshSetup2d)
+
+    if (ALBANY_ROL)
+      # Transient optimization of the coupled FO-thickness problem (AlbanyAnalysis), with a misfit
+      # of the thickness on the upper surface. The controls are the (log of the) friction
+      # coefficient: a scalar (Mu), or a distributed field on the bed (basal_friction_log) with a
+      # gradient regularization.
+      #  - ROL driver (discrete adjoint of Backward Euler): Mu and Beta, Final Time response.
+      #  - Tempus driver (adjoint sensitivities of Tempus, continuous adjoint): Mu, Final Time and
+      #    Sum Over Times responses. Their adjoint jumps need the algebraic equations of the DAE
+      #    (the velocity), which Albany gives to Tempus ("Algebraic Equations Mask").
+      # Exact derivatives require ALBANY_MESH_DEPENDS_ON_SOLUTION.
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_beta.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_beta.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml
+                      ${CMAKE_CURRENT_BINARY_DIR}/input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+
+      # The tests use the coarse MISMIP mesh (AsciiMeshes/MISMIP_coarse)
+      if (NOT ALBANY_PARALLEL_EXODUS)
+        set (testNameDecompMesh ${testNameRoot}_MISMIP_coarse_2d_decompMesh)
+        add_test (NAME ${testNameDecompMesh}
+              COMMAND ${SerialSeacasDecomp.exe} -processors ${MPIMNP} mismip_2d.exo
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP_coarse)
+        set_tests_properties (${testNameDecompMesh} PROPERTIES FIXTURES_SETUP MismipCoarseMeshSetup2d)
+      endif()
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_ROL_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Beta_ROL_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_beta.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;ROL;FinalTime;Distributed" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_Tempus_FinalTime)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_final_time.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;FinalTime;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+
+      set (testName ${testNameRoot}_MISMIP_TransientOpt_Mu_Tempus_SumOverTimes)
+      add_test(${testName} ${AlbanyAnalysis.exe} input_mismip_transient_opt_mu_tempus_sum_over_times.yaml)
+      set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Transient;Analysis;Tempus;SumOverTimes;Scalar" FIXTURES_REQUIRED MismipCoarseMeshSetup2d)
+    endif()
   else()
     set (testName ${testNameRoot}_MISMIP_Transient_Impl)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mismip_transient.yaml

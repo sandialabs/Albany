@@ -219,7 +219,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
 
     for (int eq=0; eq<numFields; ++eq) {
       // NOTE: node_offsets is to compute the idx of the side node within the cell.
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side_pos);
       const auto& node_offsets = node_dof_mgr->getGIDFieldOffsetsSide(0,side_pos);
       const int numNodes = offsets.size();
       for (int node=0; node<numNodes; ++node) {
@@ -304,7 +304,7 @@ evaluateFields(PHAL::AlbanyTraits::EvalData workset)
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
 
     for (int eq=0; eq<numFields; ++eq) {
-      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(eq,side_pos);
+      const auto& offsets = dof_mgr->getGIDFieldOffsetsSide(offset+eq,side_pos);
       const int numNodes = offsets.size();
       for (int node=0; node<numNodes; ++node) {
         const auto lid = dof_lids(offsets[node]);

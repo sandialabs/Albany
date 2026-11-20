@@ -75,6 +75,7 @@ else ()
     GIT_REPOSITORY git@github.com:SCOREC/meshFields
     GIT_TAG        origin/main
     OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
 
   # Set options for MeshFields before adding the subdirectory

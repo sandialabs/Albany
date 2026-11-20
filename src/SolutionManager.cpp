@@ -115,8 +115,8 @@ SolutionManager::SolutionManager(
           disc,
           pbParams->sublist("Initial Condition DotDot"));
       cas_manager->combine(
-          overlapped_soln->col(1),
-          current_soln->col(1),
+          overlapped_soln->col(2),
+          current_soln->col(2),
           Albany::CombineMode::INSERT);
     }
   }
