@@ -812,11 +812,39 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
           "Error! SPR adaptation requires 'Indicator Field Name' in the 'Mesh Adaptivity' sublist.\n"
           "  - This is the name of the Elem Scalar field driving the adaptation.\n");
       const auto& indicator_name = adapt_params.get<std::string>("Indicator Field Name");
+      const bool spr_dbg = adapt_params.get<bool>("Verbose",false) && !mesh->comm()->rank(); // TEMPORARY
+      if (spr_dbg) { std::cout << "[SPR-debug] start SPR" << std::endl; } // TEMPORARY
       auto effectiveStrain = getIndicatorField(*mesh, indicator_name);
+      if (spr_dbg) { // TEMPORARY
+        Omega_h::HostRead<Omega_h::Real> h_ind(effectiveStrain); // TEMPORARY
+        double mn = 1e300, mx = -1e300; int nnan = 0; // TEMPORARY
+        for (int i=0; i<static_cast<int>(h_ind.size()); ++i) { // TEMPORARY
+          const double v = h_ind[i]; // TEMPORARY
+          if (v!=v) { ++nnan; continue; } // TEMPORARY
+          mn = std::min(mn,v); mx = std::max(mx,v); // TEMPORARY
+        } // TEMPORARY
+        std::cout << "[SPR-debug] after getIndicatorField: n=" << h_ind.size() << " min=" << mn // TEMPORARY
+                  << " max=" << mx << " nan=" << nnan << std::endl; // TEMPORARY
+      } // TEMPORARY
+      if (spr_dbg) { // TEMPORARY: probe project_by_fit on mesh-only and compressed-data inputs
+        std::cout << "[SPR-debug] probe 1: project_by_fit on constant field..." << std::endl; // TEMPORARY
+        Omega_h::Write<Omega_h::Real> ones(mesh->nelems(), 1.0); // TEMPORARY
+        auto p1 = Omega_h::project_by_fit(&(*mesh), Omega_h::Reals(ones)); // TEMPORARY
+        std::cout << "[SPR-debug] probe 1 done (size " << p1.size() << ")" << std::endl; // TEMPORARY
+        std::cout << "[SPR-debug] probe 2: project_by_fit on log10(indicator)..." << std::endl; // TEMPORARY
+        Omega_h::HostRead<Omega_h::Real> h_in(effectiveStrain); // TEMPORARY
+        Omega_h::HostWrite<Omega_h::Real> h_lg(h_in.size()); // TEMPORARY
+        for (int i=0; i<static_cast<int>(h_in.size()); ++i) h_lg[i] = std::log10(std::max(h_in[i],1e-30)); // TEMPORARY
+        auto p2 = Omega_h::project_by_fit(&(*mesh), Omega_h::Reals(h_lg.write())); // TEMPORARY
+        std::cout << "[SPR-debug] probe 2 done (size " << p2.size() << ")" << std::endl; // TEMPORARY
+        std::cout << "[SPR-debug] real project_by_fit follows..." << std::endl; // TEMPORARY
+      } // TEMPORARY
       auto recoveredStrain = recoverLinearStrain(*mesh, effectiveStrain);
+      if (spr_dbg) { std::cout << "[SPR-debug] " << "after recoverLinearStrain (project_by_fit)" << std::endl; } // TEMPORARY
       mesh->add_tag<Omega_h::Real>(Omega_h::VERT, "recoveredStrain", 1, recoveredStrain,
           false, Omega_h::ArrayType::VectorND);
       addEffectiveStrainRateTag(*mesh, effectiveStrain, indicator_name);
+      if (spr_dbg) { std::cout << "[SPR-debug] " << "after addEffectiveStrainRateTag" << std::endl; } // TEMPORARY
 
       const auto MeshDim = 2;
       const auto ShapeOrder = 1;
@@ -826,6 +854,7 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
       auto fieldAndController = omf.CreateLagrangeField<Omega_h::Real, ShapeOrder, MeshDim>();
       auto recoveredStrainField = fieldAndController.field;
       setFieldAtVertices(*mesh, recoveredStrain, recoveredStrainField);
+      if (spr_dbg) { std::cout << "[SPR-debug] " << "after setFieldAtVertices" << std::endl; } // TEMPORARY
 
       auto coordFieldAndController = omf.getCoordField();
       auto coordField = coordFieldAndController.field;
@@ -837,7 +866,9 @@ checkForAdaptationImpl (const Teuchos::RCP<const Thyra_Vector>& solution ,
       auto estimation =
         MeshField::SPR::Estimation(*mesh, effectiveStrain, recoveredStrainField, adaptRatio);
 
+      if (spr_dbg) { std::cout << "[SPR-debug] " << "after SPR::Estimation" << std::endl; } // TEMPORARY
       const auto [tgtLength, error] = MeshField::SPR::getSprSizeField(estimation, omf, coordFe);
+      if (spr_dbg) { std::cout << "[SPR-debug] " << "after getSprSizeField" << std::endl; } // TEMPORARY
       const auto errorThreshold = adapt_params.get<double>("Error Threshold",0.5);
       const auto verbose = adapt_params.get<bool>("Verbose",false);
 
