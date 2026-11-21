@@ -107,7 +107,7 @@ ANONYMOUS:
         Mesh Adaptivity:
           Type: Test # debug knobs, see OmegahDiscretization
           Refine Only: true
-          Refine Only Max Length: 6.0
+          Refine Only Max Length: 0.8
           # The indicator is the effective strain rate computed by the FO problem;
           # it is large around the grounding line, where we want a finer mesh.
           Indicator Field Name: effective_strain_rate
