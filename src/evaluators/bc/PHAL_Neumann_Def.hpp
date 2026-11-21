@@ -630,12 +630,14 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   IRST::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
   IFST::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths, side_normals, true);
 
-  // take grad_T dotted with the unit normal
-  IFST::dotMultiplyDataData(qp_data_returned, grad_T, side_normals);
-  // for(int cell = 0; cell < numCells; cell++)
-  //   for(int pt = 0; pt < numPoints; pt++)
-  //     for(int dim = 0; dim < numDOFsSet; dim++)
-  //       qp_data_returned(cell, pt, dim) = grad_T(cell, pt, dim) * side_normals(cell, pt, dim);
+  // take grad_T dotted with the unit normal (a rank-2 container: cell, point), and store
+  // -grad_T.n, with the same sign convention as calc_dudn_const (-dudn), for the DOFs set by this BC
+  Kokkos::DynRankView<ScalarT, PHX::Device> gradT_dot_n = Sacado::createDynRankView(qp_data_returned, "gradT_dot_n", numCells_, numPoints);
+  IFST::dotMultiplyDataData(gradT_dot_n, grad_T, side_normals);
+  for(int cell = 0; cell < numCells_; cell++)
+    for(int pt = 0; pt < numPoints; pt++)
+      for(int dim = 0; dim < numDOFsSet; dim++)
+        qp_data_returned(cell, pt, dim) = -gradT_dot_n(cell, pt);
 }
 
 template<typename EvalT, typename Traits>

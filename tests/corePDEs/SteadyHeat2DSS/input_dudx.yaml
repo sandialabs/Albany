@@ -29,10 +29,10 @@ ANONYMOUS:
     Exodus Input File Name: quadQuadSS.exo
     Exodus Output File Name: quadOutSS_tpetra.exo
   Regression For Response 0:
-    Test Value: 1.535224
+    Test Value: 4.647755631722e-01
     Absolute Tolerance: 1.0e-04
   Regression For Response 1:
-    Test Value: 2.0
+    Test Value: 1.0
     Absolute Tolerance: 1.0e-04
   Piro: 
     NOX: 
