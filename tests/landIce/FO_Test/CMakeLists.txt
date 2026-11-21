@@ -241,7 +241,10 @@ if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_EN
         LABELS "LandIce;Forward;Omega_h;Adaptation"
         FIXTURES_SETUP MismipOshMeshSetup)
 
-  foreach (mismipAdaptInput input_mismip_transient_adapt input_mismip_transient_expl_adapt)
+  # The nulladapt/refineonly variants are diagnostics: they skip the SPR error estimate
+  # (nulladapt also skips the mesh change itself) to bisect where a run misbehaves.
+  foreach (mismipAdaptInput input_mismip_transient_adapt input_mismip_transient_expl_adapt
+                            input_mismip_transient_adapt_nulladapt input_mismip_transient_adapt_refineonly)
     set (testName ${testNameRoot}_${mismipAdaptInput})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${mismipAdaptInput}.yaml
                    ${CMAKE_CURRENT_BINARY_DIR}/${mismipAdaptInput}.yaml)
@@ -249,7 +252,7 @@ if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_EN
     set_tests_properties(${testName} PROPERTIES
           LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation"
           FIXTURES_REQUIRED MismipOshMeshSetup
-          TIMEOUT 900)
+          TIMEOUT 600)
   endforeach()
 endif()
 
