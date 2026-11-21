@@ -172,9 +172,7 @@ ANONYMOUS:
         Stepper Type: Forward Euler
         #Stepper Type: SSPERK33
     NOX:
-      Thyra Group Options:
-        Function Scaling: Row Sum #Row Sum
-        Update Row Sum Scaling: Before Each Nonlinear Solve
+      # No NOX row-sum function scaling: its scaling vector is not rebuilt after mesh adaptation
       Status Tests:
         Test Type: Combo
         Combo Type: OR
