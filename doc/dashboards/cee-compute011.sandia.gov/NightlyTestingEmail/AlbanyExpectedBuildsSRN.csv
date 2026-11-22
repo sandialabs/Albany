@@ -1,9 +1,15 @@
 group, site, buildname 
 Nightly, attaway.sandia.gov, Albany-Linux-4.18.0-553.126.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
 Nightly, attaway.sandia.gov, Trilinos-Linux-4.18.0-553.126.1.1toss.t4.x86_64-Intel(R)-18.0.0-Release-Serial
+<<<<<<< HEAD
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.126.1.el8_10.x86_64-gcc-13.2.0-Release-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.126.1.el8_10.x86_64-gcc-13.2.0-Debug-FPE-Serial
 Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.126.1.el8_10.x86_64-gcc-13.2.0-Release-OpenMP
+=======
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.169.1.el8_10.x86_64-gcc-13.2.0-Release-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.169.1.el8_10.x86_64-gcc-13.2.0-Debug-FPE-Serial
+Nightly, camobap.ca.sandia.gov, Albany-Linux-4.18.0-553.169.1.el8_10.x86_64-gcc-13.2.0-Release-OpenMP
+>>>>>>> f39227e68 (Updating expected builds on camobap.)
 Nightly, cee-compute030, Albany-Linux-4.18.0-553.184.1.el8_10.x86_64-gcc-11.4.0-Debug-Serial
 Nightly, cee-compute030, Trilinos-Linux-4.18.0-553.184.1.el8_10.x86_64-gcc-11.4.0-Debug-Serial
 Nightly, cee-compute031, Albany-Linux-4.18.0-553.184.1.el8_10.x86_64-gcc-11.4.0-Release-Serial
