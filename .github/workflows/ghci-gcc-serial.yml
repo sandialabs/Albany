@@ -118,6 +118,7 @@ jobs:
             -D ENABLE_DEMO_PDES:BOOL=ON                                       \
             -D ENABLE_LANDICE:BOOL=ON                                         \
             -D ENABLE_MPAS_INTERFACE:BOOL=ON                                  \
+            -D ENABLE_ALBANY_PYTHON:BOOL=ON                                   \
             \
             -S ${GITHUB_WORKSPACE}/albany/source
       - name: Build Albany

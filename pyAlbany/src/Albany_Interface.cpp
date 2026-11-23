@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include "Albany_Memory.hpp"
 #include "Albany_SolverFactory.hpp"
@@ -548,7 +549,7 @@ bool PyProblem::performAnalysis()
     auto p_dpv = Teuchos::rcp_dynamic_cast<Thyra::DefaultProductVector<double>>(p);
 
     if (Teuchos::nonnull(p_dpv)) {
-        size_t n_params_in = (size_t)n_params > p_dpv->productSpace()->numBlocks() ? p_dpv->productSpace()->numBlocks() : (size_t)n_params;
+        const size_t n_params_in = std::min(static_cast<size_t>(n_params), static_cast<size_t>(p_dpv->productSpace()->numBlocks()));
         for (size_t l = 0; l < n_params_in; l++)
         {
             thyraParameter[l] = p_dpv->getNonconstVectorBlock(l);

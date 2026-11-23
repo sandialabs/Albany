@@ -28,6 +28,15 @@ RUN apt-get update &&   \
     apt-get install -y  \
         libopenmpi-dev
 
+# Install python packages needed by pyAlbany (ENABLE_ALBANY_PYTHON)
+# (python3-mpi4py is built against the libopenmpi-dev installed above)
+RUN apt-get update &&       \
+    apt-get install -y      \
+        python3-dev         \
+        python3-numpy       \
+        python3-scipy       \
+        python3-mpi4py
+
 # Install blas, yaml-cpp, boost
 RUN apt-get update &&   \
     apt-get install -y  \
