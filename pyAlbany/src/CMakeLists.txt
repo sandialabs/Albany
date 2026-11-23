@@ -91,7 +91,10 @@ set(TPL_LIBRARIES
 
 add_library(pyalbanyLib ${Albany_LIBRARY_TYPE} ${PyAlbany_SRCS})
 set_target_properties(pyalbanyLib PROPERTIES HEADER "${PyAlbany_HDRS}")
-target_link_libraries(pyalbanyLib ${Trilinos_LIBRARIES})
+# Trilinos targets do not necessarily carry the MPI include dirs (they assume an MPI
+# compiler wrapper), so link MPI explicitly in case CMAKE_CXX_COMPILER is not mpicxx
+find_package(MPI REQUIRED COMPONENTS CXX)
+target_link_libraries(pyalbanyLib ${Trilinos_LIBRARIES} MPI::MPI_CXX)
 if (ALBANY_SUPPRESS_TRILINOS_WARNINGS)
   target_include_directories(pyalbanyLib SYSTEM PUBLIC
                             "${Trilinos_INCLUDE_DIRS};${Trilinos_TPL_INCLUDE_DIRS}")

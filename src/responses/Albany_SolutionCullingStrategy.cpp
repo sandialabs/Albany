@@ -210,6 +210,9 @@ createSolutionCullingStrategy(
 
   const bool unsupportedCullingStrategy = true;
   TEUCHOS_TEST_FOR_EXCEPT(unsupportedCullingStrategy);
+
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
 }
 
 } // namespace Albany

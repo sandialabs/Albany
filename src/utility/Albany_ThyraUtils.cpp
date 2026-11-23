@@ -40,6 +40,8 @@ Teuchos::RCP<const Teuchos_Comm> getComm (const Teuchos::RCP<const Thyra_VectorS
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getComm! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
 
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
 }
 
 GO getMaxAllGlobalIndex(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
@@ -51,6 +53,9 @@ GO getMaxAllGlobalIndex(const Teuchos::RCP<const Thyra_VectorSpace>& vs) {
 
   // If all the tries above are unsuccessful, throw an error.
   TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error, "Error in getMaxAllGlobalIndex! Could not cast Thyra_VectorSpace to any of the supported concrete types.\n");
+
+  // Silence compiler warning
+  TEUCHOS_UNREACHABLE_RETURN(-1);
 }
 
 Teuchos::Array<GO> getGlobalElements  (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
