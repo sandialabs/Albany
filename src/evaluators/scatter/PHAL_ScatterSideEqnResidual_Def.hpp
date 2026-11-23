@@ -346,12 +346,12 @@ doPostEvaluate(typename Traits::EvalData workset)
   const auto elem_lids = workset.disc->getElementLIDs_host(workset.wsIndex);
   const auto elem_dof_lids = dof_mgr->elem_dof_lids().host();
 
-  // Set J=identity outside of the sideset, so it's not singular
-  auto Jac = workset.Jac;
+  // Set J=identity outside of the sideset, so it's not singular.
+  // NOTE: the device view of the Jacobian (workset.Jac_kokkos) is alive during
+  //       the evaluation, so the host view of the matrix cannot be accessed.
+  //       We collect the rows on host, and modify them on device.
   const auto& ss_eqn_lids = this->ss_eqns_dofs_lids.at(workset.wsIndex);
-  const RealType j_coeff = workset.j_coeff;
-  Teuchos::Array<ST> vals;
-  Teuchos::Array<LO> cols;
+  std::set<LO> diag_rows;
   for (size_t icell=0; icell<workset.numCells; ++icell) {
     const auto elem_LID = elem_lids(icell);
     const auto dof_lids = Kokkos::subview(elem_dof_lids,elem_LID,ALL);
@@ -362,15 +362,37 @@ doPostEvaluate(typename Traits::EvalData workset)
         auto lrow = dof_lids[o];
         if (ss_eqn_lids.count(lrow)==0) {
           // LID not on the sideset. Diagonalize
-
-          // Extract the row, zero it out, then put j_coeff on diagonal
-          Albany::getLocalRowValues(Jac, lrow, cols, vals);
-          for (auto& val : vals) { val = 0.0; }
-          Albany::setLocalRowValues(Jac, lrow, cols(), vals());
-          Albany::setLocalRowValue(Jac,lrow,lrow, j_coeff);
+          diag_rows.insert(lrow);
         }
       }
     }
+  }
+
+  const int num_rows = diag_rows.size();
+  if (num_rows>0) {
+    using exec_space = typename decltype(workset.Jac_kokkos)::execution_space;
+    using mem_space  = typename decltype(workset.Jac_kokkos)::memory_space;
+
+    Kokkos::View<LO*,mem_space> rows_d("ScatterSideEqnResidual diag rows",num_rows);
+    auto rows_h = Kokkos::create_mirror_view(rows_d);
+    int i = 0;
+    for (auto r : diag_rows) {
+      rows_h(i++) = r;
+    }
+    Kokkos::deep_copy(rows_d,rows_h);
+
+    // Zero out the row, then put j_coeff on diagonal
+    const auto Jac_kokkos = workset.Jac_kokkos;
+    const ST j_coeff = workset.j_coeff;
+    Kokkos::parallel_for(this->getName()+"_diagonalize",
+                         Kokkos::RangePolicy<exec_space>(0,num_rows),
+                         KOKKOS_LAMBDA(const int irow) {
+      const LO lrow = rows_d(irow);
+      auto row = Jac_kokkos.row(lrow);
+      for (LO k=0; k<row.length; ++k) {
+        row.value(k) = (row.colidx(k)==lrow) ? j_coeff : 0.0;
+      }
+    });
   }
 
   // Call the base class one, to handle residual (if needed)
@@ -385,8 +407,10 @@ doEvaluateFields(typename Traits::EvalData workset,
   if (!workset.f.is_null()) {
     this->doEvaluateFieldsResidual(workset,sideSet);
   }
-  const auto Jac = workset.Jac;
-
+  // NOTE: the device view of the Jacobian (workset.Jac_kokkos) is alive during
+  //       the evaluation, so the host view of the matrix cannot be accessed.
+  //       We compute the (row,col,val) entries on host (from the host copies
+  //       of the residual fields), and sum them into the matrix on device.
   constexpr auto ALL = Kokkos::ALL();
   const auto dof_mgr = workset.disc->getDOFManager();
   const auto node_dof_mgr = workset.disc->getNodeDOFManager();
@@ -396,7 +420,9 @@ doEvaluateFields(typename Traits::EvalData workset,
   const int numSides = sideSet.size();
   const int neq = dof_mgr->getNumFields();
 
-  Teuchos::Array<LO> cols;
+  std::vector<LO> cols;
+  std::vector<LO> entries_rows, entries_cols;
+  std::vector<ST> entries_vals;
 
   for (int iside=0; iside<numSides; ++iside) {
     const auto& side = sideSet[iside];
@@ -433,13 +459,39 @@ doEvaluateFields(typename Traits::EvalData workset,
         for (int col_eq=0; col_eq<neq; ++col_eq) {
           for (int jnode=0; jnode<numNodes;++jnode) {
             const int deriv = neq*side_nodes[jnode] + col_eq;
-            const int col = cols[neq*jnode + col_eq];
-            Albany::addToLocalRowValues(Jac,row,1,&col,&res.fastAccessDx(deriv));
+            entries_rows.push_back(row);
+            entries_cols.push_back(cols[neq*jnode + col_eq]);
+            entries_vals.push_back(res.fastAccessDx(deriv));
           }
         }
       }
     }
   }
+
+  const int num_entries = entries_vals.size();
+  if (num_entries==0) {
+    return;
+  }
+
+  using exec_space = typename decltype(workset.Jac_kokkos)::execution_space;
+  using mem_space  = typename decltype(workset.Jac_kokkos)::memory_space;
+  using host_lo_view = Kokkos::View<const LO*,Kokkos::HostSpace,Kokkos::MemoryUnmanaged>;
+  using host_st_view = Kokkos::View<const ST*,Kokkos::HostSpace,Kokkos::MemoryUnmanaged>;
+
+  Kokkos::View<LO*,mem_space> rows_d("ScatterSideEqnResidual rows",num_entries);
+  Kokkos::View<LO*,mem_space> cols_d("ScatterSideEqnResidual cols",num_entries);
+  Kokkos::View<ST*,mem_space> vals_d("ScatterSideEqnResidual vals",num_entries);
+  Kokkos::deep_copy(rows_d,host_lo_view(entries_rows.data(),num_entries));
+  Kokkos::deep_copy(cols_d,host_lo_view(entries_cols.data(),num_entries));
+  Kokkos::deep_copy(vals_d,host_st_view(entries_vals.data(),num_entries));
+
+  // Different entries may target the same (row,col), so use atomics
+  const auto Jac_kokkos = workset.Jac_kokkos;
+  Kokkos::parallel_for(this->getName()+"_jacobian",
+                       Kokkos::RangePolicy<exec_space>(0,num_entries),
+                       KOKKOS_LAMBDA(const int i) {
+    Jac_kokkos.sumIntoValues(rows_d(i), &cols_d(i), 1, &vals_d(i), false, true);
+  });
 }
 
 // **********************************************************************

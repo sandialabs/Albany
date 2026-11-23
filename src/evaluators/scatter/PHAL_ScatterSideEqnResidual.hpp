@@ -144,7 +144,8 @@ public:
   ScatterSideEqnResidual (const Teuchos::ParameterList& p,
                           const Teuchos::RCP<Albany::Layouts>& dl);
 
-protected:
+  // NOTE: these launch device kernels, and CUDA does not allow extended
+  //       lambdas inside private/protected methods, so they must be public
   void doEvaluateFields(typename Traits::EvalData d,
                         const std::vector<Albany::SideStruct>& sideSet);
   void doPostEvaluate(typename Traits::EvalData d);
