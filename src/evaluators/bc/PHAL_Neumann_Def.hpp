@@ -696,10 +696,14 @@ calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_return
   // -grad_T.n, with the same sign convention as calc_dudn_const (-dudn), for the DOFs set by this BC
   Kokkos::DynRankView<ScalarT, PHX::Device> gradT_dot_n = Sacado::createDynRankView(qp_data_returned, "gradT_dot_n", numCells_, numPoints);
   IFST::dotMultiplyDataData(gradT_dot_n, grad_T, side_normals);
-  for(int cell = 0; cell < numCells_; cell++)
-    for(int pt = 0; pt < numPoints; pt++)
-      for(int dim = 0; dim < numDOFsSet; dim++)
-        qp_data_returned(cell, pt, dim) = -gradT_dot_n(cell, pt);
+  {
+    const auto qp_data = qp_data_returned;
+    using Policy3 = Kokkos::MDRangePolicy<PHX::Device::execution_space, Kokkos::Rank<3>>;
+    Kokkos::parallel_for("Neumann: gradu dotn const", Policy3({0,0,0},{numCells_,numPoints,numDOFsSet}),
+                         KOKKOS_LAMBDA(const int side, const int pt, const int dim) {
+      qp_data(side, pt, dim) = -gradT_dot_n(side, pt);
+    });
+  }
 }
 
 template<typename EvalT, typename Traits>
