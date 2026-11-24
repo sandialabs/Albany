@@ -142,6 +142,14 @@ if (ALBANY_OMEGAH AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENA
     add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_adapt.yaml)
     set_tests_properties(${testName}  PROPERTIES
       LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
+
+    # Same, but with NOX row sum function scaling (the scaling must follow the adapted mesh)
+    set (testName ${testNameRoot}_Box_Transient_Omega_h_Adapt_RowSumScaling)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_box_transient_omegah_adapt_rowsum.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/input_fo_box_transient_omegah_adapt_rowsum.yaml)
+    add_test(${testName} ${SerialAlbany.exe} input_fo_box_transient_omegah_adapt_rowsum.yaml)
+    set_tests_properties(${testName}  PROPERTIES
+      LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation")
   endif()
 endif()
 
