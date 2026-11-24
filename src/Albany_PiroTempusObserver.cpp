@@ -13,6 +13,7 @@
 
 #include <Tempus_Stepper.hpp>
 #include <Tempus_StepperImplicit.hpp>
+#include <Thyra_NonlinearSolver_NOX.hpp>
 
 namespace {
 std::tuple<Teuchos::RCP<const Thyra_Vector>,
@@ -115,6 +116,28 @@ observeStartTimeStep(const Tempus::Integrator<ST>& integrator)
       auto stepper = integrator.getStepper();
       stepper->setModel(model_);
       stepper->initialize();
+
+      // setModel marks the NOX solver of an implicit stepper for rebuild (new group, new
+      // scaling vector in the new residual space). However, a rebuilt Thyra::NOXNonlinearSolver
+      // chains the "User Defined Pre/Post Operator" it finds in its parameter list with its own.
+      // With "Function Scaling: Row Sum", that is the row sum observer of the *previous* solver,
+      // which still holds a scaling vector in the pre-adaptation residual space, and which would
+      // fail at the next solve ("getRowMap()->isSameAs(*tRowSumVec->getMap())"). The same issue
+      // is documented in Tempus for steppers of another problem (see removeStepperSolverObjects).
+      // Albany does not install its own NOX pre/post operators or merit functions, so it is
+      // safe to drop these objects and let the rebuilt solver recreate them.
+      auto implicit_stepper = Teuchos::rcp_dynamic_cast<Tempus::StepperImplicit<ST>>(stepper);
+      if (Teuchos::nonnull(implicit_stepper)) {
+        auto nox_solver = Teuchos::rcp_dynamic_cast<Thyra::NOXNonlinearSolver>(implicit_stepper->getSolver());
+        if (Teuchos::nonnull(nox_solver)) {
+          auto nox_pl = nox_solver->getNonconstParameterList();
+          if (Teuchos::nonnull(nox_pl) && nox_pl->isSublist("Solver Options")) {
+            auto& solver_options = nox_pl->sublist("Solver Options");
+            solver_options.remove("User Defined Pre/Post Operator", false);
+            solver_options.remove("User Defined Merit Function", false);
+          }
+        }
+      }
     }
   }
 }
