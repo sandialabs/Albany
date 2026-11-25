@@ -228,6 +228,34 @@ IF(NOT Kokkos_ENABLE_CUDA)
   set_tests_properties(${testName}  PROPERTIES LABELS "LandIce;Forward;Explicit" FIXTURES_REQUIRED MismipMeshSetup2d)
 ENDIF()
 
+# Adaptive-mesh MISMIP tests (Omega_h + SPR, indicator: effective strain rate).
+# The basal mesh is the coarse MISMIP mesh, converted from the exodus file to an osh file.
+# A TIMEOUT bounds the run time, since adaptation can make a run much more expensive.
+# TODO: add a regression block to the yaml files once reference values are available.
+if (ALBANY_OMEGAH AND ALBANY_MESHFIELDS AND NOT (Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL))
+  set (testNameMismipOsh ${testNameRoot}_MISMIP_CreateOsh)
+  add_test (NAME ${testNameMismipOsh}
+        COMMAND ${OMEGAH_EXO2OSH} mismip_2d.exo mismip_2d.osh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../AsciiMeshes/MISMIP_coarse)
+  set_tests_properties (${testNameMismipOsh} PROPERTIES
+        LABELS "LandIce;Forward;Omega_h;Adaptation"
+        FIXTURES_SETUP MismipOshMeshSetup)
+
+  # The nulladapt/refineonly variants are diagnostics: they skip the SPR error estimate
+  # (nulladapt also skips the mesh change itself) to bisect where a run misbehaves.
+  foreach (mismipAdaptInput input_mismip_transient_adapt input_mismip_transient_expl_adapt
+                            input_mismip_transient_adapt_nulladapt input_mismip_transient_adapt_refineonly)
+    set (testName ${testNameRoot}_${mismipAdaptInput})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${mismipAdaptInput}.yaml
+                   ${CMAKE_CURRENT_BINARY_DIR}/${mismipAdaptInput}.yaml)
+    add_test(${testName} ${SerialAlbany.exe} ${mismipAdaptInput}.yaml)
+    set_tests_properties(${testName} PROPERTIES
+          LABELS "LandIce;Forward;Omega_h;MeshFields;Adaptation"
+          FIXTURES_REQUIRED MismipOshMeshSetup
+          TIMEOUT 600)
+  endforeach()
+endif()
+
 
 
 ######################
